@@ -1,6 +1,6 @@
 """Tests for relationship properties in Kybra Simple DB."""
 
-import unittest
+from tester import Tester
 
 from kybra_simple_db import *
 
@@ -55,7 +55,7 @@ class Course(Entity):
     students = ManyToMany(["student"], "courses")
 
 
-class TestRelationships(unittest.TestCase):
+class TestRelationships:
     """Test cases for relationship properties."""
 
     def setUp(self):
@@ -74,30 +74,29 @@ class TestRelationships(unittest.TestCase):
         person.profile = profile
 
         # Verify relationships
-        self.assertEqual(person.profile, profile)
-        self.assertEqual(profile.person, person)
+        assert person.profile == profile
+        assert profile.person == person
 
         # Verify that we can't assign multiple profiles
         profile2 = Profile(bio="Another bio")
-        with self.assertRaises(ValueError):
-            person.profile = [profile, profile2]
+        Tester.assert_raises(ValueError, lambda: setattr(person, 'profile', [profile, profile2]))
 
         # Test replacing profile
         new_profile = Profile(bio="Updated bio")
         person.profile = new_profile
 
         # Verify that old profile is unlinked and new profile is linked
-        self.assertEqual(person.profile, new_profile)
-        self.assertEqual(new_profile.person, person)
-        self.assertIsNone(profile.person)
+        assert person.profile == new_profile
+        assert new_profile.person == person
+        assert profile.person is None
 
         # Test department manager one-to-one relationship
         dept = Department(name="Engineering")
         emp = Employee(name="Bob")
 
         dept.manager = emp
-        self.assertEqual(dept.manager, emp)
-        self.assertEqual(emp.managed_department, dept)
+        assert dept.manager == emp
+        assert emp.managed_department == dept
 
     def test_one_to_many(self):
         """Test one-to-many relationships."""
@@ -112,33 +111,31 @@ class TestRelationships(unittest.TestCase):
         dept.employees = [emp1, emp2]
 
         # Verify relationships
-        self.assertEqual(len(dept.employees), 2)
-        self.assertEqual(emp1.department, dept)
-        self.assertEqual(emp2.department, dept)
+        assert len(dept.employees) == 2
+        assert emp1.department == dept
+        assert emp2.department == dept
 
         # Verify that we can't assign multiple departments
         dept2 = Department(name="Sales")
-        with self.assertRaises(ValueError):
-            emp1.department = [dept, dept2]
+        Tester.assert_raises(ValueError, lambda: setattr(emp1, 'department', [dept, dept2]))
 
         # Add another employee
         dept.employees = [emp1, emp2, emp3]
 
         # Verify relationships
-        self.assertEqual(len(dept.employees), 3)
-        self.assertEqual(emp3.department, dept)
+        assert len(dept.employees) == 3
+        assert emp3.department == dept
 
         # Move employee to new department
         dept2.employees = [emp1]
 
         # Verify relationships
-        self.assertEqual(len(dept.employees), 2)
-        self.assertEqual(len(dept2.employees), 1)
-        self.assertEqual(emp1.department, dept2)
+        assert len(dept.employees) == 2
+        assert len(dept2.employees) == 1
+        assert emp1.department == dept2
 
         # Test that employee can't be in multiple departments
-        with self.assertRaises(ValueError):
-            emp1.department = [dept, dept2]
+        Tester.assert_raises(ValueError, lambda: setattr(emp1, 'department', [dept, dept2]))
 
     def test_many_to_many(self):
         """Test many-to-many relationships."""
@@ -156,33 +153,38 @@ class TestRelationships(unittest.TestCase):
         student2.courses = [course2, course3]
 
         # Verify relationships from both sides
-        self.assertEqual(len(student1.courses), 2)
-        self.assertEqual(len(student2.courses), 2)
-        self.assertEqual(len(course1.students), 1)
-        self.assertEqual(len(course2.students), 2)
-        self.assertEqual(len(course3.students), 1)
+        assert len(student1.courses) == 2
+        assert len(student2.courses) == 2
+        assert len(course1.students) == 1
+        assert len(course2.students) == 2
+        assert len(course3.students) == 1
 
         # Remove a course from student
         student1.courses = [course1]
 
         # Verify relationships are updated on both sides
-        self.assertEqual(len(student1.courses), 1)
-        self.assertEqual(len(course2.students), 1)
-        self.assertTrue(course1 in student1.courses)
-        self.assertTrue(student1 in course1.students)
-        self.assertFalse(student1 in course2.students)
+        assert len(student1.courses) == 1
+        assert len(course2.students) == 1
+        assert course1 in student1.courses
+        assert student1 in course1.students
+        assert student1 not in course2.students
 
         # Add student to multiple courses at once
         student1.courses = [course1, course2, course3]
 
         # Verify all relationships are updated
-        self.assertEqual(len(student1.courses), 3)
-        self.assertEqual(len(course2.students), 2)
-        self.assertEqual(len(course3.students), 2)
+        assert len(student1.courses) == 3
+        assert len(course2.students) == 2
+        assert len(course3.students) == 2
         for course in [course1, course2, course3]:
-            self.assertTrue(course in student1.courses)
-            self.assertTrue(student1 in course.students)
+            assert course in student1.courses
+            assert student1 in course.students
 
+
+def run():
+    print("Running tests...")
+    tester = Tester(TestRelationships)
+    return tester.run_tests()
 
 if __name__ == "__main__":
-    unittest.main()
+    exit(run())

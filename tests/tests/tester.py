@@ -9,7 +9,9 @@ class Tester:
         failed = 0
         for test in test_methods:
             try:
-                self.test_instance.setUp()  # Call setUp before each test
+                # Call setUp if it exists
+                if hasattr(self.test_instance, 'setUp'):
+                    self.test_instance.setUp()
                 test()
                 print(f"\033[92m{test.__name__} passed\033[0m")  # Green for pass
             except Exception as e:
@@ -17,3 +19,18 @@ class Tester:
                 failed += 1
         print(f"\033[91m{failed} tests failed\033[0m" if failed > 0 else "\033[92mAll tests passed\033[0m")
         return failed
+
+    @classmethod
+    def assert_raises(cls, exception, func, *args, **kwargs):
+        """Assert that a function raises a specific exception."""
+        try:
+            func(*args, **kwargs)
+        except exception:
+            print(f"\033[92m{func.__name__} raised {exception.__name__} as expected\033[0m")
+            return True
+        except Exception as e:
+            print(f"\033[91m{func.__name__} raised an unexpected exception: {e}\033[0m")
+            return False
+        else:
+            print(f"\033[91m{func.__name__} did not raise {exception.__name__}\033[0m")
+            return False

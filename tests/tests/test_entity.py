@@ -1,7 +1,7 @@
 """Tests for entity functionality in Kybra Simple DB."""
 
 from kybra_simple_db import *
-from .tester import Tester
+from tester import Tester
 
 
 class Person(Entity):
@@ -16,8 +16,8 @@ class Department(Entity):
 class TestEntity:
     def setUp(self):
         """Reset Entity class variables before each test."""
-        Entity._context = set()
-        Database._instance = Database(MemoryStorage())
+        Entity._context = set()  # TODO: delete?
+        Database._instance = Database(MemoryStorage())  # TODO: improve?
 
     def test_entity_creation_and_save(self):
         """Test creating and saving an entity."""
