@@ -79,3 +79,5 @@ class MemoryStorage(Storage):
         current_id = self._next_id
         self._next_id += 1
         return current_id
+
+# TODO: add Kybra persistance storage here

@@ -45,6 +45,7 @@ pip install ...
 ## Features
 
 - Uses IC persistent storage when used on the Internet Computer, although it can be run outside IC using a custom storage object.
+- No need for calling ".save()". Just use the variables seamlessly (TODO: explain better)
 - Simple key-value storage with JSON serialization
 - Entity-relationship management
 - Audit logging of all operations
@@ -79,22 +80,8 @@ class User(Entity, TimestampedMixin):
 class Department(Entity):
     pass
 
-# Create and save entities
-user = User("user", name="John", age=30)
-user.save()  # Automatically sets creation timestamp and owner
-
+user = User("user", name="John", age=30)  # Automatically sets creation timestamp and owner
 dept = Department("department", name="IT")
-dept.save()
-
-# Create bidirectional relationships
-user.add_relation("works_in", "has_employee", dept)
-
-# Query relationships
-user_dept = user.get_relations(Department, "works_in")[0]
-print(user_dept.name)  # "IT"
-
-dept_employees = dept.get_relations(User, "has_employee")
-print(dept_employees[0].name)  # "John"
 
 # View timestamps and ownership
 print(user.to_dict())

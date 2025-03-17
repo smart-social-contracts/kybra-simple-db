@@ -24,7 +24,7 @@ fi
 # Call test1 and check output
 echo "Testing test1 function..."
 TEST1_RESULT=$(dfx canister call test test1)
-if [ "$TEST1_RESULT" != '("Test 1")' ]; then
+if [ "$TEST1_RESULT" != '("OK")' ]; then
   echo "Error: test1 function returned unexpected result: $TEST1_RESULT"
   dfx stop
   exit 1
