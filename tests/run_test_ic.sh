@@ -2,6 +2,11 @@
 set -e
 set -x
 
+IMAGE_ADDRESS="ghcr.io/smart-social-contracts/icp-dev-env:latest"
+
+echo "Pulling image..."
+docker pull $IMAGE_ADDRESS
+
 echo "Running tests..."
 docker run --rm \
     -v "${PWD}/src:/app/src" \
@@ -10,7 +15,7 @@ docker run --rm \
     -v "${PWD}/dfx.json:/app/dfx.json" \
     -v "${PWD}/entrypoint.sh:/app/entrypoint.sh" \
     --entrypoint "/app/entrypoint.sh" \
-    ghcr.io/smart-social-contracts/icp-dev-env:latest || {
+    $IMAGE_ADDRESS || {
     echo "❌ Tests failed"
     exit 1
 }
