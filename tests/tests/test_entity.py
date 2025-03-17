@@ -1,6 +1,5 @@
 """Tests for entity functionality in Kybra Simple DB."""
 
-# import unittest
 from kybra_simple_db import *
 
 
@@ -13,7 +12,7 @@ class Department(Entity):
     name = String(min_length=2, max_length=50)
 
 
-class TestEntity(unittest.TestCase):
+class TestEntity:
     def setUp(self):
         """Reset Entity class variables before each test."""
         Entity._context = set()
@@ -25,7 +24,7 @@ class TestEntity(unittest.TestCase):
         loaded = Person[person._id]
         self.assertIsNotNone(loaded)
         self.assertEqual(loaded.name, "John")
-        self.assertEqual(loaded.age, 30)
+        self.assertEqual(loaded.age, 31)
 
     def test_entity_update(self):
         """Test updating an entity."""
@@ -56,8 +55,11 @@ class TestEntity(unittest.TestCase):
         Person(_id="test_id", name="John", age=30)
 
         # Try to create and save second entity with same ID
-        with self.assertRaises(ValueError, msg="Entity Person@test_id already exists"):
+        try:
             Person(_id="test_id", name="Jane", age=25)
+            assert False, "Entity Person@test_id already exists"
+        except ValueError as e:
+            assert str(e) == "Entity Person@test_id already exists"
 
     def test_getitem_by_id(self):
         """Test loading an entity by ID using class[id] syntax."""
@@ -187,16 +189,25 @@ class TestEntity(unittest.TestCase):
         cat_c.delete()
 
 
-def run():
-    for name, func in globals().items():
-        if callable(func) and name.startswith('test_'):
-            try:
-                func()
-                print(f"{name} passed")
-            except Exception as e:
-                print(f"{name} failed: {e}")
+def run_tests():
+    """Custom test runner to execute test functions and report results."""
+    test_instance = TestEntity()
+    test_methods = [getattr(test_instance, func) for func in dir(test_instance) if callable(getattr(test_instance, func)) and func.startswith('test_')]
+    print("test_methods", test_methods)
+    failed = 0
+    for test in test_methods:
+        try:
+            test_instance.setUp()  # Call setUp before each test
+            test()
+            print(f"{test.__name__} passed")
+        except Exception as e:
+            print(f"{test.__name__} failed: {e}")
+            failed += 1
+    print(f"{failed} tests failed")
+    if failed > 0:
+        exit(1)
 
 
 if __name__ == "__main__":
-    unittest.main()
-
+    print("Running tests...")
+    run_tests()
