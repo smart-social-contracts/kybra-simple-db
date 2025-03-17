@@ -10,6 +10,6 @@ def running_on_ic() -> bool:
 def get_logger():
     if running_on_ic():
         from kybra import ic
-        return lambda o: ic.print(str(o))
+        return lambda *args: ic.print(', '.join(map(str, args)))
     else:
         return print

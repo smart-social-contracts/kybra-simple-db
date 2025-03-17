@@ -21,16 +21,21 @@ else
   echo "greet function test passed!"
 fi
 
-# Call test1 and check output
-echo "Testing test1 function..."
-TEST1_RESULT=$(dfx canister call test test1)
-if [ "$TEST1_RESULT" != '("OK")' ]; then
-  echo "Error: test1 function returned unexpected result: $TEST1_RESULT"
-  dfx stop
-  exit 1
-else
-  echo "test1 function test passed!"
-fi
+# Define a list of test identifiers
+TEST_IDS=('1','2', 'entity')
+
+# Loop through each test identifier
+for TEST_ID in "${TEST_IDS[@]}"; do
+  echo "Testing test_${TEST_ID} module..."
+  TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
+  if [ "$TEST_RESULT" != '("OK")' ]; then
+    # echo "Error: test_${TEST_ID}.run() function returned unexpected result"
+    dfx stop
+    exit 1
+  else
+    echo "test_${TEST_ID}.run() function test passed!"
+  fi
+done
 
 echo "Stopping dfx..."
 dfx stop
