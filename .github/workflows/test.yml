@@ -1,4 +1,4 @@
-name: Test on IC
+name: Test without IC
 
 on:
   push:
