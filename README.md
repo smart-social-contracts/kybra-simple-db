@@ -2,7 +2,15 @@
 
 
 # TODO:
-test if an entity is already in the list of a `many` relationship (raise if already? )
+the current errors
+coverage
+final cleaning
+    readme
+linting
+add tests inside docker
+review the pip package metadata
+add release and publish to pypi (override, maybe I need to delete)
+
 
 
 [![Test](https://github.com/Batou125/kybra_simple_db/actions/workflows/test.yml/badge.svg)](https://github.com/Batou125/kybra_simple_db/actions/workflows/test.yml)
@@ -56,7 +64,9 @@ pip install -e .
 To run the test suite:
 
 ```bash
-python3 -m pytest -v && python -m pylint kybra_simple_db tests
+pip install -r requirements-dev.txt
+python -m pytest -v
+python -m pylint kybra_simple_db tests
 ```
 
 ## Quick Start

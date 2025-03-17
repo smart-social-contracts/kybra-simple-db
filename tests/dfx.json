@@ -1,0 +1,8 @@
+{
+  "canisters": {
+    "test": {
+      "type": "kybra",
+      "main": "src/main.py"
+    }
+  }
+}
