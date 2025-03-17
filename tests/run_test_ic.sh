@@ -3,7 +3,7 @@ set -e
 set -x
 
 echo "Running tests..."
-docker run --rm -it \
+docker run --rm \
     -v "${PWD}/src:/app/src" \
     -v "${PWD}/../kybra_simple_db:/app/src/kybra_simple_db" \
     -v "${PWD}/tests:/app/tests" \
