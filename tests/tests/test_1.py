@@ -46,4 +46,8 @@ def run():
     deleted = User.load("1")
     log("After delete:%s" % deleted)  # None
 
-    return "OK"
+    return 0
+
+if __name__ == "__main__":
+    exit(run())
+

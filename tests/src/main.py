@@ -10,6 +10,6 @@ def greet() -> str:
 
 
 @query
-def run_test(module_name:str) -> str: 
+def run_test(module_name:str) -> int: 
     ic.print(f"Running test_{module_name}...")
     return globals()[f"test_{module_name}"].run()

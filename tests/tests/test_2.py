@@ -5,20 +5,19 @@ import os
 from kybra_simple_db import *
 from kybra_simple_db.logger import get_logger
 
+
 def run():
     log = get_logger()
-    
+
     # Set up database
     db = Database(MemoryStorage())
     Database._instance = db
-
 
     class User(Entity, TimestampedMixin):
         """User entity with properties and timestamp tracking."""
 
         name = String(min_length=2, max_length=50)
         age = Integer(min_value=0, max_value=150)
-
 
     # Set up system time for demonstration
     system_time = SystemTime.get_instance()
@@ -68,4 +67,8 @@ def run():
     # Clean up
     system_time.clear_time()  # Return to using real system time
 
-    return "OK"
+    return 0
+
+
+if __name__ == "__main__":
+    exit(run())

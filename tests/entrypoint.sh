@@ -28,8 +28,8 @@ TEST_IDS=('1','2', 'entity')
 for TEST_ID in "${TEST_IDS[@]}"; do
   echo "Testing test_${TEST_ID} module..."
   TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
-  if [ "$TEST_RESULT" != '("OK")' ]; then
-    # echo "Error: test_${TEST_ID}.run() function returned unexpected result"
+  if [ "$TEST_RESULT" != '0' ]; then
+    echo "Error: test_${TEST_ID}.run() function returned unexpected result: $TEST_RESULT"
     dfx stop
     exit 1
   else

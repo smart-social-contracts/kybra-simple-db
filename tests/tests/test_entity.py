@@ -1,6 +1,7 @@
 """Tests for entity functionality in Kybra Simple DB."""
 
 from kybra_simple_db import *
+from .tester import Tester
 
 
 class Person(Entity):
@@ -22,9 +23,9 @@ class TestEntity:
         """Test creating and saving an entity."""
         person = Person(name="John", age=30)
         loaded = Person[person._id]
-        self.assertIsNotNone(loaded)
-        self.assertEqual(loaded.name, "John")
-        self.assertEqual(loaded.age, 31)
+        assert loaded is not None
+        assert loaded.name == "John"
+        assert loaded.age == 30
 
     def test_entity_update(self):
         """Test updating an entity."""
@@ -32,7 +33,7 @@ class TestEntity:
         person.age = 31
 
         loaded = Person[person._id]
-        self.assertEqual(loaded.age, 31)
+        assert loaded.age == 31
 
     def test_entity_relations(self):
         """Test entity relations."""
@@ -46,8 +47,8 @@ class TestEntity:
         loaded_person = Person[person._id]
         loaded_dept = Department[dept._id]
 
-        self.assertEqual(loaded_person.get_relations("works_in", "Department")[0], dept)
-        self.assertEqual(loaded_dept.get_relations("has_employee", "Person")[0], person)
+        assert loaded_person.get_relations("works_in", "Department")[0] == dept
+        assert loaded_dept.get_relations("has_employee", "Person")[0] == person
 
     def test_entity_duplicate_key(self):
         """Test that saving an entity with a duplicate ID raises an error."""
@@ -68,12 +69,12 @@ class TestEntity:
 
         # Load using class[id] syntax
         loaded_person = Person[person._id]
-        self.assertIsNotNone(loaded_person)
-        self.assertEqual(loaded_person._id, "John")
-        self.assertEqual(loaded_person.age, 30)
+        assert loaded_person is not None
+        assert loaded_person._id == "John"
+        assert loaded_person.age == 30
 
         # Test with non-existent ID
-        self.assertIsNone(Person["non_existent"])
+        assert Person["non_existent"] is None
 
     def test_entity_duplicate_relation(self):
         """Test handling of duplicate relations."""
@@ -85,7 +86,7 @@ class TestEntity:
         person.add_relation("works_in", "has_employee", dept)
 
         loaded = Person[person._id]
-        self.assertEqual(len(loaded.get_relations("works_in", "Department")), 1)
+        assert len(loaded.get_relations("works_in", "Department")) == 1
 
     def test_instances_basic(self):
         """Test basic functionality of instances() method."""
@@ -97,12 +98,12 @@ class TestEntity:
         persons = Person.instances()
 
         # Check that we have the correct number of instances
-        self.assertEqual(len(persons), 2)
+        assert len(persons) == 2
 
         # Check that the instances match the saved persons
         saved_ids = {person1._id, person2._id}
         retrieved_ids = {p._id for p in persons}
-        self.assertEqual(saved_ids, retrieved_ids)
+        assert saved_ids == retrieved_ids
 
     def test_instances_with_type_name(self):
         """Test instances() method with explicit type name."""
@@ -115,12 +116,12 @@ class TestEntity:
         departments = Department.instances()
 
         # Check that we have the correct number of instances for each type
-        self.assertEqual(len(persons), 1)
-        self.assertEqual(len(departments), 1)
+        assert len(persons) == 1
+        assert len(departments) == 1
 
         # Check that the instances are of the correct type
-        self.assertTrue(all(isinstance(p, Person) for p in persons))
-        self.assertTrue(all(isinstance(d, Department) for d in departments))
+        assert all(isinstance(p, Person) for p in persons)
+        assert all(isinstance(d, Department) for d in departments)
 
     def test_instances_empty(self):
         """Test instances() method when no instances exist."""
@@ -133,7 +134,7 @@ class TestEntity:
         instances = NewEntity.instances()
 
         # Check that no instances are returned
-        self.assertEqual(len(instances), 0)
+        assert len(instances) == 0
 
     def test_instances_with_multiple_types(self):
         """Test instances() method with multiple entity types."""
@@ -147,8 +148,8 @@ class TestEntity:
         departments = Department.instances()
 
         # Check the number of instances for each type
-        self.assertEqual(len(persons), 2)
-        self.assertEqual(len(departments), 1)
+        assert len(persons) == 2
+        assert len(departments) == 1
 
     def test_entity_inheritance(self):
         """Test entity inheritance and type-based instance querying."""
@@ -170,44 +171,28 @@ class TestEntity:
 
         # Test instance querying
         all_animals = Animal.instances()
-        self.assertEqual(len(all_animals), 3)
-        self.assertTrue(any(a.name == "Alice" for a in all_animals))
-        self.assertTrue(any(a.name == "Bob" for a in all_animals))
-        self.assertTrue(any(a.name == "Charlie" for a in all_animals))
+        assert len(all_animals) == 3
+        assert any(a.name == "Alice" for a in all_animals)
+        assert any(a.name == "Bob" for a in all_animals)
+        assert any(a.name == "Charlie" for a in all_animals)
 
         dogs = Dog.instances()
-        self.assertEqual(len(dogs), 1)
-        self.assertEqual(dogs[0].name, "Bob")
+        assert len(dogs) == 1
+        assert dogs[0].name == "Bob"
 
         cats = Cat.instances()
-        self.assertEqual(len(cats), 1)
-        self.assertEqual(cats[0].name, "Charlie")
+        assert len(cats) == 1
+        assert cats[0].name == "Charlie"
 
         # Clean up
         animal_a.delete()
         dog_b.delete()
         cat_c.delete()
 
-
-def run_tests():
-    """Custom test runner to execute test functions and report results."""
-    test_instance = TestEntity()
-    test_methods = [getattr(test_instance, func) for func in dir(test_instance) if callable(getattr(test_instance, func)) and func.startswith('test_')]
-    print("test_methods", test_methods)
-    failed = 0
-    for test in test_methods:
-        try:
-            test_instance.setUp()  # Call setUp before each test
-            test()
-            print(f"{test.__name__} passed")
-        except Exception as e:
-            print(f"{test.__name__} failed: {e}")
-            failed += 1
-    print(f"{failed} tests failed")
-    if failed > 0:
-        exit(1)
-
+def run():
+    print("Running tests...")
+    tester = Tester(TestEntity)
+    return tester.run_tests()
 
 if __name__ == "__main__":
-    print("Running tests...")
-    run_tests()
+    exit(run())
