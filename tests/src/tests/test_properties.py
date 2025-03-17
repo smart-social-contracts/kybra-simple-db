@@ -32,9 +32,11 @@ class TestProperties:
         person.name = "John"
         assert person.name == "John"
 
-        Tester.assert_raises(TypeError, lambda: setattr(person, 'name', 123))
+        Tester.assert_raises(TypeError, lambda: setattr(person, "name", 123))
 
-        Tester.assert_raises(ValueError, lambda: setattr(person, 'name', "A"))  # Too short
+        Tester.assert_raises(
+            ValueError, lambda: setattr(person, "name", "A")
+        )  # Too short
 
         # Integer property
         person.age = 30
@@ -44,7 +46,7 @@ class TestProperties:
         assert person.age == 25
         assert isinstance(person.age, int)
 
-        Tester.assert_raises(ValueError, lambda: setattr(person, 'age', -1))
+        Tester.assert_raises(ValueError, lambda: setattr(person, "age", -1))
 
         # Float property
         person.height = 1.75
@@ -54,60 +56,56 @@ class TestProperties:
         assert person.height == 1.8
         assert isinstance(person.height, float)
 
-        Tester.assert_raises(ValueError, lambda: setattr(person, 'height', 4.0))
-
+        Tester.assert_raises(ValueError, lambda: setattr(person, "height", 4.0))
 
         # Boolean property
         assert person.is_active is True  # Default value
 
-        person.is_active=False
+        person.is_active = False
         assert person.is_active is False
 
-        person.is_active="true"  # Should convert to bool
+        person.is_active = "true"  # Should convert to bool
         assert person.is_active is True
-
 
     def test_property_persistence(self):
         """Test that properties are correctly saved and loaded."""
-        person=Person(name="John")
-        person.name="John"
-        person.age=30
-        person.height=1.75
-        person.is_active=True
+        person = Person(name="John")
+        person.name = "John"
+        person.age = 30
+        person.height = 1.75
+        person.is_active = True
 
         # Load the person and verify properties
-        loaded=Person.load(person._id)
+        loaded = Person.load(person._id)
         assert loaded.name == "John"
         assert loaded.age == 30
         assert loaded.height == 1.75
         assert loaded.is_active is True
 
-
     def test_property_defaults(self):
         """Test that property defaults work correctly."""
-        person=Person()
+        person = Person()
         assert person.name is None  # No default
         assert person.age is None  # No default
         assert person.height is None  # No default
         assert person.is_active is True  # Has default
 
-
     def test_relation_properties(self):
         """Test that relation properties work correctly."""
-        person1=PersonWithRelations(name="Alice")
-        person1.name="Alice"
+        person1 = PersonWithRelations(name="Alice")
+        person1.name = "Alice"
 
-        person2=PersonWithRelations(name="Bob")
-        person2.name="Bob"
+        person2 = PersonWithRelations(name="Bob")
+        person2.name = "Bob"
 
-        person3=PersonWithRelations(name="Charlie")
-        person3.name="Charlie"
+        person3 = PersonWithRelations(name="Charlie")
+        person3.name = "Charlie"
 
         # Set friends using property
-        person1.friends=[person2, person3]
+        person1.friends = [person2, person3]
 
         # Get friends using property
-        friends=person1.friends
+        friends = person1.friends
         assert len(friends) == 2
         assert person2 in friends
         assert person3 in friends
@@ -117,30 +115,29 @@ class TestProperties:
         assert person1 in person3.friends
 
         # Test setting single entity
-        person1.friends=person2  # Should work with single entity too
+        person1.friends = person2  # Should work with single entity too
         assert len(person1.friends) == 1
         assert person2 in person1.friends
         assert person3 not in person1.friends
 
         # Save and load
-        person1_id=person1._id
-        person2_id=person2._id
+        person1_id = person1._id
+        person2_id = person2._id
 
         # Clear cache
-        PersonWithRelations._instances={}
+        PersonWithRelations._instances = {}
 
         # Load and verify relations persist
-        loaded1=PersonWithRelations.load(person1_id)
-        loaded2=PersonWithRelations.load(person2_id)
+        loaded1 = PersonWithRelations.load(person1_id)
+        loaded2 = PersonWithRelations.load(person2_id)
 
         assert loaded2 in loaded1.friends
         assert loaded1 in loaded2.friends
 
 
-
 def run():
     print("Running tests...")
-    tester=Tester(TestProperties)
+    tester = Tester(TestProperties)
     return tester.run_tests()
 
 

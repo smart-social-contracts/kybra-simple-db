@@ -79,7 +79,9 @@ class TestRelationships:
 
         # Verify that we can't assign multiple profiles
         profile2 = Profile(bio="Another bio")
-        Tester.assert_raises(ValueError, lambda: setattr(person, 'profile', [profile, profile2]))
+        Tester.assert_raises(
+            ValueError, lambda: setattr(person, "profile", [profile, profile2])
+        )
 
         # Test replacing profile
         new_profile = Profile(bio="Updated bio")
@@ -117,7 +119,9 @@ class TestRelationships:
 
         # Verify that we can't assign multiple departments
         dept2 = Department(name="Sales")
-        Tester.assert_raises(ValueError, lambda: setattr(emp1, 'department', [dept, dept2]))
+        Tester.assert_raises(
+            ValueError, lambda: setattr(emp1, "department", [dept, dept2])
+        )
 
         # Add another employee
         dept.employees = [emp1, emp2, emp3]
@@ -135,7 +139,9 @@ class TestRelationships:
         assert emp1.department == dept2
 
         # Test that employee can't be in multiple departments
-        Tester.assert_raises(ValueError, lambda: setattr(emp1, 'department', [dept, dept2]))
+        Tester.assert_raises(
+            ValueError, lambda: setattr(emp1, "department", [dept, dept2])
+        )
 
     def test_many_to_many(self):
         """Test many-to-many relationships."""
@@ -185,6 +191,7 @@ def run():
     print("Running tests...")
     tester = Tester(TestRelationships)
     return tester.run_tests()
+
 
 if __name__ == "__main__":
     exit(run())

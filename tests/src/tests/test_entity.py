@@ -1,7 +1,8 @@
 """Tests for entity functionality in Kybra Simple DB."""
 
-from kybra_simple_db import *
 from tester import Tester
+
+from kybra_simple_db import *
 
 
 class Person(Entity):
@@ -189,10 +190,12 @@ class TestEntity:
         dog_b.delete()
         cat_c.delete()
 
+
 def run():
     print("Running tests...")
     tester = Tester(TestEntity)
     return tester.run_tests()
+
 
 if __name__ == "__main__":
     exit(run())

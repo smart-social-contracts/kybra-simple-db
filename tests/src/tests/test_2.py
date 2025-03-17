@@ -2,8 +2,9 @@
 
 import os
 
-from kybra_simple_db import *
 from kybra_simple_db.logger import get_logger
+
+from kybra_simple_db import *
 
 
 def run():

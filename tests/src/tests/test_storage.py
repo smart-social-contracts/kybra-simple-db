@@ -28,11 +28,9 @@ class TestStorage:
         items = dict(storage.items())
         assert items == {"key1": "value1", "key3": "value3", "key4": "value4"}
 
-
     def test_memory_storage_remove_nonexistent(self):
         storage = MemoryStorage()
         Tester.assert_raises(KeyError, storage.remove, "non_existent")
-
 
     def test_memory_storage_clear(self):
         storage = MemoryStorage()
@@ -53,6 +51,7 @@ def run():
     print("Running tests...")
     tester = Tester(TestStorage)
     return tester.run_tests()
+
 
 if __name__ == "__main__":
     exit(run())

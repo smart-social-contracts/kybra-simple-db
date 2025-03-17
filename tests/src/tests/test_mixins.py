@@ -2,9 +2,9 @@
 
 import os
 
-from kybra_simple_db import *
 from tester import Tester
 
+from kybra_simple_db import *
 
 
 class TestEntity(Entity, TimestampedMixin):
@@ -12,12 +12,13 @@ class TestEntity(Entity, TimestampedMixin):
 
     pass
 
+
 class TestMixins:
     def setUp(self):
         """Reset Entity class variables before each test."""
         Entity._context = set()  # TODO: delete?
         Database._instance = Database(MemoryStorage())  # TODO: improve?
-    
+
     def test_timestamped_mixin(self):
         """Test that TimestampedMixin adds timestamp and ownership functionality."""
         # Set up test caller and time
@@ -77,6 +78,7 @@ def run():
     print("Running tests...")
     tester = Tester(TestMixins)
     return tester.run_tests()
+
 
 if __name__ == "__main__":
     exit(run())

@@ -1,7 +1,8 @@
 """Simple example script showing basic usage of kybra_simple_db with properties."""
 
-from kybra_simple_db import *
 from kybra_simple_db.logger import get_logger
+
+from kybra_simple_db import *
 
 
 def run():
@@ -48,6 +49,6 @@ def run():
 
     return 0
 
+
 if __name__ == "__main__":
     exit(run())
-
