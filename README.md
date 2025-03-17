@@ -19,10 +19,32 @@ add release and publish to pypi (override, maybe I need to delete)
 [![Coverage](https://codecov.io/gh/Batou125/kybra_simple_db/branch/main/graph/badge.svg)](https://codecov.io/gh/Batou125/kybra_simple_db)
 [![License](https://img.shields.io/github/license/Batou125/kybra_simple_db.svg)](https://github.com/Batou125/kybra_simple_db/blob/main/LICENSE)
 
-A lightweight key-value database with entity relationships and audit logging capabilities. Perfect for small to medium-sized applications needing persistent storage with relationship management.
+A lightweight key-value database with entity relationships and audit logging capabilities, intended for small to medium-sized applications running on the Internet Computer using Kybra.
+
+## Quick Start
+
+### Basic Usage
+
+```python
+from kybra_simple_db import *
+
+TODO
+```
+
+### Installation
+
+On your Kybra project, copy the folder
+
+TODO: insert directory tree
+
+If not using Kybra, just:
+```
+pip install ...
+```
 
 ## Features
 
+- Uses IC persistent storage when used on the Internet Computer, although it can be run outside IC using a custom storage object.
 - Simple key-value storage with JSON serialization
 - Entity-relationship management
 - Audit logging of all operations
@@ -33,31 +55,7 @@ A lightweight key-value database with entity relationships and audit logging cap
 - Timestamp and ownership tracking via mixins
 - System time management for testing and synchronization
 
-## Installation
 
-**Requirements**: Python 3.10.7
-
-Install from PyPI:
-
-```bash
-pip install kybra_simple_db
-```
-
-Or install from source:
-
-```bash
-git clone https://github.com/Batou125/kybra_simple_db.git
-cd kybra_simple_db
-pip install .
-```
-
-### Development Installation
-
-To install the package in development mode, which allows you to modify the code and test changes without reinstalling:
-
-```bash
-pip install -e .
-```
 
 ### Running Tests
 
@@ -69,29 +67,6 @@ python -m pytest -v
 python -m pylint kybra_simple_db tests
 ```
 
-## Quick Start
-
-### Basic Usage
-
-```python
-from kybra_simple_db import *
-
-# Create a database instance
-db = Database(MemoryStorage())
-
-# Save data
-db.save("user1", {"name": "John", "age": 30})
-
-# Load data
-user = db.load("user1")
-print(user)  # {"name": "John", "age": 30}
-
-# Update data
-db.update("user1", "age", 31)
-
-# Delete data
-db.delete("user1")
-```
 
 ### Using Entities and Relationships
 
@@ -214,45 +189,29 @@ print(entity.timestamp_updated)  # 1060
 system_time.clear_time()  # Return to using real system time
 ```
 
-### Custom Storage Backend
+### Storage on IC using Kybra
 
-```python
-from kybra_simple_db import *
-from typing import Optional, Iterator, Tuple
+TODO
 
-class RedisStorage(Storage):
-    def __init__(self, redis_client):
-        self.redis = redis_client
-
-    def insert(self, key: str, value: str) -> None:
-        self.redis.set(key, value)
-
-    def get(self, key: str) -> Optional[str]:
-        return self.redis.get(key)
-
-    def remove(self, key: str) -> None:
-        self.redis.delete(key)
-
-    def items(self) -> Iterator[Tuple[str, str]]:
-        for key in self.redis.keys():
-            yield (key, self.redis.get(key))
-
-    def __contains__(self, key: str) -> bool:
-        return self.redis.exists(key)
-```
 
 ## Development
 
 ```bash
 # Clone the repository
-git clone https://github.com/Batou125/kybra_simple_db.git
+git clone https://github.com/smart-social-contracts/kybra_simple_db.git
 cd kybra_simple_db
+
+# Recommended steps
+pip install pyenv virtualenv
+pyenv local 3.10.7
+python -m virtualenv venv
+source venv/bin/activate
 
 # Install development dependencies
 pip install -r requirements-dev.txt
 
 # Run tests
-pytest
+cd tests && ./run_test.sh
 
 # Run linters
 black .
