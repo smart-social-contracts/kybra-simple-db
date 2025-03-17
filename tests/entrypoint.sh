@@ -6,12 +6,8 @@ set -x
 echo "Starting dfx..."
 dfx start --background --clean
 
-# Wait for dfx to be ready
-echo "Waiting for dfx to start..."
-sleep 10
-
-# Deploy the hello canister
-echo "Deploying hello canister..."
+# Deploy the test canister
+echo "Deploying test canister..."
 dfx deploy
 
 # Call greet and check output
