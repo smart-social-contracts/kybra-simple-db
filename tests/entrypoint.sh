@@ -28,7 +28,7 @@ TEST_IDS=('1' '2' 'entity' 'mixins' 'properties' 'relationships' 'database' 'sto
 for TEST_ID in "${TEST_IDS[@]}"; do
   echo "Testing test_${TEST_ID} module..."
   TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
-  if [ "$TEST_RESULT" != '0' ]; then
+  if [ "$TEST_RESULT" != '(0 : int)' ]; then
     echo "Error: test_${TEST_ID}.run() function returned unexpected result: $TEST_RESULT"
     dfx stop
     exit 1

@@ -4,12 +4,14 @@ set -x
 
 echo "Running tests..."
 
+cd src
+
 exit_code=0
 
 TEST_IDS=("1" "2" "entity" "mixins" "properties" "relationships" "database" "storage")
 
 for TEST_ID in "${TEST_IDS[@]}"; do
-  PYTHONPATH=.. python tests/test_${TEST_ID}.py || exit_code=1
+  PYTHONPATH=../.. python tests/test_${TEST_ID}.py || exit_code=1
 done
 
 if [ $exit_code -eq 0 ]; then
