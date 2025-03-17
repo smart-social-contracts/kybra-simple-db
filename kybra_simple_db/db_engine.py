@@ -13,7 +13,6 @@ from .storage import MemoryStorage, Storage
 logger = logging.getLogger(__name__)
 
 
-
 class Database:
     """Main database class providing high-level operations"""
 
@@ -46,7 +45,7 @@ class Database:
             data: Data to store
         """
         key = f"{type_name}@{id}"
-        print('save', type_name, id, pformat(data))
+        print("save", type_name, id, pformat(data))
         self._db_storage.insert(key, json.dumps(data))
         self._audit("save", key, data)
 

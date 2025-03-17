@@ -1,12 +1,15 @@
 from pprint import pprint
 from kybra_simple_db import *
 
+
 class MyEntity(Entity, TimestampedMixin):
     pass
 
+
 class Organization(MyEntity):
-    name = String(min_length=2, max_length=50) 
+    name = String(min_length=2, max_length=50)
     users = OneToMany(["User", "Robot"], "organization")
+
 
 class User(MyEntity):
     name = String(min_length=2, max_length=50)
@@ -19,7 +22,8 @@ class User(MyEntity):
         # new_user.name = name
         # new_user.age = age
         return new_user
-        
+
+
 class SuperUser(User):
     address = String(min_length=2, max_length=50)
     gender = String(min_length=1, max_length=1)
@@ -39,6 +43,7 @@ class Robot(MyEntity):
     def new(cls, name):
         new_user = cls(name=name)
         return new_user
+
 
 # jesus = MyEntity.new(name="Nesus", age=33)
 

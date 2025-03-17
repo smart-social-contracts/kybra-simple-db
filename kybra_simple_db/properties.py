@@ -215,7 +215,9 @@ class Relation:
         if not isinstance(entity, Entity):
             raise TypeError(f"{self.name} must be set to Entity instances")
         if entity._type not in self.entity_types:
-            raise TypeError(f"{self.name} must be set an Entity instance of any of the following types: {self.entity_types}")
+            raise TypeError(
+                f"{self.name} must be set an Entity instance of any of the following types: {self.entity_types}"
+            )
 
 
 class RelationList:
@@ -274,9 +276,7 @@ class OneToOne(Relation):
             person = OneToOne('Person', 'profile')
     """
 
-    def __init__(
-        self, entity_types: [str], reverse_name: str = None
-    ):
+    def __init__(self, entity_types: [str], reverse_name: str = None):
         super().__init__(entity_types, reverse_name, many=False)
 
     def __set__(self, obj, value):
@@ -352,7 +352,6 @@ class OneToMany(Relation):
                     f"Trying to set an Entity instance of type '{value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
                 )
 
-
             # Check that the reverse property is ManyToOne
             reverse_prop = value.__class__.__dict__.get(self.reverse_name)
             if not isinstance(reverse_prop, ManyToOne):
@@ -383,9 +382,7 @@ class ManyToOne(Relation):
             employees = OneToMany('Employee', 'department')
     """
 
-    def __init__(
-        self, entity_types: [str], reverse_name: str = None
-    ):
+    def __init__(self, entity_types: [str], reverse_name: str = None):
         super().__init__(entity_types, reverse_name, many=False)
 
     def __set__(self, obj, value):
@@ -408,8 +405,10 @@ class ManyToOne(Relation):
             # Check that the reverse property is OneToMany
             reverse_prop = value.__class__.__dict__.get(self.reverse_name)
             if not reverse_prop:
-                raise ValueError(f"Reverse property '{self.reverse_name}' not found in {value.__class__.__name__} entity")
-            print('self.reverse_name', self.reverse_name)
+                raise ValueError(
+                    f"Reverse property '{self.reverse_name}' not found in {value.__class__.__name__} entity"
+                )
+            print("self.reverse_name", self.reverse_name)
             if not isinstance(reverse_prop, OneToMany):
                 raise ValueError(
                     f"Reverse property '{self.reverse_name}' must be OneToMany and it is '{reverse_prop.__class__.__name__}'"

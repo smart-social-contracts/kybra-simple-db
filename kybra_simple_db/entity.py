@@ -183,7 +183,9 @@ class Entity:
     def find(cls: Type[T], d) -> List[T]:
         D = d
         L = [l.to_dict() for l in cls.instances()]
-        return [cls.load(d['_id']) for d in L if all(d.get(k) == v for k, v in D.items())]
+        return [
+            cls.load(d["_id"]) for d in L if all(d.get(k) == v for k, v in D.items())
+        ]
 
     @classmethod
     def instances(cls: Type[T]) -> List[T]:

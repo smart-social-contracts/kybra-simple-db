@@ -55,7 +55,7 @@ def test_entity_creation_audit(db_audit, db, system_time, caller_id):
     audit_entries = [
         json.loads(db_audit.get(key))
         for key in sorted(db_audit.keys())
-        if key not in ['_min_id', '_max_id']
+        if key not in ["_min_id", "_max_id"]
     ]
 
     # Should have one audit entry for the save
@@ -63,18 +63,18 @@ def test_entity_creation_audit(db_audit, db, system_time, caller_id):
     entry = audit_entries[0]
 
     # Check audit entry format
-    assert entry[0] == 'save'  # Operation type
+    assert entry[0] == "save"  # Operation type
     assert isinstance(entry[1], int)  # Timestamp
-    print('entry', entry)
-    assert entry[2].startswith('TestUser@')  # Entity identifier
+    print("entry", entry)
+    assert entry[2].startswith("TestUser@")  # Entity identifier
 
     # Check audited data
     data = entry[3]
-    assert data['_type'] == 'TestUser'
-    assert isinstance(data['_id'], str)
-    assert data['timestamp_created'] == data['timestamp_updated']
-    assert data['creator'] == data['updater'] == 'system'
-    assert data['owner'] == 'system'
+    assert data["_type"] == "TestUser"
+    assert isinstance(data["_id"], str)
+    assert data["timestamp_created"] == data["timestamp_updated"]
+    assert data["creator"] == data["updater"] == "system"
+    assert data["owner"] == "system"
 
 
 def test_entity_update_audit(db_audit, db, system_time, caller_id):
