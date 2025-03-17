@@ -3,10 +3,17 @@ name: Publish to PyPI
 on:
   release:
     types: [created]
+  workflow_run:
+    workflows: ["Test", "Test IC"]
+    types:
+      - completed
+    branches: [main]
   workflow_dispatch:  # Allows manual triggering without restrictions
 
 jobs:
   deploy:
+    # Only run if the workflow_run event was successful or if it's a release or manual dispatch
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'release' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
