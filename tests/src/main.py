@@ -1,5 +1,6 @@
 from kybra import query
-from kybra_simple_db import *
+
+# from kybra_simple_db import *  # TODO
 
 
 @query

@@ -5,8 +5,8 @@ Core database engine implementation
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
 from pprint import pformat
+from typing import Any, Dict, List, Optional, Tuple
 
 from .storage import MemoryStorage, Storage
 

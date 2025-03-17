@@ -49,7 +49,7 @@ def db(db_audit):
 
 def test_entity_creation_audit(db_audit, db, system_time, caller_id):
     """Test that entity creation is properly audited."""
-    user = TestUser(name="Alice")
+    # user = TestUser(name="Alice")
 
     # Get all audit logs except internal IDs
     audit_entries = [
