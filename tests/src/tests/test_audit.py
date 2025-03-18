@@ -3,15 +3,12 @@
 import json
 
 from kybra_simple_db import *
-from kybra_simple_db.logger import get_logger
 from tester import Tester
 
 log = get_logger()
 
 class TestUser(Entity, TimestampedMixin):
     """Test user entity with a name property."""
-
-    _entity_type = "user"
     name = String()
 
 

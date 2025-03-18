@@ -49,8 +49,6 @@ class Student(Entity):
 class Course(Entity):
     """Test course entity with many-to-many relationship to students."""
 
-    _entity_type = "course"
-
     name = String()
     students = ManyToMany(["student"], "courses")
 

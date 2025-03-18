@@ -1,10 +1,9 @@
 def running_on_ic() -> bool:
     try:
         from kybra import ic
-
         ic.print("running_on_ic: Running on IC")
         return True
-    except ImportError:
+    except:
         print("running_on_ic:Not running on IC")
     return False
 

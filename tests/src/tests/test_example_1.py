@@ -1,18 +1,18 @@
 """Simple example script showing basic usage of kybra_simple_db with properties."""
 
-import kybra_simple_db as ksdb
+from kybra_simple_db import Entity, String, Integer, ManyToMany, ManyToOne, OneToMany, OneToOne, Database, get_logger
 
 
 def run():
-    log = ksdb.get_logger()
+    log = get_logger()
 
-    class Person(ksdb.Entity):
-        name = ksdb.String(min_length=2, max_length=50)
-        age = ksdb.Integer(min_value=0, max_value=150)
-        friends = ksdb.ManyToMany("Person", "friends")
-        mother = ksdb.ManyToOne("Person", "children")
-        children = ksdb.OneToMany("Person", "mother")
-        spouse = ksdb.OneToOne("Person", "spouse")
+    class Person(Entity):
+        name = String(min_length=2, max_length=50)
+        age = Integer(min_value=0, max_value=150)
+        friends = ManyToMany("Person", "friends")
+        mother = ManyToOne("Person", "children")
+        children = OneToMany("Person", "mother")
+        spouse = OneToOne("Person", "spouse")
 
     # Create and save a person
     person = Person(name="John", age=30)
@@ -36,7 +36,7 @@ def run():
 
     # Print storage contents
     log("\nStorage contents:")
-    log(ksdb.Database.get_instance().raw_dump_json(pretty=True))
+    log(Database.get_instance().raw_dump_json(pretty=True))
 
     # Delete the person
     person.delete()

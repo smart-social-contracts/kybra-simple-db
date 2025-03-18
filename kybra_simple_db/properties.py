@@ -397,6 +397,9 @@ class ManyToOne(Relation):
             # Validate entity type
             if not isinstance(value, Entity):
                 raise TypeError(f"{self.name} must be set to an Entity instance")
+
+            print("value._type", value._type)
+            print("self.entity_types", self.entity_types)
             if value._type.lower() not in [et.lower() for et in self.entity_types]:
                 raise TypeError(
                     f"Trying to set an Entity instance of type '{value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
