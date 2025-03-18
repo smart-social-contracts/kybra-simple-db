@@ -1,6 +1,9 @@
+import traceback
+
 class Tester:
-    def __init__(self, test_class):
+    def __init__(self, test_class, logger=None):
         self.test_instance = test_class()
+        self.log = print if not logger else logger
 
     def run_tests(self):
         """Run all test methods in the test class and report results."""
@@ -16,9 +19,10 @@ class Tester:
                 if hasattr(self.test_instance, "setUp"):
                     self.test_instance.setUp()
                 test()
-                print(f"\033[92m{test.__name__} passed\033[0m")  # Green for pass
+                self.log(f"\033[92m{test.__name__} passed\033[0m")  # Green for pass
             except Exception as e:
-                print(f"\033[91m{test.__name__} failed: {e}\033[0m")  # Red for fail
+                self.log(f"\033[91m{test.__name__} failed: {e}\033[0m")  # Red for fail
+                self.log(traceback.format_exc())
                 failed += 1
         print(
             f"\033[91m{failed} tests failed\033[0m"
