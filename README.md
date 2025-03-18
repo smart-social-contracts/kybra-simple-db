@@ -2,16 +2,13 @@
 
 
 # TODO:
-the current errors
-coverage
+review audit and test examples
+add coverage
+linting
 final cleaning
     readme
-linting
-add tests inside docker
-review the pip package metadata
-add release and publish to pypi (override, maybe I need to delete)
-
-
+    printouts, TODO, etc.
+RELEASE!
 
 [![Test](https://github.com/Batou125/kybra_simple_db/actions/workflows/test.yml/badge.svg)](https://github.com/Batou125/kybra_simple_db/actions/workflows/test.yml)
 [![PyPI version](https://badge.fury.io/py/kybra-simple-db.svg)](https://badge.fury.io/py/kybra-simple-db)
@@ -24,6 +21,8 @@ A lightweight key-value database with entity relationships and audit logging cap
 ## Quick Start
 
 ### Basic Usage
+
+[Example 1](./tests/src/tests/test_1.py)
 
 ```python
 from kybra_simple_db import *
@@ -57,19 +56,9 @@ pip install ...
 - System time management for testing and synchronization
 
 
-
-### Running Tests
-
-To run the test suite:
-
-```bash
-pip install -r requirements-dev.txt
-python -m pytest -v
-python -m pylint kybra_simple_db tests
-```
-
-
 ### Using Entities and Relationships
+
+[Example 2](./tests/src/tests/test_2.py)
 
 ```python
 from kybra_simple_db import *
@@ -97,6 +86,8 @@ print(user.to_dict())
 ```
 
 ### Entity Inheritance
+
+[Example 3](./tests/src/tests/test_3.py)
 
 The database supports inheritance between entity classes. This allows you to create a hierarchy of entities and query instances based on their type:
 
@@ -137,6 +128,8 @@ The `instances()` class method supports inheritance:
 
 ### Audit Logging
 
+[Example 4](./tests/src/tests/test_4.py)
+
 ```python
 from kybra_simple_db import *
 
@@ -150,35 +143,16 @@ db.save("user1", {"name": "John"})
 print(db.get_audit())
 ```
 
-### Time Management for Testing
 
-```python
-from kybra_simple_db import *
+### Running Tests
 
-class TestEntity(Entity, TimestampedMixin):
-    pass
+To run the test suite:
 
-# Set fixed time for testing
-system_time = SystemTime.get_instance()
-system_time.set_time(1000)  # Set to specific timestamp
-
-# Create entity
-entity = TestEntity("test")
-entity.save()
-print(entity.timestamp_created)  # 1000
-
-# Advance time
-system_time.advance_time(60)  # Advance by 60 seconds
-entity.save()
-print(entity.timestamp_updated)  # 1060
-
-# Clear fixed time
-system_time.clear_time()  # Return to using real system time
+```bash
+pip install -r requirements-dev.txt
+python -m pytest -v
+python -m pylint kybra_simple_db tests
 ```
-
-### Storage on IC using Kybra
-
-TODO
 
 
 ## Development

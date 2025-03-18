@@ -8,8 +8,20 @@ cd src
 
 exit_code=0
 
-TEST_IDS=("1" "2" "entity" "mixins" "properties" "relationships" "database" "storage")
-# TEST_IDS=("audit")
+TEST_IDS=("example_1" "example_2" "example_3" "example_4" "entity" "mixins" "properties" "relationships" "database" "storage" "audit")
+
+# Check if a specific test ID is provided as an argument
+if [ "$1" ]; then
+  if [[ " ${TEST_IDS[@]} " =~ " $1 " ]]; then
+    echo "Running test $1..."
+    PYTHONPATH="../..:." python tests/test_$1.py || exit_code=1
+    exit $exit_code
+  else
+    echo "Invalid test ID: $1"
+    echo "Valid test IDs are: ${TEST_IDS[@]}"
+    exit 1
+  fi
+fi
 
 for TEST_ID in "${TEST_IDS[@]}"; do
   PYTHONPATH="../..:." python tests/test_${TEST_ID}.py || exit_code=1

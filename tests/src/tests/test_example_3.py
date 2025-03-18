@@ -4,9 +4,6 @@ import logging
 
 from kybra_simple_db import *
 
-# Set the logging level to DEBUG (or lower)
-logging.basicConfig(level=logging.DEBUG)
-
 # Set up audit storage
 db_audit = MemoryStorage()
 db = Database(db_audit=db_audit)

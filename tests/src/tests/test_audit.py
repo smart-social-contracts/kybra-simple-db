@@ -18,10 +18,10 @@ class TestUser(Entity, TimestampedMixin):
 def get_system_time():
     """Set up system time for testing."""
     time = SystemTime.get_instance()
-    time.set_time(1000000)  # 1000 seconds since epoch
-    yield time
-    time.clear_time()
-
+    # time.set_time(1000000)  # 1000 seconds since epoch
+    # yield time
+    # time.clear_time()
+    return time
 
 def get_caller_id():
     """Set up caller ID for testing."""
@@ -154,6 +154,7 @@ class TestAudit:
         ]
 
         # Should have three entries total
+        log("audit_entries", audit_entries)
         assert len(audit_entries) == 3
 
         # Check chronological order
