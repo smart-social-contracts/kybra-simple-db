@@ -45,7 +45,6 @@ class Database:
             data: Data to store
         """
         key = f"{type_name}@{id}"
-        print("save", type_name, id, pformat(data))
         self._db_storage.insert(key, json.dumps(data))
         self._audit("save", key, data)
 

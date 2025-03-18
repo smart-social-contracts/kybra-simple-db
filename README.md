@@ -56,91 +56,12 @@ pip install ...
 - System time management for testing and synchronization
 
 
-### Using Entities and Relationships
+### Advance usage
 
 [Example 2](./tests/src/tests/test_2.py)
 
 ```python
-from kybra_simple_db import *
-
-class User(Entity, TimestampedMixin):
-    pass
-
-class Department(Entity):
-    pass
-
-user = User("user", name="John", age=30)  # Automatically sets creation timestamp and owner
-dept = Department("department", name="IT")
-
-# View timestamps and ownership
-print(user.to_dict())
-# {
-#   "name": "John",
-#   "age": 30,
-#   "timestamp_created": "2025-02-09 15:32:46 (1739111966)",
-#   "timestamp_updated": "2025-02-09 15:32:46 (1739111966)",
-#   "creator": "system",
-#   "updater": "system",
-#   "owner": "system"
-# }
-```
-
-### Entity Inheritance
-
-[Example 3](./tests/src/tests/test_3.py)
-
-The database supports inheritance between entity classes. This allows you to create a hierarchy of entities and query instances based on their type:
-
-```python
-from kybra_simple_db import *
-
-# Define base class
-class Animal(Entity, TimestampedMixin):
-    def __init__(self, name: str, **kwargs):
-        super().__init__(**kwargs)
-        self.name = name
-
-# Define subclasses
-class Dog(Animal):
-    pass
-
-class Cat(Animal):
-    pass
-
-# Create instances
-animal_a = Animal(name='Alice')
-dog_b = Dog(name='Bob')
-cat_c = Cat(name='Charlie')
-
-# Save instances
-for entity in [animal_a, dog_b, cat_c]:
-    entity.save()
-
-# Query instances by type
-all_animals = Animal.instances()  # Returns [animal_a, dog_b, cat_c]
-dogs = Dog.instances()           # Returns [dog_b]
-cats = Cat.instances()           # Returns [cat_c]
-```
-
-The `instances()` class method supports inheritance:
-- When called on a base class (e.g., `Animal`), it returns instances of that class and all its subclasses
-- When called on a subclass (e.g., `Dog`), it returns only instances of that specific class
-
-### Audit Logging
-
-[Example 4](./tests/src/tests/test_4.py)
-
-```python
-from kybra_simple_db import *
-
-# Create database with audit logging
-db = Database(MemoryStorage(), MemoryStorage())
-
-# Perform operations
-db.save("user1", {"name": "John"})
-
-# View audit log
-print(db.get_audit())
+TODO
 ```
 
 

@@ -14,7 +14,7 @@ class SystemTime:
     """
 
     _instance = None
-    _current_time: Optional[int] = None
+    _current_time_ms: Optional[int] = None
 
     def __init__(self):
         if SystemTime._instance is not None:
@@ -37,8 +37,8 @@ class SystemTime:
         Returns:
             int: Current time in milliseconds
         """
-        if self._current_time is not None:
-            return self._current_time
+        if self._current_time_ms is not None:
+            return self._current_time_ms
         return int(time.time() * 1000)  # Convert to milliseconds
 
     def set_time(self, timestamp: int) -> None:
@@ -47,11 +47,11 @@ class SystemTime:
         Args:
             timestamp: Time in milliseconds since epoch
         """
-        self._current_time = timestamp
+        self._current_time_ms = timestamp
 
     def clear_time(self) -> None:
         """Clear the fixed time and revert to using real system time."""
-        self._current_time = None
+        self._current_time_ms = None
 
     def advance_time(self, milliseconds: int) -> None:
         """Advance the current time by the specified number of milliseconds.
@@ -62,6 +62,7 @@ class SystemTime:
             milliseconds: Number of milliseconds to advance
         """
         current = self.get_time()
+        print(f"Advancing time by {milliseconds} ms (current: {current}) = {current + milliseconds}")
         self.set_time(current + milliseconds)
 
     @staticmethod
@@ -72,9 +73,12 @@ class SystemTime:
             timestamp: Time in milliseconds since epoch
 
         Returns:
-            Formatted string like "2025-02-09 15:26:27 (1739111587)"
+            Formatted string like "2025-02-09 15:26:27.123"
         """
         if not timestamp:
-            return "Never"
-        dt = datetime.fromtimestamp(timestamp / 1000)
-        return f"{dt} ({timestamp})"
+            return "None"
+        dt = datetime.fromtimestamp(timestamp / 1000).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        return f"{dt}"
+
+    def print(self) -> str:
+        return self.format_timestamp(self.get_time())

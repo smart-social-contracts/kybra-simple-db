@@ -6,26 +6,26 @@ from kybra_simple_db import *
 
 
 class Person(Entity):
-    """Test person entity with one-to-one relationship to profile."""
+    """Test person entity with one-to-one relationship to Profile."""
 
     name = String()
-    profile = OneToOne(["profile"], "person")  # One-to-one with Profile
+    profile = OneToOne(["Profile"], "person")  # One-to-one with Profile
 
 
 class Profile(Entity):
     """Test profile entity with one-to-one relationship to person."""
 
     bio = String()
-    person = OneToOne(["person"], "profile")  # One-to-one with Person
+    person = OneToOne(["Person"], "profile")  # One-to-one with Person
 
 
 class Department(Entity):
     """Test department entity with one-to-many relationship to employees."""
 
     name = String()
-    employees = OneToMany(["employee"], "department")  # One-to-many with Employee
+    employees = OneToMany(["Employee"], "department")  # One-to-many with Employee
     manager = OneToOne(
-        ["employee"], "managed_department"
+        ["Employee"], "managed_department"
     )  # One-to-one with Employee (manager)
 
 
@@ -33,9 +33,9 @@ class Employee(Entity):
     """Test employee entity."""
 
     name = String()
-    department = ManyToOne("department")  # Many-to-one with Department
+    department = ManyToOne(["Department"], "employees")  # Many-to-one with Department
     managed_department = OneToOne(
-        ["department"], "manager"
+        ["Department"], "manager"
     )  # One-to-one with Department (as manager)  # Reference to parent department
 
 
@@ -43,14 +43,14 @@ class Student(Entity):
     """Test student entity with many-to-many relationship to courses."""
 
     name = String()
-    courses = ManyToMany(["course"], "students")
+    courses = ManyToMany(["Course"], "students")
 
 
 class Course(Entity):
     """Test course entity with many-to-many relationship to students."""
 
     name = String()
-    students = ManyToMany(["student"], "courses")
+    students = ManyToMany(["Student"], "courses")
 
 
 class TestRelationships:

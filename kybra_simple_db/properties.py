@@ -183,7 +183,6 @@ class Relation:
 
         # Get existing and new relations as sets
         existing = set(obj.get_relations(self.name))
-        # print('values_list', values_list)
         new = set(values_list)
 
         # For one-to-many, check if entities have existing relations
@@ -232,7 +231,7 @@ class RelationList:
         if not isinstance(entity, Entity):
             raise TypeError(f"{self.prop.name} must be set to Entity instances")
 
-        if entity._type.lower() not in [et.lower() for et in self.prop.entity_types]:
+        if entity._type not in self.prop.entity_types:
             raise TypeError(
                 f"{self.prop.name} must be set an Entity instance of any of the following types: {self.prop.entity_types}"
             )
@@ -291,7 +290,7 @@ class OneToOne(Relation):
             # Validate entity type
             if not isinstance(value, Entity):
                 raise TypeError(f"{self.name} must be set to an Entity instance")
-            if value._type.lower() not in [et.lower() for et in self.entity_types]:
+            if value._type not in self.entity_types:
                 raise TypeError(
                     f"{self.name} must be set an Entity instance of any of the following types: {self.entity_types}"
                 )
@@ -347,7 +346,7 @@ class OneToMany(Relation):
             # Validate entity type
             if not isinstance(value, Entity):
                 raise TypeError(f"{self.name} must contain Entity instances")
-            if value._type.lower() not in [et.lower() for et in self.entity_types]:
+            if value._type not in self.entity_types:
                 raise TypeError(
                     f"Trying to set an Entity instance of type '{value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
                 )
@@ -398,9 +397,7 @@ class ManyToOne(Relation):
             if not isinstance(value, Entity):
                 raise TypeError(f"{self.name} must be set to an Entity instance")
 
-            print("value._type", value._type)
-            print("self.entity_types", self.entity_types)
-            if value._type.lower() not in [et.lower() for et in self.entity_types]:
+            if value._type not in self.entity_types:
                 raise TypeError(
                     f"Trying to set an Entity instance of type '{value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
                 )
@@ -411,7 +408,7 @@ class ManyToOne(Relation):
                 raise ValueError(
                     f"Reverse property '{self.reverse_name}' not found in {value.__class__.__name__} entity"
                 )
-            print("self.reverse_name", self.reverse_name)
+
             if not isinstance(reverse_prop, OneToMany):
                 raise ValueError(
                     f"Reverse property '{self.reverse_name}' must be OneToMany and it is '{reverse_prop.__class__.__name__}'"
@@ -450,7 +447,7 @@ class ManyToMany(Relation):
                 # Validate entity type
                 if not isinstance(value, Entity):
                     raise TypeError(f"{self.name} must contain Entity instances")
-                if value._type.lower() not in [et.lower() for et in self.entity_types]:
+                if value._type not in self.entity_types:
                     raise TypeError(
                         f"Trying to set an Entity instance of type '{value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
                     )

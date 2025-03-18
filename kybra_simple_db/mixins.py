@@ -57,14 +57,9 @@ class TimestampedMixin:
             Dict containing the timestamp and ownership data
         """
 
-        def format_timestamp(ts: int) -> str:
-            if not ts:
-                return "Never"
-            return SystemTime.format_timestamp(ts)
-
         return {
-            "timestamp_created": format_timestamp(self._timestamp_created),
-            "timestamp_updated": format_timestamp(self._timestamp_updated),
+            "timestamp_created": SystemTime.format_timestamp(self._timestamp_created),
+            "timestamp_updated": SystemTime.format_timestamp(self._timestamp_updated),
             "creator": self._creator,
             "updater": self._updater,
             "owner": self._owner,

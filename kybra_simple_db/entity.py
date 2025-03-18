@@ -162,7 +162,6 @@ class Entity:
         relations = {}
         if "relations" in data:
             relations_data = data.pop("relations")
-            print("relations_data", relations_data)
             for rel_name, rel_refs in relations_data.items():
                 relations[rel_name] = []
                 for ref in rel_refs:

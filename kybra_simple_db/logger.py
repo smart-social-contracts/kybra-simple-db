@@ -4,7 +4,7 @@ def running_on_ic() -> bool:
         ic.print("running_on_ic: Running on IC")
         return True
     except:
-        print("running_on_ic:Not running on IC")
+        pass
     return False
 
 
