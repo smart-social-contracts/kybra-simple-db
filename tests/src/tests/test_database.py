@@ -16,10 +16,14 @@ def get_db_with_audit():
 
 
 class TestDatabase:
-    def test_database_basic_operations(self):
+    def setUp(self):
+        """Reset database before each test."""
+        get_db().clear()
+        get_db_with_audit().clear()
 
-        db = get_db()
+    def test_database_basic_operations(self):
         """Test basic database operations like save, load, and delete."""
+        db = get_db()
         # Test save and load
         data = {"name": "John", "age": 30}
         db.save("person", "1", data)

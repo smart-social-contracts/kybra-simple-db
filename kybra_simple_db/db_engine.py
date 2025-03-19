@@ -13,7 +13,6 @@ from .constants import (
 )
 from .utils import running_on_ic
 from .storage import MemoryStorage, Storage
-from kybra import StableBTreeMap
 
 from .logger import get_logger
 
@@ -30,16 +29,12 @@ def manage_databases(storage_db=None, audit_db=None):
     if storage_db is not None:
         default_storage_db = storage_db
     elif default_storage_db is None:
-        default_storage_db = StableBTreeMap[str, str](
-            memory_id=9, max_key_size=100_000, max_value_size=1_000_000
-        )
+        default_storage_db = MemoryStorage()
 
     if audit_db is not None:
         default_audit_db = audit_db
     elif default_audit_db is None:
-        default_audit_db = StableBTreeMap[str, str](
-            memory_id=11, max_key_size=100_000, max_value_size=1_000_000
-        )
+        default_audit_db = MemoryStorage()
 
     return default_storage_db, default_audit_db
 

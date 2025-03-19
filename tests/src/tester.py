@@ -1,4 +1,5 @@
 import traceback
+import random
 
 class Tester:
     def __init__(self, test_class, logger=None):
@@ -12,6 +13,7 @@ class Tester:
             for func in dir(self.test_instance)
             if callable(getattr(self.test_instance, func)) and func.startswith("test_")
         ]
+        random.shuffle(test_methods)  # catch hidden dependencies among tests
         failed = 0
         for test in test_methods:
             try:
