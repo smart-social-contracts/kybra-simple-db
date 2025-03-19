@@ -18,6 +18,7 @@ from .properties import (
 from .storage import MemoryStorage, Storage
 from .system_time import SystemTime
 from .logger import get_logger
+from .utils import running_on_ic
 
 __version__ = "0.1.0"
 __all__ = [
@@ -36,4 +37,5 @@ __all__ = [
     "ManyToMany",
     "SystemTime",
     "get_logger",
+    "running_on_ic",
 ]

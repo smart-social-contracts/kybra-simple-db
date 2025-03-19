@@ -7,12 +7,12 @@ from kybra_simple_db import *
 
 def get_db():
     """Create a database instance for testing."""
-    return Database(MemoryStorage())
+    return Database()
 
 
 def get_db_with_audit():
     """Create a database instance with audit logging for testing."""
-    return Database(MemoryStorage(), MemoryStorage())
+    return Database(audit=True)
 
 
 class TestDatabase:

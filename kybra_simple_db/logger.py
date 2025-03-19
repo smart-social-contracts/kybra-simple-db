@@ -1,12 +1,4 @@
-def running_on_ic() -> bool:
-    try:
-        from kybra import ic
-        ic.print("running_on_ic: Running on IC")
-        return True
-    except:
-        pass
-    return False
-
+from .utils import running_on_ic
 
 def get_logger():
     if running_on_ic():

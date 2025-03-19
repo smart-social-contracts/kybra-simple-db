@@ -45,7 +45,6 @@ class MemoryStorage(Storage):
 
     def __init__(self):
         self._data: Dict[str, str] = {}
-        self._next_id: int = 1
 
     def insert(self, key: str, value: str) -> None:
         self._data[key] = value
@@ -68,17 +67,8 @@ class MemoryStorage(Storage):
     def clear(self) -> None:
         """Clear all data from storage"""
         self._data.clear()
-        self._next_id = 1
 
     def keys(self) -> Iterator[str]:
         """Return all keys in storage"""
         return iter(self._data.keys())
 
-    def get_next_id(self) -> int:
-        """Get the next available ID and increment the counter"""
-        current_id = self._next_id
-        self._next_id += 1
-        return current_id
-
-
-# TODO: add Kybra persistance storage here

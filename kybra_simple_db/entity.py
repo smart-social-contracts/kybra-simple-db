@@ -88,7 +88,7 @@ class Entity:
         """
 
         if self._id is None:
-            self._id = str(self.db()._db_storage.get_next_id())
+            self._id = str(self.db().get_next_id())
         elif not self._loaded:
             type_name = self.__class__.__name__
             db = self.__class__.db()

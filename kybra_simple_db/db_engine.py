@@ -3,14 +3,50 @@ Core database engine implementation
 """
 
 import json
-import logging
+
 import time
 from pprint import pformat
 from typing import Any, Dict, List, Optional, Tuple
-
+from .constants import (
+    STABLEBTREEMAP_MAX_KEY_SIZE,
+    STABLEBTREEMAP_MAX_VALUE_SIZE
+)
+from .utils import running_on_ic
 from .storage import MemoryStorage, Storage
 
-logger = logging.getLogger(__name__)
+from .logger import get_logger
+
+log = get_logger()
+
+
+class KybraStableBTreeMapFactory:
+    _instances = {}
+
+    @classmethod
+    def get_StableBTreeMap(cls):
+        log('Getting StableBTreeMap')
+        from kybra import StableBTreeMap
+        for memory_id in range(256):
+            try:
+                memory_id = memory_id + 25
+                log(f'memory_id: {memory_id}')
+                ret = StableBTreeMap[str, str](
+                    memory_id=memory_id,
+                    max_key_size=STABLEBTREEMAP_MAX_KEY_SIZE,
+                    max_value_size=STABLEBTREEMAP_MAX_VALUE_SIZE
+                )
+                if ret:
+                    log(f'StableBTreeMap created on memory_id {memory_id}')
+                    return ret
+            except:
+                pass
+        raise Exception("No available memory_id for StableBTreeMap")
+
+    def __call__(cls, tag: str):
+        if tag not in cls._instances:
+            cls._instances[tag] = cls.get_StableBTreeMap()
+        log(f'cls._instances[{tag}]: {cls._instances[tag]}')
+        return cls._instances[tag]
 
 
 class Database:
@@ -18,14 +54,61 @@ class Database:
 
     _instance = None
 
-    def __init__(self, db_storage: Storage = None, db_audit: Optional[Storage] = None):
-        self._db_storage = db_storage or MemoryStorage()
-        self._db_audit = db_audit
-        self._entity_types = {}  # Map of type names to type objects
+    @classmethod
+    def get_instance(cls) -> "Database":
+        """Get the singleton instance of the database.
 
-        if db_audit and not db_audit.get("_min_id"):
-            db_audit.insert("_min_id", "0")
-            db_audit.insert("_max_id", "0")
+        Returns:
+            Database: The singleton instance
+
+        Raises:
+            RuntimeError: If no instance has been created yet
+        """
+        if not cls._instance:
+            cls._instance = cls()
+        return cls._instance
+
+    def __init__(self, db_storage: Storage = None, db_audit: Storage = None, audit: bool = False):
+        if db_storage:
+            self._db_storage = db_storage
+        else:
+            if running_on_ic():
+                log('Using StableBTreeMap for storage')
+                self._db_storage = KybraStableBTreeMapFactory()("storage")
+                log('test')
+                log(f'self._db_storage: {self._db_storage}')
+                self._db_storage.insert('test', 'some test')
+                log('test2')
+            else:
+                self._db_storage = MemoryStorage()
+
+        self._db_audit = db_audit
+        if not self._db_audit and audit:
+            if running_on_ic():
+                log('Using StableBTreeMap for audit')
+                self._db_audit = KybraStableBTreeMapFactory()("audit")
+            else:
+                self._db_audit = MemoryStorage()
+        if self._db_audit:
+            if not self._db_audit.get("_min_id"):
+                self._db_audit.insert("_min_id", "0")
+                self._db_audit.insert("_max_id", "0")
+
+        self._entity_types = {}  # TODO: Map of type names to type objects # TODO: should this be in database too??
+        self._next_id: int = 1   # TODO: this too
+
+    def clear(self):
+        self._db_storage.clear()
+        if self._db_audit:
+            self._db_audit.clear()
+        self._entity_types = {}
+        self._next_id = 1
+
+    def get_next_id(self) -> int:
+        """Get the next available ID and increment the counter"""
+        current_id = self._next_id
+        self._next_id += 1
+        return current_id
 
     def _audit(self, op: str, key: str, data: Any) -> None:
         if self._db_audit:
@@ -102,7 +185,7 @@ class Database:
         Args:
             type_obj: Type object to register
         """
-        logger.debug(
+        log(
             f"Registering type {type_obj.__name__} with bases {[b.__name__ for b in type_obj.__bases__]}"
         )
         self._entity_types[type_obj.__name__] = type_obj
@@ -118,10 +201,10 @@ class Database:
             bool: True if type_name is a subclass of parent_type
         """
         type_obj = self._entity_types.get(type_name)
-        logger.debug(f"Checking if {type_name} is subclass of {parent_type.__name__}")
-        logger.debug(f"Found type object: {type_obj}")
+        log(f"Checking if {type_name} is subclass of {parent_type.__name__}")
+        log(f"Found type object: {type_obj}")
         if type_obj:
-            logger.debug(f"Bases: {[b.__name__ for b in type_obj.__bases__]}")
+            log(f"Bases: {[b.__name__ for b in type_obj.__bases__]}")
         return type_obj and issubclass(type_obj, parent_type)
 
     # TODO: `dump_json`` and `raw_dump_json` should not parse the values (which are JSON strings) but rather compose
@@ -163,20 +246,6 @@ class Database:
         if pretty:
             return json.dumps(raw_data, indent=2)
         return json.dumps(raw_data)
-
-    @classmethod
-    def get_instance(cls) -> "Database":
-        """Get the singleton instance of the database.
-
-        Returns:
-            Database: The singleton instance
-
-        Raises:
-            RuntimeError: If no instance has been created yet
-        """
-        if not cls._instance:
-            cls._instance = cls()
-        return cls._instance
 
     def get_audit(
         self, id_from: Optional[int] = None, id_to: Optional[int] = None
