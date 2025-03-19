@@ -6,8 +6,9 @@ from typing import Any, Dict, List, Optional, Set, Type, TypeVar
 
 from .constants import LEVEL_MAX_DEFAULT
 from .db_engine import Database
+from .logger import get_logger
 
-logger = logging.getLogger(__name__)
+log = get_logger()
 
 T = TypeVar("T", bound="Entity")
 
@@ -95,7 +96,7 @@ class Entity:
             if db.load(type_name, self._id) is not None:
                 raise ValueError(f"Entity {self._type}@{self._id} already exists")
 
-        logger.debug(f"Saving entity {self._type}@{self._id}")
+        log(f"Saving entity {self._type}@{self._id}")
 
         # Update timestamps if mixin is present
         if hasattr(self, "_update_timestamps"):
@@ -115,9 +116,9 @@ class Entity:
         data = self.to_dict()
 
         if not self._do_not_save:
-            logger.debug(f"Data to save: {data}")
+            log(f"Data to save: {data}")
             db = self.db()
-            logger.debug(f"Database instance: {db}")
+            log(f"Database instance: {db}")
             db.save(self._type, self._id, data)
             self._loaded = True
 
@@ -137,7 +138,7 @@ class Entity:
         Returns:
             Entity if found, None otherwise
         """
-        logger.debug(f"Loading entity {entity_id} with level {level}")
+        log(f"Loading entity {entity_id} with level {level}")
         if level == 0:
             return None
 
@@ -146,12 +147,12 @@ class Entity:
 
         # Use class name for type
         type_name = cls.__name__
-        logger.debug(f"Loading entity {type_name}@{entity_id}")
+        log(f"Loading entity {type_name}@{entity_id}")
 
         db = cls.db()
-        logger.debug(f"Database instance: {db}")
+        log(f"Database instance: {db}")
         data = db.load(type_name, entity_id)
-        logger.debug(f"Loaded data: {data}")
+        log(f"Loaded data: {data}")
         if not data:
             return None
 
@@ -222,9 +223,12 @@ class Entity:
         return instances
 
     def delete(self) -> None:
+        log(f"Deleting entity {self._type}@{self._id}")
         # TODO: check relations!!!
         """Delete this entity from the database."""
         self.db().delete(self._type, self._id)
+
+        log(f"Deleted entity {self._type}@{self._id}")
 
         # Remove from context
         self.__class__._context.discard(self)

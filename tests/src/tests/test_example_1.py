@@ -31,7 +31,9 @@ def run():
     log("\nPeter loaded: %s" % peter.to_dict())  # convert to dict
 
     # Delete the person
+    log("1")
     peter.delete()
+    log("2")
     deleted = Person.load("peter")
     log("\nPeter after deleation: %s" % deleted)  # shows None
 

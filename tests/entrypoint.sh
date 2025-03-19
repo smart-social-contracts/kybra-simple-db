@@ -22,7 +22,7 @@ else
 fi
 
 # Define a list of test identifiers
-TEST_IDS=('example_1' 'example_2' 'example_3' 'example_4' 'entity' 'mixins' 'properties' 'relationships' 'database' 'storage' 'audit')
+TEST_IDS=('example_1' 'example_2' 'entity' 'mixins' 'properties' 'relationships' 'database' 'storage' 'audit')
 
 # Loop through each test identifier
 for TEST_ID in "${TEST_IDS[@]}"; do

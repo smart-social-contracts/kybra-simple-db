@@ -13,40 +13,35 @@ from .constants import (
 )
 from .utils import running_on_ic
 from .storage import MemoryStorage, Storage
+from kybra import StableBTreeMap
 
 from .logger import get_logger
 
 log = get_logger()
 
 
-class KybraStableBTreeMapFactory:
-    _instances = {}
+default_storage_db = None
+default_audit_db = None
 
-    @classmethod
-    def get_StableBTreeMap(cls):
-        log('Getting StableBTreeMap')
-        from kybra import StableBTreeMap
-        for memory_id in range(256):
-            try:
-                memory_id = memory_id + 25
-                log(f'memory_id: {memory_id}')
-                ret = StableBTreeMap[str, str](
-                    memory_id=memory_id,
-                    max_key_size=STABLEBTREEMAP_MAX_KEY_SIZE,
-                    max_value_size=STABLEBTREEMAP_MAX_VALUE_SIZE
-                )
-                if ret:
-                    log(f'StableBTreeMap created on memory_id {memory_id}')
-                    return ret
-            except:
-                pass
-        raise Exception("No available memory_id for StableBTreeMap")
 
-    def __call__(cls, tag: str):
-        if tag not in cls._instances:
-            cls._instances[tag] = cls.get_StableBTreeMap()
-        log(f'cls._instances[{tag}]: {cls._instances[tag]}')
-        return cls._instances[tag]
+# Combined singleton and setter function for default_storage_db and default_audit_db
+def manage_databases(storage_db=None, audit_db=None):
+    global default_storage_db, default_audit_db
+    if storage_db is not None:
+        default_storage_db = storage_db
+    elif default_storage_db is None:
+        default_storage_db = StableBTreeMap[str, str](
+            memory_id=9, max_key_size=100_000, max_value_size=1_000_000
+        )
+
+    if audit_db is not None:
+        default_audit_db = audit_db
+    elif default_audit_db is None:
+        default_audit_db = StableBTreeMap[str, str](
+            memory_id=11, max_key_size=100_000, max_value_size=1_000_000
+        )
+
+    return default_storage_db, default_audit_db
 
 
 class Database:
@@ -69,26 +64,15 @@ class Database:
         return cls._instance
 
     def __init__(self, db_storage: Storage = None, db_audit: Storage = None, audit: bool = False):
-        if db_storage:
-            self._db_storage = db_storage
-        else:
-            if running_on_ic():
-                log('Using StableBTreeMap for storage')
-                self._db_storage = KybraStableBTreeMapFactory()("storage")
-                log('test')
-                log(f'self._db_storage: {self._db_storage}')
-                self._db_storage.insert('test', 'some test')
-                log('test2')
-            else:
-                self._db_storage = MemoryStorage()
+
+        log(f'default_storage_db: {manage_databases()[0]}')
+        log(f'default_audit_db: {manage_databases()[1]}')
+
+        self._db_storage = db_storage if db_storage else manage_databases()[0]
 
         self._db_audit = db_audit
         if not self._db_audit and audit:
-            if running_on_ic():
-                log('Using StableBTreeMap for audit')
-                self._db_audit = KybraStableBTreeMapFactory()("audit")
-            else:
-                self._db_audit = MemoryStorage()
+            self._db_audit = manage_databases()[1]
         if self._db_audit:
             if not self._db_audit.get("_min_id"):
                 self._db_audit.insert("_min_id", "0")
@@ -154,11 +138,12 @@ class Database:
             type_name: Type of the entity
             id: ID of the entity
         """
+        log(f"Database: Deleting entity {type_name}@{entity_id}")
         key = f"{type_name}@{entity_id}"
-        if key in self._db_storage:
-            data = self._db_storage.get(key)
-            self._audit("delete", key, data)
-            self._db_storage.remove(key)
+        data = self._db_storage.get(key)
+        self._db_storage.remove(key)
+        self._audit("delete", key, data)
+        log(f"Database: Deleted entity {type_name}@{entity_id}")
 
     def update(self, type_name: str, id: str, field: str, value: Any) -> None:
         """Update a specific field in the stored data
