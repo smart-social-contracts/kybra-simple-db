@@ -1,19 +1,18 @@
-from kybra import ic, query, update, StableBTreeMap
+import kybra_simple_db.initialize
+from kybra import StableBTreeMap, ic, query, update
 
 from kybra_simple_db import *  # TODO
 from tests import (
-    test_example_1,
-    test_example_2,
     test_audit,
     test_database,
     test_entity,
+    test_example_1,
+    test_example_2,
     test_mixins,
     test_properties,
     test_relationships,
     test_storage,
 )
-
-import kybra_simple_db.initialize
 
 
 @query

@@ -4,6 +4,7 @@ Kybra Simple DB - A lightweight key-value database with entity relationships and
 
 from .db_engine import Database
 from .entity import Entity
+from .logger import get_logger
 from .mixins import TimestampedMixin
 from .properties import (
     Boolean,
@@ -17,7 +18,6 @@ from .properties import (
 )
 from .storage import MemoryStorage, Storage
 from .system_time import SystemTime
-from .logger import get_logger
 from .utils import running_on_ic
 
 __version__ = "0.1.0"

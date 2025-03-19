@@ -71,4 +71,3 @@ class MemoryStorage(Storage):
     def keys(self) -> Iterator[str]:
         """Return all keys in storage"""
         return iter(self._data.keys())
-

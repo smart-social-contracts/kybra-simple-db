@@ -7,7 +7,7 @@ add coverage
 linting
 final cleaning
     readme
-    printouts, TODO, etc.
+    remove printouts, TODO, etc.
 RELEASE!
 
 [![Test](https://github.com/Batou125/kybra_simple_db/actions/workflows/test.yml/badge.svg)](https://github.com/Batou125/kybra_simple_db/actions/workflows/test.yml)
@@ -104,4 +104,4 @@ mypy .
 
 ## License
 
-MIT License
+MIT

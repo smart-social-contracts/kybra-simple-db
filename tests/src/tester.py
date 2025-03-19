@@ -1,5 +1,6 @@
-import traceback
 import random
+import traceback
+
 
 class Tester:
     def __init__(self, test_class, logger=None):

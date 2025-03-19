@@ -3,7 +3,17 @@
 - Creation modification and deletion of objects.
 - Properties and relationships."""
 
-from kybra_simple_db import Entity, String, Integer, ManyToMany, ManyToOne, OneToMany, OneToOne, Database, get_logger
+from kybra_simple_db import (
+    Database,
+    Entity,
+    Integer,
+    ManyToMany,
+    ManyToOne,
+    OneToMany,
+    OneToOne,
+    String,
+    get_logger,
+)
 
 
 def run():
@@ -22,7 +32,7 @@ def run():
     log("Created person: %s" % {"name": john.name, "age": john.age})
 
     # Update the person's age
-    john.age = 33 # Type checking and validation happens automatically
+    john.age = 33  # Type checking and validation happens automatically
     log("\nUpdated person:%s" % {"name": john.name, "age": john.age})
 
     # _id can be used to load an entity
@@ -39,7 +49,7 @@ def run():
 
     alice = Person(name="Alice")
     eva = Person(name="Eva")
-    
+
     john.mother = alice
 
     eva.friends = [alice]

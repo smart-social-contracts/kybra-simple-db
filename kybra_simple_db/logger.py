@@ -1,5 +1,6 @@
 from .utils import running_on_ic
 
+
 def get_logger():
     if running_on_ic():
         from kybra import ic

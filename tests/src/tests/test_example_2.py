@@ -19,7 +19,6 @@ def run():
         name = ksdb.String(min_length=2, max_length=50)
         age = ksdb.Integer(min_value=0, max_value=150)
 
-
     # from kybra_simple_db import *
 
     # # Create database with audit logging

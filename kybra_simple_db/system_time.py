@@ -62,7 +62,9 @@ class SystemTime:
             milliseconds: Number of milliseconds to advance
         """
         current = self.get_time()
-        print(f"Advancing time by {milliseconds} ms (current: {current}) = {current + milliseconds}")
+        print(
+            f"Advancing time by {milliseconds} ms (current: {current}) = {current + milliseconds}"
+        )
         self.set_time(current + milliseconds)
 
     @staticmethod
@@ -77,7 +79,9 @@ class SystemTime:
         """
         if not timestamp:
             return "None"
-        dt = datetime.fromtimestamp(timestamp / 1000).strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        dt = datetime.fromtimestamp(timestamp / 1000).strftime("%Y-%m-%d %H:%M:%S.%f")[
+            :-3
+        ]
         return f"{dt}"
 
     def print(self) -> str:

@@ -3,18 +3,14 @@ Core database engine implementation
 """
 
 import json
-
 import time
 from pprint import pformat
 from typing import Any, Dict, List, Optional, Tuple
-from .constants import (
-    STABLEBTREEMAP_MAX_KEY_SIZE,
-    STABLEBTREEMAP_MAX_VALUE_SIZE
-)
-from .utils import running_on_ic
-from .storage import MemoryStorage, Storage
 
+from .constants import STABLEBTREEMAP_MAX_KEY_SIZE, STABLEBTREEMAP_MAX_VALUE_SIZE
 from .logger import get_logger
+from .storage import MemoryStorage, Storage
+from .utils import running_on_ic
 
 log = get_logger()
 
@@ -58,10 +54,12 @@ class Database:
             cls._instance = cls()
         return cls._instance
 
-    def __init__(self, db_storage: Storage = None, db_audit: Storage = None, audit: bool = False):
+    def __init__(
+        self, db_storage: Storage = None, db_audit: Storage = None, audit: bool = False
+    ):
 
-        log(f'default_storage_db: {manage_databases()[0]}')
-        log(f'default_audit_db: {manage_databases()[1]}')
+        log(f"default_storage_db: {manage_databases()[0]}")
+        log(f"default_audit_db: {manage_databases()[1]}")
 
         self._db_storage = db_storage if db_storage else manage_databases()[0]
 
@@ -73,8 +71,10 @@ class Database:
                 self._db_audit.insert("_min_id", "0")
                 self._db_audit.insert("_max_id", "0")
 
-        self._entity_types = {}  # TODO: Map of type names to type objects # TODO: should this be in database too??
-        self._next_id: int = 1   # TODO: this too
+        self._entity_types = (
+            {}
+        )  # TODO: Map of type names to type objects # TODO: should this be in database too??
+        self._next_id: int = 1  # TODO: this too
 
     def clear(self):
         self._db_storage.clear()
