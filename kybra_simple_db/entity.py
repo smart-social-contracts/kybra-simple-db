@@ -1,6 +1,5 @@
 """Enhanced entity implementation with support for mixins and entity types."""
 
-import logging
 import os
 from typing import Any, Dict, List, Optional, Set, Type, TypeVar
 

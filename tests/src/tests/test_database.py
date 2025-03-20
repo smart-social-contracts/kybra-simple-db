@@ -6,6 +6,7 @@ from kybra_simple_db import *
 
 log = get_logger()
 
+
 class TestDatabase:
     def setUp(self):
         self.db = Database.get_instance()
@@ -36,14 +37,14 @@ class TestDatabase:
         self.db.save("person", "2", data2)
 
         all_data = self.db.get_all()
-        log('all_data', all_data)
+        log("all_data", all_data)
         assert len(all_data) == 2
         assert all_data["person@1"] == data1
         assert all_data["person@2"] == data2
 
     def test_database_dump_json(self):
         # Test empty database
-        log('self.db.dump_json()', self.db.dump_json())
+        log("self.db.dump_json()", self.db.dump_json())
         assert self.db.dump_json() == "{}"
         assert json.loads(self.db.dump_json(pretty=True)) == {}
 

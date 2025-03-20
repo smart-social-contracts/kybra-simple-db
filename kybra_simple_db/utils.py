@@ -1,5 +1,3 @@
-import traceback
-
 _running_on_ic = None
 
 
@@ -10,9 +8,8 @@ def running_on_ic() -> bool:
 
     try:
         from kybra import ic
-
         ic.print("")
         return True
-    except:
+    except Exception:
         pass
     return False

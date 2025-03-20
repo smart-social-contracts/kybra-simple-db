@@ -4,13 +4,12 @@ Core database engine implementation
 
 import json
 import time
-from pprint import pformat
+
 from typing import Any, Dict, List, Optional, Tuple
 
-from .constants import STABLEBTREEMAP_MAX_KEY_SIZE, STABLEBTREEMAP_MAX_VALUE_SIZE
 from .logger import get_logger
 from .storage import MemoryStorage, Storage
-from .utils import running_on_ic
+
 
 log = get_logger()
 
@@ -28,14 +27,22 @@ class Database:
         return cls._instance
 
     @classmethod
-    def init(cls, audit_enabled: bool = False, db_storage: Storage = None, db_audit: Storage = None) -> "Database":
+    def init(
+        cls,
+        audit_enabled: bool = False,
+        db_storage: Storage = None,
+        db_audit: Storage = None,
+    ) -> "Database":
         if cls._instance:
             raise RuntimeError("Database instance already exists")
         cls._instance = cls(audit_enabled, db_storage, db_audit)
         return cls._instance
 
     def __init__(
-        self, audit_enabled: bool = False, db_storage: Storage = None, db_audit: Storage = None
+        self,
+        audit_enabled: bool = False,
+        db_storage: Storage = None,
+        db_audit: Storage = None,
     ):
         self._db_storage = db_storage if db_storage else MemoryStorage()
         self._audit_enabled = audit_enabled
@@ -47,7 +54,7 @@ class Database:
             self._db_audit.insert("_min_id", "0")
             self._db_audit.insert("_max_id", "0")
 
-        log('self._db_audit.items()', [i for i in self._db_audit.items()])
+        log("self._db_audit.items()", [i for i in self._db_audit.items()])
 
         self._entity_types = (
             {}
@@ -78,9 +85,9 @@ class Database:
     def _audit(self, op: str, key: str, data: Any) -> None:
         if self._db_audit and self._audit_enabled:
             timestamp = int(time.time() * 1000)
-            log('self._db_audit.items() 2', [i for i in self._db_audit.items()])
+            log("self._db_audit.items() 2", [i for i in self._db_audit.items()])
             id = self._db_audit.get("_max_id")
-            log('id', id)
+            log("id", id)
             self._db_audit.insert(
                 str(id), json.dumps([op, timestamp, key, data])
             )  # TODO: just store in audit the diff

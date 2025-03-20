@@ -1,9 +1,8 @@
 """Tests for audit functionality in Kybra Simple DB."""
 
-import json
+from tester import Tester
 
 from kybra_simple_db import *
-from tester import Tester
 
 log = get_logger()
 
