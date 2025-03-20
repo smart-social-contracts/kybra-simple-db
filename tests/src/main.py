@@ -1,18 +1,16 @@
-import adsad
 from kybra import StableBTreeMap, ic, query, update
 
 from kybra_simple_db import *  # TODO
 
 from tests import (
-    test_audit,
-    test_database,
-    test_entity,
     test_example_1,
     test_example_2,
+    test_entity,
     test_mixins,
     test_properties,
     test_relationships,
-    test_storage,
+    test_database,
+    test_audit,
 )
 
 
@@ -23,8 +21,8 @@ db_audit = StableBTreeMap[str, str](
     memory_id=1, max_key_size=100_000, max_value_size=1_000_000
 )
 
-Database(db_storage, db_audit)
-Database.get_instance().audit_enabled = True
+Database.init(audit_enabled=True, db_storage=db_storage, db_audit=db_audit)
+
 
 @query
 def greet() -> str:

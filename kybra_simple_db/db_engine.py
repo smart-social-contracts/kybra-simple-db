@@ -14,6 +14,7 @@ from .utils import running_on_ic
 
 log = get_logger()
 
+
 class Database:
     """Main database class providing high-level operations"""
 
@@ -22,16 +23,15 @@ class Database:
 
     @classmethod
     def get_instance(cls) -> "Database":
-        """Get the singleton instance of the database.
-
-        Returns:
-            Database: The singleton instance
-
-        Raises:
-            RuntimeError: If no instance has been created yet
-        """
         if not cls._instance:
-            cls._instance = cls()
+            cls._instance = cls.init(audit_enabled=True)
+        return cls._instance
+
+    @classmethod
+    def init(cls, audit_enabled: bool = False, db_storage: Storage = None, db_audit: Storage = None) -> "Database":
+        if cls._instance:
+            raise RuntimeError("Database instance already exists")
+        cls._instance = cls(audit_enabled, db_storage, db_audit)
         return cls._instance
 
     def __init__(
@@ -53,13 +53,21 @@ class Database:
             {}
         )  # TODO: Map of type names to type objects # TODO: should this be in database too??
         self._next_id: int = 1  # TODO: this too
-        Database._instance = self
 
     def clear(self):
-        for map in [self._db_storage, self._db_audit]:
-            keys = list(map.keys())
-            for key in keys:
-                map.remove(key)
+        keys = list(self._db_storage.keys())
+        for key in keys:
+            self._db_storage.remove(key)
+
+        if not self._db_audit:
+            return
+
+        keys = list(self._db_audit.keys())
+        for key in keys:
+            self._db_audit.remove(key)
+
+        self._db_audit.insert("_min_id", "0")
+        self._db_audit.insert("_max_id", "0")
 
     def get_next_id(self) -> int:
         """Get the next available ID and increment the counter"""
@@ -251,8 +259,8 @@ class Entity:
     def id(self) -> Optional[int]:
         return self.entity_id
 
-    #@classmethod
-    #def db(cls) -> Database:
+    # @classmethod
+    # def db(cls) -> Database:
     #    return Database(cls._db_storage, cls._db_audit)
 
     @classmethod

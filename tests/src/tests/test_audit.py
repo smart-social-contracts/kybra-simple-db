@@ -7,10 +7,10 @@ from tester import Tester
 
 log = get_logger()
 
+
 class TestAudit:
     def setUp(self):
-        """Setup test method to initialize the database with audit enabled."""
-        self.db = Database(audit_enabled=True)
+        self.db = Database.get_instance()
         self.db.clear()
 
     def test_audit_initialization(self):
@@ -42,7 +42,7 @@ class TestAudit:
         """Test if an update operation is logged correctly in the audit database."""
         self.db.save("test_type", "1", {"field": "value"})
         self.db.update("test_type", "1", "field", "new_value")
-        audit_log = self.db._db_audit.get("4")
+        audit_log = self.db._db_audit.get("2")
         log('self.db._db_audit.get("0")', self.db._db_audit.get("0"))
         log('self.db._db_audit.get("1")', self.db._db_audit.get("1"))
         log('self.db._db_audit.get("2")', self.db._db_audit.get("2"))
