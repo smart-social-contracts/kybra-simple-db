@@ -4,12 +4,10 @@ Core database engine implementation
 
 import json
 import time
-
 from typing import Any, Dict, List, Optional, Tuple
 
 from .logger import get_logger
 from .storage import MemoryStorage, Storage
-
 
 log = get_logger()
 
