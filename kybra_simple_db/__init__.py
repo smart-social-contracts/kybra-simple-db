@@ -20,7 +20,7 @@ from .storage import MemoryStorage, Storage
 from .system_time import SystemTime
 from .utils import running_on_ic
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __all__ = [
     "Database",
     "Entity",
