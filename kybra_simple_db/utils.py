@@ -8,6 +8,7 @@ def running_on_ic() -> bool:
 
     try:
         from kybra import ic
+
         ic.print("")
         return True
     except Exception:
