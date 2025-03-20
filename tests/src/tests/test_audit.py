@@ -10,7 +10,7 @@ log = get_logger()
 class TestAudit:
     def setUp(self):
         """Setup test method to initialize the database with audit enabled."""
-        self.db = Database(has_audit=True)
+        self.db = Database(audit_enabled=True)
         self.db.clear()
 
     def test_audit_initialization(self):

@@ -35,32 +35,25 @@ class Database:
         return cls._instance
 
     def __init__(
-        self, db_storage: Storage = None, db_audit: Storage = None
+        self, audit_enabled: bool = False, db_storage: Storage = None, db_audit: Storage = None
     ):
-        self._initialize(db_storage, db_audit)
-
-    def _initialize(self, db_storage=None, db_audit=None):
         self._db_storage = db_storage if db_storage else MemoryStorage()
-        self._db_audit = db_audit
-        if not self._db_audit:
-            self._db_audit = MemoryStorage()
-        if not self._db_audit.get("_min_id"):
+        self._audit_enabled = audit_enabled
+        self._db_audit = None
+        if self._audit_enabled:
+            self._db_audit = db_audit if db_audit else MemoryStorage()
+
+        if self._db_audit:
             self._db_audit.insert("_min_id", "0")
             self._db_audit.insert("_max_id", "0")
+
+        log('self._db_audit.items()', [i for i in self._db_audit.items()])
 
         self._entity_types = (
             {}
         )  # TODO: Map of type names to type objects # TODO: should this be in database too??
         self._next_id: int = 1  # TODO: this too
-
-    @property
-    def audit_enabled(self):
-        return self._audit_enabled
-
-    @audit_enabled.setter
-    def audit_enabled(self, value: bool):
-        self._audit_enabled = value
-
+        Database._instance = self
 
     def clear(self):
         for map in [self._db_storage, self._db_audit]:
@@ -77,6 +70,7 @@ class Database:
     def _audit(self, op: str, key: str, data: Any) -> None:
         if self._db_audit and self._audit_enabled:
             timestamp = int(time.time() * 1000)
+            log('self._db_audit.items() 2', [i for i in self._db_audit.items()])
             id = self._db_audit.get("_max_id")
             log('id', id)
             self._db_audit.insert(
@@ -257,9 +251,9 @@ class Entity:
     def id(self) -> Optional[int]:
         return self.entity_id
 
-    @classmethod
-    def db(cls) -> Database:
-        return Database(cls._db_storage, cls._db_audit)
+    #@classmethod
+    #def db(cls) -> Database:
+    #    return Database(cls._db_storage, cls._db_audit)
 
     @classmethod
     def _construct_key(cls, entity_type: str, entity_id: int) -> str:
