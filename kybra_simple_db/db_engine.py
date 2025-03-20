@@ -14,30 +14,11 @@ from .utils import running_on_ic
 
 log = get_logger()
 
-default_storage_db = None
-default_audit_db = None
-
-# Combined singleton and setter function for default_storage_db and default_audit_db
-def manage_databases(storage_db=None, audit_db=None):
-    global default_storage_db, default_audit_db
-    if storage_db is not None:
-        default_storage_db = storage_db
-    elif default_storage_db is None:
-        default_storage_db = MemoryStorage()
-
-    if audit_db is not None:
-        default_audit_db = audit_db
-    elif default_audit_db is None:
-        default_audit_db = MemoryStorage()
-
-    return default_storage_db, default_audit_db
-
-
 class Database:
     """Main database class providing high-level operations"""
 
     _instance = None
-    _has_audit = False
+    _audit_enabled = False
 
     @classmethod
     def get_instance(cls) -> "Database":
@@ -54,32 +35,38 @@ class Database:
         return cls._instance
 
     def __init__(
-        self, db_storage: Storage = None, db_audit: Storage = None, has_audit: bool = False
+        self, db_storage: Storage = None, db_audit: Storage = None
     ):
-        self._has_audit = has_audit
         self._initialize(db_storage, db_audit)
 
-    def clear(self):
-        self._initialize()
-
     def _initialize(self, db_storage=None, db_audit=None):
-        import kybra_simple_db.initialize
-
-        self._db_storage = db_storage if db_storage else manage_databases()[0]
-
+        self._db_storage = db_storage if db_storage else MemoryStorage()
         self._db_audit = db_audit
-        if not self._db_audit and self._has_audit:
-            self._db_audit = manage_databases()[1]
-        if self._db_audit:
-            if not self._db_audit.get("_min_id"):
-                self._db_audit.insert("_min_id", "0")
-                self._db_audit.insert("_max_id", "0")
+        if not self._db_audit:
+            self._db_audit = MemoryStorage()
+        if not self._db_audit.get("_min_id"):
+            self._db_audit.insert("_min_id", "0")
+            self._db_audit.insert("_max_id", "0")
 
         self._entity_types = (
             {}
         )  # TODO: Map of type names to type objects # TODO: should this be in database too??
         self._next_id: int = 1  # TODO: this too
 
+    @property
+    def audit_enabled(self):
+        return self._audit_enabled
+
+    @audit_enabled.setter
+    def audit_enabled(self, value: bool):
+        self._audit_enabled = value
+
+
+    def clear(self):
+        for map in [self._db_storage, self._db_audit]:
+            keys = list(map.keys())
+            for key in keys:
+                map.remove(key)
 
     def get_next_id(self) -> int:
         """Get the next available ID and increment the counter"""
@@ -88,9 +75,10 @@ class Database:
         return current_id
 
     def _audit(self, op: str, key: str, data: Any) -> None:
-        if self._db_audit:
+        if self._db_audit and self._audit_enabled:
             timestamp = int(time.time() * 1000)
             id = self._db_audit.get("_max_id")
+            log('id', id)
             self._db_audit.insert(
                 str(id), json.dumps([op, timestamp, key, data])
             )  # TODO: just store in audit the diff

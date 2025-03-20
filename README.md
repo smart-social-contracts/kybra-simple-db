@@ -25,9 +25,18 @@ A lightweight key-value database with entity relationships and audit logging cap
 [Example 1](./tests/src/tests/test_1.py)
 
 ```python
-from kybra_simple_db import *
 
-TODO
+# Step 1: Import Kybra and define storage
+from kybra import StableBTreeMap
+db_storage  = StableBTreeMap[str, str](memory_id=..., max_key_size=..., max_value_size=...)
+
+# Step 2: Import Kybra Simple DB and initialize database
+from kybra_simple_db import *
+Database(db_storage)
+
+# Step 3: Run your application using the database
+
+# TODO
 ```
 
 ### Installation

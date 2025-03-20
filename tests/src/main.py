@@ -1,7 +1,8 @@
-import kybra_simple_db.initialize
+import adsad
 from kybra import StableBTreeMap, ic, query, update
 
 from kybra_simple_db import *  # TODO
+
 from tests import (
     test_audit,
     test_database,
@@ -15,6 +16,16 @@ from tests import (
 )
 
 
+db_storage = StableBTreeMap[str, str](
+    memory_id=0, max_key_size=100_000, max_value_size=1_000_000
+)
+db_audit = StableBTreeMap[str, str](
+    memory_id=1, max_key_size=100_000, max_value_size=1_000_000
+)
+
+Database(db_storage, db_audit)
+Database.get_instance().audit_enabled = True
+
 @query
 def greet() -> str:
     ic.print("Hello!")
@@ -24,7 +35,4 @@ def greet() -> str:
 @update
 def run_test(module_name: str) -> int:
     ic.print(f"Running test_{module_name}...")
-
-    # default_storage_db.insert('test', 'some_test')
-    # ic.print(f"good")
     return globals()[f"test_{module_name}"].run()

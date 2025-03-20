@@ -64,10 +64,6 @@ class MemoryStorage(Storage):
     def __contains__(self, key: str) -> bool:
         return key in self._data
 
-    def clear(self) -> None:
-        """Clear all data from storage"""
-        self._data.clear()
-
     def keys(self) -> Iterator[str]:
         """Return all keys in storage"""
         return iter(self._data.keys())
