@@ -43,7 +43,7 @@ pip install ...
 
 ## Features
 
-- Uses IC persistent storage when used on the Internet Computer, although it can be run outside IC using a custom storage object.
+- Uses IC persistent storage (StableBTreeMap)when used on the Internet Computer, although it can be run outside IC using a custom storage object.
 - No need for calling ".save()". Just use the variables seamlessly (TODO: explain better)
 - Simple key-value storage with JSON serialization
 - Entity-relationship management

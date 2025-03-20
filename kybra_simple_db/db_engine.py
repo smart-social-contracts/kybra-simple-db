@@ -14,10 +14,8 @@ from .utils import running_on_ic
 
 log = get_logger()
 
-
 default_storage_db = None
 default_audit_db = None
-
 
 # Combined singleton and setter function for default_storage_db and default_audit_db
 def manage_databases(storage_db=None, audit_db=None):
@@ -39,6 +37,7 @@ class Database:
     """Main database class providing high-level operations"""
 
     _instance = None
+    _has_audit = False
 
     @classmethod
     def get_instance(cls) -> "Database":
@@ -55,16 +54,21 @@ class Database:
         return cls._instance
 
     def __init__(
-        self, db_storage: Storage = None, db_audit: Storage = None, audit: bool = False
+        self, db_storage: Storage = None, db_audit: Storage = None, has_audit: bool = False
     ):
+        self._has_audit = has_audit
+        self._initialize(db_storage, db_audit)
 
-        log(f"default_storage_db: {manage_databases()[0]}")
-        log(f"default_audit_db: {manage_databases()[1]}")
+    def clear(self):
+        self._initialize()
+
+    def _initialize(self, db_storage=None, db_audit=None):
+        import kybra_simple_db.initialize
 
         self._db_storage = db_storage if db_storage else manage_databases()[0]
 
         self._db_audit = db_audit
-        if not self._db_audit and audit:
+        if not self._db_audit and self._has_audit:
             self._db_audit = manage_databases()[1]
         if self._db_audit:
             if not self._db_audit.get("_min_id"):
@@ -76,12 +80,6 @@ class Database:
         )  # TODO: Map of type names to type objects # TODO: should this be in database too??
         self._next_id: int = 1  # TODO: this too
 
-    def clear(self):
-        self._db_storage.clear()
-        if self._db_audit:
-            self._db_audit.clear()
-        self._entity_types = {}
-        self._next_id = 1
 
     def get_next_id(self) -> int:
         """Get the next available ID and increment the counter"""

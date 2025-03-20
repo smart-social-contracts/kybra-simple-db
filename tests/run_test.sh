@@ -8,7 +8,7 @@ cd src
 
 exit_code=0
 
-TEST_IDS=("example_1" "example_2" "entity" "mixins" "properties" "relationships" "database" "storage") # "audit")
+TEST_IDS=("example_1" "example_2" "entity" "mixins" "properties" "relationships" "database" "storage" "audit")
 
 # Check if a specific test ID is provided as an argument
 if [ "$1" ]; then
