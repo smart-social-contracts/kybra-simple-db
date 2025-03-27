@@ -3,7 +3,8 @@
 
 # TODO:
 test canister update persistance of db data and instantiation
-add support for default values of properties
+test update database with new/less attributes and new/less entities (migrations)
+why _id needs to be a str?
 
 
 review audit and test examples

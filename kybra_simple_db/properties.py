@@ -50,7 +50,7 @@ class Property:
                     raise TypeError(f"{self.name} must be of type {self.type.__name__}")
 
             if self.validator and not self.validator(value):
-                raise ValueError(f"Invalid value for {self.name}")
+                raise ValueError(f"Invalid value for {self.name}: {value}")
 
         obj.__dict__[f"_{self.name}"] = value
         obj._save()
