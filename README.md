@@ -2,6 +2,10 @@
 
 
 # TODO:
+test canister update persistance of db data and instantiation
+add support for default values of properties
+
+
 review audit and test examples
 add coverage
 linting
