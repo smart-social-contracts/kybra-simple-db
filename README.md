@@ -5,6 +5,8 @@
 test canister update persistance of db data and instantiation
 test update database with new/less attributes and new/less entities (migrations)
 why _id needs to be a str?
+change the logger to an actual Python standard logging...
+make it possible to select mixings more granually (timestamps / user)
 
 
 review audit and test examples
