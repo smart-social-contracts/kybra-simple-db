@@ -2,9 +2,11 @@
 Kybra Simple DB - A lightweight key-value database with entity relationships and audit logging
 """
 
+from kybra_simple_logging import get_logger
+logger = get_logger('kybra_simple_db')
+
 from .db_engine import Database
 from .entity import Entity
-from .logger import get_logger
 from .mixins import TimestampedMixin
 from .properties import (
     Boolean,

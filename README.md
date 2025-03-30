@@ -2,6 +2,7 @@
 
 
 # TODO:
+fix logging!!
 test canister update persistance of db data and instantiation
 test update database with new/less attributes and new/less entities (migrations)
 why _id needs to be a str?

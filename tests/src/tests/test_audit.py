@@ -4,7 +4,7 @@ from tester import Tester
 
 from kybra_simple_db import *
 
-log = get_logger()
+from kybra_simple_db import logger
 
 
 class TestAudit:
@@ -28,12 +28,12 @@ class TestAudit:
         self.db.save("test_type", "1", {"field": "value"})
         self.db.delete("test_type", "1")
         audit_log = self.db._db_audit.get("1")
-        log('self.db._db_audit.get("0")', self.db._db_audit.get("0"))
-        log('self.db._db_audit.get("1")', self.db._db_audit.get("1"))
-        log('self.db._db_audit.get("2")', self.db._db_audit.get("2"))
-        log('self.db._db_audit.get("3")', self.db._db_audit.get("3"))
-        log('self.db._db_audit.get("4")', self.db._db_audit.get("4"))
-        log('self.db._db_audit.get("5")', self.db._db_audit.get("5"))
+        logger.debug(f'self.db._db_audit.get("0"): {self.db._db_audit.get("0")}')
+        logger.debug(f'self.db._db_audit.get("1"): {self.db._db_audit.get("1")}')
+        logger.debug(f'self.db._db_audit.get("2"): {self.db._db_audit.get("2")}')
+        logger.debug(f'self.db._db_audit.get("3"): {self.db._db_audit.get("3")}')
+        logger.debug(f'self.db._db_audit.get("4"): {self.db._db_audit.get("4")}')
+        logger.debug(f'self.db._db_audit.get("5"): {self.db._db_audit.get("5")}')
         assert audit_log is not None
         assert "delete" in audit_log
 
@@ -42,19 +42,19 @@ class TestAudit:
         self.db.save("test_type", "1", {"field": "value"})
         self.db.update("test_type", "1", "field", "new_value")
         audit_log = self.db._db_audit.get("2")
-        log('self.db._db_audit.get("0")', self.db._db_audit.get("0"))
-        log('self.db._db_audit.get("1")', self.db._db_audit.get("1"))
-        log('self.db._db_audit.get("2")', self.db._db_audit.get("2"))
-        log('self.db._db_audit.get("3")', self.db._db_audit.get("3"))
-        log('self.db._db_audit.get("4")', self.db._db_audit.get("4"))
-        log('self.db._db_audit.get("5")', self.db._db_audit.get("5"))
+        logger.debug(f'self.db._db_audit.get("0"): {self.db._db_audit.get("0")}')
+        logger.debug(f'self.db._db_audit.get("1"): {self.db._db_audit.get("1")}')
+        logger.debug(f'self.db._db_audit.get("2"): {self.db._db_audit.get("2")}')
+        logger.debug(f'self.db._db_audit.get("3"): {self.db._db_audit.get("3")}')
+        logger.debug(f'self.db._db_audit.get("4"): {self.db._db_audit.get("4")}')
+        logger.debug(f'self.db._db_audit.get("5"): {self.db._db_audit.get("5")}')
         assert audit_log is not None
         assert "update" in audit_log
 
 
 def run():
-    log("Running tests...")
-    tester = Tester(TestAudit, log)
+    logger.debug("Running tests...")
+    tester = Tester(TestAudit)
     return tester.run_tests()
 
 

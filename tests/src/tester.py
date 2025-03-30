@@ -1,11 +1,11 @@
 import random
 import traceback
 
+from kybra_simple_db import logger
 
 class Tester:
-    def __init__(self, test_class, logger=None):
+    def __init__(self, test_class):
         self.test_instance = test_class()
-        self.log = print if not logger else logger
 
     def run_tests(self):
         """Run all test methods in the test class and report results."""
@@ -22,12 +22,12 @@ class Tester:
                 if hasattr(self.test_instance, "setUp"):
                     self.test_instance.setUp()
                 test()
-                self.log(f"\033[92m{test.__name__} passed\033[0m")  # Green for pass
+                logger.info(f"{test.__name__} passed")  # Green for pass
             except Exception as e:
-                self.log(f"\033[91m{test.__name__} failed: {e}\033[0m")  # Red for fail
-                self.log(traceback.format_exc())
+                logger.error(f"{test.__name__} failed: {e}")  # Red for fail
+                logger.error(traceback.format_exc())
                 failed += 1
-        print(
+        logger.info(
             f"\033[91m{failed} tests failed\033[0m"
             if failed > 0
             else "\033[92mAll tests passed\033[0m"
@@ -40,13 +40,11 @@ class Tester:
         try:
             func(*args, **kwargs)
         except exception:
-            print(
-                f"\033[92m{func.__name__} raised {exception.__name__} as expected\033[0m"
-            )
+            logger.error(f"{func.__name__} raised {exception.__name__} as expected")
             return True
         except Exception as e:
-            print(f"\033[91m{func.__name__} raised an unexpected exception: {e}\033[0m")
+            logger.error(f"{func.__name__} raised an unexpected exception: {e}")
             return False
         else:
-            print(f"\033[91m{func.__name__} did not raise {exception.__name__}\033[0m")
+            logger.error(f"{func.__name__} did not raise {exception.__name__}")
             return False

@@ -9,6 +9,7 @@ docker run --rm \
     -v "${PWD}/src:/app/src" \
     -v "${PWD}/../kybra_simple_db:/app/src/kybra_simple_db" \
     -v "${PWD}/dfx.json:/app/dfx.json" \
+    -v "${PWD}/../requirements.txt:/app/requirements.txt" \
     -v "${PWD}/entrypoint.sh:/app/entrypoint.sh" \
     --entrypoint "/app/entrypoint.sh" \
     $IMAGE_ADDRESS || {

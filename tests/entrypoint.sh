@@ -6,6 +6,10 @@ set -x
 echo "Starting dfx..."
 dfx start --background --clean
 
+# Install dependencies
+echo "Installing dependencies..."
+pip install -r requirements.txt
+
 # Deploy the test canister
 echo "Deploying test canister..."
 dfx deploy

@@ -6,11 +6,9 @@ import json
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-from .logger import get_logger
 from .storage import MemoryStorage, Storage
 
-log = get_logger()
-
+from kybra_simple_db import logger
 
 class Database:
     """Main database class providing high-level operations"""
@@ -52,7 +50,7 @@ class Database:
             self._db_audit.insert("_min_id", "0")
             self._db_audit.insert("_max_id", "0")
 
-        log("self._db_audit.items()", [i for i in self._db_audit.items()])
+        logger.debug("self._db_audit.items() = %s" % [i for i in self._db_audit.items()])
 
         self._entity_types = (
             {}
@@ -83,9 +81,9 @@ class Database:
     def _audit(self, op: str, key: str, data: Any) -> None:
         if self._db_audit and self._audit_enabled:
             timestamp = int(time.time() * 1000)
-            log("self._db_audit.items() 2", [i for i in self._db_audit.items()])
+            logger.debug(f"self._db_audit.items() 2: {[i for i in self._db_audit.items()]}")
             id = self._db_audit.get("_max_id")
-            log("id", id)
+            logger.debug(f"id: {id}")
             self._db_audit.insert(
                 str(id), json.dumps([op, timestamp, key, data])
             )  # TODO: just store in audit the diff
@@ -126,12 +124,12 @@ class Database:
             type_name: Type of the entity
             id: ID of the entity
         """
-        log(f"Database: Deleting entity {type_name}@{entity_id}")
+        logger.debug(f"Database: Deleting entity {type_name}@{entity_id}")
         key = f"{type_name}@{entity_id}"
         data = self._db_storage.get(key)
         self._db_storage.remove(key)
         self._audit("delete", key, data)
-        log(f"Database: Deleted entity {type_name}@{entity_id}")
+        logger.debug(f"Database: Deleted entity {type_name}@{entity_id}")
 
     def update(self, type_name: str, id: str, field: str, value: Any) -> None:
         """Update a specific field in the stored data
@@ -158,7 +156,7 @@ class Database:
         Args:
             type_obj: Type object to register
         """
-        log(
+        logger.debug(
             f"Registering type {type_obj.__name__} with bases {[b.__name__ for b in type_obj.__bases__]}"
         )
         self._entity_types[type_obj.__name__] = type_obj
@@ -174,10 +172,10 @@ class Database:
             bool: True if type_name is a subclass of parent_type
         """
         type_obj = self._entity_types.get(type_name)
-        log(f"Checking if {type_name} is subclass of {parent_type.__name__}")
-        log(f"Found type object: {type_obj}")
+        logger.debug(f"Checking if {type_name} is subclass of {parent_type.__name__}")
+        logger.debug(f"Found type object: {type_obj}")
         if type_obj:
-            log(f"Bases: {[b.__name__ for b in type_obj.__bases__]}")
+            logger.debug(f"Bases: {[b.__name__ for b in type_obj.__bases__]}")
         return type_obj and issubclass(type_obj, parent_type)
 
     # TODO: `dump_json`` and `raw_dump_json` should not parse the values (which are JSON strings) but rather compose
