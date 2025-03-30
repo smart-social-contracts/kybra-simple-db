@@ -3,6 +3,7 @@ import traceback
 
 from kybra_simple_db import logger
 
+
 class Tester:
     def __init__(self, test_class):
         self.test_instance = test_class()

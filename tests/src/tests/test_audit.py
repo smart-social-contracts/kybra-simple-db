@@ -3,7 +3,6 @@
 from tester import Tester
 
 from kybra_simple_db import *
-
 from kybra_simple_db import logger
 
 

@@ -29,23 +29,23 @@ def run():
 
     # Create and save a person
     john = Person(name="John", age=30)
-    logger.debug(f"Created person: {{'name': john.name, 'age': john.age}}")
+    logger.debug(f"Created person: {{'name': {john.name}, 'age': {john.age}}}")
 
     # Update the person's age
     john.age = 33  # Type checking and validation happens automatically
-    logger.debug(f"\nUpdated person: {{'name': john.name, 'age': john.age}}")
+    logger.debug(f"\nUpdated person: {{'name': {john.name}, 'age': {john.age}}}")
 
     # _id can be used to load an entity
     Person(_id="peter", name="Peter")
     peter = Person["peter"]
-    logger.debug("\nPeter loaded: %s" % peter.to_dict())  # convert to dict
+    logger.debug(f"\nPeter loaded: {peter.to_dict()}")  # convert to dict
 
     # Delete the person
     logger.debug("1")
     peter.delete()
     logger.debug("2")
     deleted = Person.load("peter")
-    logger.debug("\nPeter after deleation: %s" % deleted)  # shows None
+    logger.debug(f"\nPeter after deleation: {deleted}")  # shows None
 
     alice = Person(name="Alice")
     eva = Person(name="Eva")
@@ -55,8 +55,7 @@ def run():
     eva.friends = [alice]
 
     # Print storage contents
-    logger.debug("\nStorage contents:")
-    logger.debug(Database.get_instance().dump_json(pretty=True))
+    logger.debug(f"\nStorage contents: {Database.get_instance().dump_json(pretty=True)}")
 
     return 0
 

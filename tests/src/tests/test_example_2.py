@@ -40,8 +40,12 @@ def run():
     logger.debug("\nCreated user:")
     logger.debug(f"- Name: {user.name}")
     logger.debug(f"- Age: {user.age}")
-    logger.debug(f"- Created at: {system_time.format_timestamp(user._timestamp_created)}")
-    logger.debug(f"- Updated at: {system_time.format_timestamp(user._timestamp_updated)}")
+    logger.debug(
+        f"- Created at: {system_time.format_timestamp(user._timestamp_created)}"
+    )
+    logger.debug(
+        f"- Updated at: {system_time.format_timestamp(user._timestamp_updated)}"
+    )
     logger.debug(f"- Creator: {user._creator}")
     logger.debug(f"- Owner: {user._owner}")
 
@@ -62,8 +66,12 @@ def run():
     logger.debug("\nAfter update:")
     logger.debug(f"- Name: {user.name}")
     logger.debug(f"- Age: {user.age}")
-    logger.debug(f"- Created at: {system_time.format_timestamp(user._timestamp_created)}")
-    logger.debug(f"- Updated at: {system_time.format_timestamp(user._timestamp_updated)}")
+    logger.debug(
+        f"- Created at: {system_time.format_timestamp(user._timestamp_created)}"
+    )
+    logger.debug(
+        f"- Updated at: {system_time.format_timestamp(user._timestamp_updated)}"
+    )
     logger.debug(f"- Creator: {user._creator}")
     logger.debug(f"- Updater: {user._updater}")
     logger.debug(f"- Owner: {user._owner}")

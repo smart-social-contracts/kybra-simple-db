@@ -6,9 +6,10 @@ import json
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
+from kybra_simple_db import logger
+
 from .storage import MemoryStorage, Storage
 
-from kybra_simple_db import logger
 
 class Database:
     """Main database class providing high-level operations"""
@@ -50,7 +51,9 @@ class Database:
             self._db_audit.insert("_min_id", "0")
             self._db_audit.insert("_max_id", "0")
 
-        logger.debug("self._db_audit.items() = %s" % [i for i in self._db_audit.items()])
+        logger.debug(
+            "self._db_audit.items() = %s" % [i for i in self._db_audit.items()]
+        )
 
         self._entity_types = (
             {}
@@ -81,7 +84,9 @@ class Database:
     def _audit(self, op: str, key: str, data: Any) -> None:
         if self._db_audit and self._audit_enabled:
             timestamp = int(time.time() * 1000)
-            logger.debug(f"self._db_audit.items() 2: {[i for i in self._db_audit.items()]}")
+            logger.debug(
+                f"self._db_audit.items() 2: {[i for i in self._db_audit.items()]}"
+            )
             id = self._db_audit.get("_max_id")
             logger.debug(f"id: {id}")
             self._db_audit.insert(

@@ -1,5 +1,6 @@
 """Enhanced entity implementation with support for mixins and entity types."""
 
+from kybra_simple_db import logger
 import os
 from typing import Any, Dict, List, Optional, Set, Type, TypeVar
 
@@ -8,7 +9,6 @@ from .db_engine import Database
 
 T = TypeVar("T", bound="Entity")
 
-from kybra_simple_db import logger
 
 class Entity:
     """Base class for database entities with enhanced features.
