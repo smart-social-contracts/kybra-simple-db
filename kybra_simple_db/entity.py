@@ -1,10 +1,12 @@
 """Enhanced entity implementation with support for mixins and entity types."""
 
-from .db_engine import Database
-from .constants import LEVEL_MAX_DEFAULT
-from typing import Any, Dict, List, Optional, Set, Type, TypeVar
 import os
+from typing import Any, Dict, List, Optional, Set, Type, TypeVar
+
 from kybra_simple_logging import get_logger
+
+from .constants import LEVEL_MAX_DEFAULT
+from .db_engine import Database
 
 logger = get_logger(__name__)
 
