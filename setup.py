@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="kybra_simple_db",
-    version="0.1.1",
+    version="0.1.2",
     author="Kybra Team",
     description="A lightweight key-value database with entity relationships and audit logging",
     long_description=long_description,
