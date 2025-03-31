@@ -3,6 +3,8 @@
 - Creation modification and deletion of objects.
 - Properties and relationships."""
 
+from kybra_simple_logging import get_logger
+
 from kybra_simple_db import (
     Database,
     Entity,
@@ -12,13 +14,12 @@ from kybra_simple_db import (
     OneToMany,
     OneToOne,
     String,
-    get_logger,
 )
+
+logger = get_logger(__name__)
 
 
 def run():
-    logger = get_logger()
-
     class Person(Entity):
         name = String(min_length=2, max_length=50)
         age = Integer(min_value=0, max_value=150)
@@ -55,7 +56,9 @@ def run():
     eva.friends = [alice]
 
     # Print storage contents
-    logger.debug(f"\nStorage contents: {Database.get_instance().dump_json(pretty=True)}")
+    logger.debug(
+        f"\nStorage contents: {Database.get_instance().dump_json(pretty=True)}"
+    )
 
     return 0
 

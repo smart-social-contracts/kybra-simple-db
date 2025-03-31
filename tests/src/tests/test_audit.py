@@ -1,9 +1,11 @@
 """Tests for audit functionality in Kybra Simple DB."""
 
+from kybra_simple_logging import get_logger
 from tester import Tester
 
 from kybra_simple_db import *
-from kybra_simple_db import logger
+
+logger = get_logger(__name__)
 
 
 class TestAudit:

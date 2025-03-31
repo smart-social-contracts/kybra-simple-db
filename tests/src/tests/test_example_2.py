@@ -7,11 +7,14 @@
 
 import os
 
+from kybra_simple_logging import get_logger
+
 import kybra_simple_db as ksdb
+
+logger = get_logger(__name__)
 
 
 def run():
-    logger = ksdb.get_logger()
 
     class User(ksdb.Entity, ksdb.TimestampedMixin):
         """User entity with properties and timestamp tracking."""

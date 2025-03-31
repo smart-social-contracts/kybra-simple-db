@@ -2,13 +2,14 @@
 Core database engine implementation
 """
 
+from .storage import MemoryStorage, Storage
 import json
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-from kybra_simple_db import logger
+from kybra_simple_logging import get_logger
 
-from .storage import MemoryStorage, Storage
+logger = get_logger(__name__)
 
 
 class Database:

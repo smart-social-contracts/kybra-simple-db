@@ -1,10 +1,11 @@
 import json
 
+from kybra_simple_logging import get_logger
 from tester import Tester
 
 from kybra_simple_db import *
 
-logger = get_logger()
+logger = get_logger(__name__)
 
 
 class TestDatabase:

@@ -1,7 +1,9 @@
 import random
 import traceback
 
-from kybra_simple_db import logger
+from kybra_simple_logging import get_logger
+
+logger = get_logger("kybra_simple_db")
 
 
 class Tester:
@@ -41,7 +43,7 @@ class Tester:
         try:
             func(*args, **kwargs)
         except exception:
-            logger.error(f"{func.__name__} raised {exception.__name__} as expected")
+            logger.info(f"{func.__name__} raised {exception.__name__} as expected")
             return True
         except Exception as e:
             logger.error(f"{func.__name__} raised an unexpected exception: {e}")
