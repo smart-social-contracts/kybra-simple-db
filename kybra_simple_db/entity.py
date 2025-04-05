@@ -77,9 +77,7 @@ class Entity:
 
     def _save(
         self,
-    ) -> (
-        "Entity"
-    ):
+    ) -> "Entity":
         """Save the entity to the database.
 
         Returns:

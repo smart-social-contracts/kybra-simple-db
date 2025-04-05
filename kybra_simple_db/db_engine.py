@@ -57,9 +57,7 @@ class Database:
             "self._db_audit.items() = %s" % [i for i in self._db_audit.items()]
         )
 
-        self._entity_types = (
-            {}
-        )
+        self._entity_types = {}
         self._next_id: int = 1
 
     def clear(self):
@@ -91,9 +89,7 @@ class Database:
             )
             id = self._db_audit.get("_max_id")
             logger.debug(f"id: {id}")
-            self._db_audit.insert(
-                str(id), json.dumps([op, timestamp, key, data])
-            )
+            self._db_audit.insert(str(id), json.dumps([op, timestamp, key, data]))
             self._db_audit.insert("_max_id", str(int(id) + 1))
 
     def save(self, type_name: str, id: str, data: dict) -> None:

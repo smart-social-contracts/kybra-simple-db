@@ -8,7 +8,6 @@ setup(
     version="0.1.2",
     author="Smart Social Contracts",
     author_email="smartsocialcontracts@gmail.com",
-    url="https://smartsocialcontracts.org",
     description="A lightweight key-value database with entity relationships and audit logging",
     long_description=long_description,
     long_description_content_type="text/markdown",
