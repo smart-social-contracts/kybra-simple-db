@@ -16,8 +16,8 @@ class TestEntity(Entity, TimestampedMixin):
 class TestMixins:
     def setUp(self):
         """Reset Entity class variables before each test."""
-        Entity._context = set()  # TODO: delete?
-        Database._instance = Database(MemoryStorage())  # TODO: improve?
+        Entity._context = set()
+        Database._instance = Database(MemoryStorage())
 
     def test_timestamped_mixin(self):
         """Test that TimestampedMixin adds timestamp and ownership functionality."""

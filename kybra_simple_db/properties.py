@@ -173,7 +173,6 @@ class Relation:
         else:
             values_list = [value]
 
-        # TODO: Necessary?
         # # Validate all values are Entity instances of correct type
         # for entity in values_list:
         #     if not isinstance(entity, Entity):

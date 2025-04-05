@@ -1,6 +1,6 @@
 from kybra import StableBTreeMap, ic, query, update
 
-from kybra_simple_db import *  # TODO
+from kybra_simple_db import *
 from tests import (
     test_audit,
     test_database,

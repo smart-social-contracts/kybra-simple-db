@@ -59,8 +59,8 @@ class Database:
 
         self._entity_types = (
             {}
-        )  # TODO: Map of type names to type objects # TODO: should this be in database too??
-        self._next_id: int = 1  # TODO: this too
+        )
+        self._next_id: int = 1
 
     def clear(self):
         keys = list(self._db_storage.keys())
@@ -93,7 +93,7 @@ class Database:
             logger.debug(f"id: {id}")
             self._db_audit.insert(
                 str(id), json.dumps([op, timestamp, key, data])
-            )  # TODO: just store in audit the diff
+            )
             self._db_audit.insert("_max_id", str(int(id) + 1))
 
     def save(self, type_name: str, id: str, data: dict) -> None:
@@ -185,7 +185,6 @@ class Database:
             logger.debug(f"Bases: {[b.__name__ for b in type_obj.__bases__]}")
         return type_obj and issubclass(type_obj, parent_type)
 
-    # TODO: `dump_json`` and `raw_dump_json` should not parse the values (which are JSON strings) but rather compose
     def dump_json(self, pretty: bool = False) -> str:
         """Dump the entire database as a JSON string.
 

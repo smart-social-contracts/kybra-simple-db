@@ -79,7 +79,7 @@ class Entity:
         self,
     ) -> (
         "Entity"
-    ):  # TODO: should this method be private? in other words, should always be called automatically without the user needing to call it explicitly?
+    ):
         """Save the entity to the database.
 
         Returns:
@@ -225,7 +225,6 @@ class Entity:
 
     def delete(self) -> None:
         logger.debug(f"Deleting entity {self._type}@{self._id}")
-        # TODO: check relations!!!
         """Delete this entity from the database."""
         self.db().delete(self._type, self._id)
 
