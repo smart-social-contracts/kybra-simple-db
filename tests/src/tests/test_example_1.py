@@ -30,13 +30,17 @@ def run():
 
     # Create and save a person
     john = Person(name="John", age=30)
+    assert john.name == "John"
+    assert john.age == 30
 
     # Update the person's age
     john.age = 33  # Type checking and validation happens automatically
+    assert john.age == 33
 
     # _id can be used to load an entity
     Person(_id="peter", name="Peter")
     peter = Person["peter"]
+    assert peter.name == "Peter"
 
     # Delete the person
     peter.delete()
@@ -46,11 +50,19 @@ def run():
     eva = Person(name="Eva")
 
     john.mother = alice
+    assert john.mother == alice
+    # Check reverse relationship - alice should have john as a child
+    assert john in alice.children
 
     eva.friends = [alice]
+    assert alice in eva.friends
+    assert eva in alice.friends
 
     # Get storage contents
-    Database.get_instance().dump_json(pretty=True)
+    dump = Database.get_instance().dump_json(pretty=True)
+    assert dump is not None
+    # Verify that the dump contains our entities
+    assert "Person" in dump
 
     return 0
 
