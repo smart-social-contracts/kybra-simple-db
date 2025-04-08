@@ -51,8 +51,19 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+        # Run bumpversion to update version in files
         bumpversion ${{ github.event.inputs.release_type }}
-        echo "NEW_VERSION=$(grep -Po '(?<=version=\")[^\"]*' setup.py)" >> $GITHUB_OUTPUT
+        # Extract and verify the new version from setup.py
+        NEW_VERSION=$(grep -Po '(?<=version="|version=\")[^"]*' setup.py)
+        # Also get version from .bumpversion.cfg to verify they match
+        BUMP_VERSION=$(grep -Po '(?<=current_version = )[^\s]*' .bumpversion.cfg)
+        # Make sure versions match
+        if [ "$NEW_VERSION" != "$BUMP_VERSION" ]; then
+          echo "ERROR: Version mismatch between setup.py ($NEW_VERSION) and .bumpversion.cfg ($BUMP_VERSION)"
+          exit 1
+        fi
+        echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "New version: $NEW_VERSION"
     
     # Only push changes if we did a version bump
     - name: Push changes

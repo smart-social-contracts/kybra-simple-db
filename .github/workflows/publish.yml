@@ -28,13 +28,30 @@ jobs:
         python -m pip install --upgrade pip
         pip install build twine
         
+    - name: Verify version consistency
+      run: |
+        # Extract version from setup.py
+        SETUP_VERSION=$(grep -Po '(?<=version="|version=\")[^"]*' setup.py)
+        # Extract version from .bumpversion.cfg
+        BUMP_VERSION=$(grep -Po '(?<=current_version = )[^\s]*' .bumpversion.cfg)
+        
+        echo "Version in setup.py: $SETUP_VERSION"
+        echo "Version in .bumpversion.cfg: $BUMP_VERSION"
+        
+        # Make sure versions match
+        if [ "$SETUP_VERSION" != "$BUMP_VERSION" ]; then
+          echo "ERROR: Version mismatch between setup.py ($SETUP_VERSION) and .bumpversion.cfg ($BUMP_VERSION)"
+          exit 1
+        fi
+      
     - name: Build package
       run: python -m build
+      
+    - name: Check package
+      run: twine check dist/*
       
     - name: Publish to PyPI
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: |
-        twine check dist/*
-        twine upload dist/*
+      run: twine upload dist/*
