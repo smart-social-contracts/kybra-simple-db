@@ -229,7 +229,7 @@ class Database:
             id_str = str(id)
             entry = self._db_audit.get(id_str)
             if entry:
-                ret[id_str] = entry
+                ret[id_str] = json.loads(entry)
         return ret
 
 
