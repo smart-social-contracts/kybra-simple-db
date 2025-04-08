@@ -26,97 +26,123 @@ pip install kybra-simple-db
 
 ## Quick Start
 
-### Basic Setup
+Your canister's storage must be initialized before using Kybra Simple DB. Here's an example of how to do it:
 
 ```python
-# Step 1: Import Kybra and define storage
 from kybra import StableBTreeMap
+from kybra_simple_db import Database
 
-# Create a StableBTreeMap for database storage
-db_storage = StableBTreeMap[str, str](
-    memory_id=1,  # Unique memory ID for this map
-    max_key_size=100,  # Maximum key size in bytes
-    max_value_size=1000  # Maximum value size in bytes
+# Initialize storage and database
+storage = StableBTreeMap[str, str](memory_id=1, max_key_size=100, max_value_size=1000)
+db = Database(storage, audit_enabled=True)
+```
+
+then define your entities:
+
+```python
+from kybra_simple_db import (
+    Entity, String, Integer, Float, Boolean,
+    OneToOne, OneToMany, ManyToOne, ManyToMany, TimestampedMixin
 )
 
-# Step 2: Import Kybra Simple DB and initialize database
-from kybra_simple_db import Database, Entity, String, Integer
+# Define your entities with relationships
+class User(Entity, TimestampedMixin):
+    age = Integer(min_value=13, max_value=120)
+    posts = OneToMany("Post", "author")
+    profile = OneToOne("Profile", "user")
+    liked_posts = ManyToMany("Post", "liked_by")
 
-# Initialize the database with your storage
-db = Database(db_storage, audit_enabled=True)
+
+class Profile(Entity):
+    bio = String(max_length=500)
+    website = String()
+    user = OneToOne("User", "profile")
+
+class Post(Entity, TimestampedMixin):
+    title = String(min_length=3, max_length=100)
+    content = String(min_length=10)
+    is_published = Boolean(default=False)
+    view_count = Integer(default=0)
+    author = ManyToOne("User", "posts")
+    liked_by = ManyToMany("User", "liked_posts")
+    tags = ManyToMany("Tag", "posts")
+
+class Tag(Entity):
+    name = String(min_length=1, max_length=30)
+    posts = ManyToMany("Post", "tags")
 ```
 
-### Creating and Using Entities
+This is an example showcasing the use of the library:
 
-```python
-# Define a User entity
-class User(Entity):
-    def __init__(self, username, email, age):
-        super().__init__(entity_type="user")
-        self.username = String(username)
-        self.email = String(email)
-        self.age = Integer(age)
-
-# Create and save a user
-user = User("johndoe", "john@example.com", 30)
-
-# Retrieve a user by ID
-user_id = user.id()  # Get the user's ID
-retrieved_user = Entity.get(User, user_id)  # Retrieve by ID
-
-# Update a user property
-retrieved_user.update("age", 31)
-
-# Delete a user
-retrieved_user.delete()
 ```
+# Create users
+alice = User(name="Alice Smith", email="alice@example.com", age=28)
+bob = User(name="Bob Jones", email="bob@example.com", age=34)
 
-### Working with Relationships
+# Create profile with one-to-one relationship
+alice_profile = Profile(bio="Software engineer and blogger", website="https://alice.dev")
+alice.profile = alice_profile
 
-```python
-# Define entities with relationships
-class Post(Entity):
-    def __init__(self, title, content, author):
-        super().__init__(entity_type="post")
-        self.title = String(title)
-        self.content = String(content)
-        # Create relationship to author (User)
-        self.add_relation("author", "posts", author)
+# Create posts with author relationship
+tech_post = Post(
+    title="Understanding the IC",
+    content="The Internet Computer is a blockchain that provides...",
+    author=alice
+)
+travel_post = Post(
+    title="My Trip to Japan",
+    content="Last month, I visited Tokyo and Kyoto...",
+    author=alice
+)
 
-# Create related entities
-user = User("johndoe", "john@example.com", 30)
-post = Post("First Post", "Hello World!", user)
+# Create and assign tags (many-to-many)
+tech_tag = Tag(name="Technology")
+travel_tag = Tag(name="Travel")
+japan_tag = Tag(name="Japan")
 
-# Access relationships
-post_author = post.get_relations(User, "author")[0]  # Get the post's author
-user_posts = user.get_relations(Post, "posts")  # Get all posts by the user
+tech_post.tags = [tech_tag]
+travel_post.tags = [travel_tag, japan_tag]
+
+# Many-to-many relationship (likes)
+bob.liked_posts = [tech_post]
+
+# Retrieve entities by ID
+retrieved_user = User[alice.id()]
+assert retrieved_user.name == "Alice Smith"
+
+# Query by relationships
+alice_posts = alice.posts                  # All posts by Alice
+assert len(alice_posts) == 2
+
+japan_posts = japan_tag.posts              # All posts with Japan tag
+assert japan_posts[0].title == "My Trip to Japan"
+
+tech_post_likers = tech_post.liked_by      # Users who liked tech post
+assert bob in tech_post_likers
+
+# Update entities
+travel_post.view_count = 42
+travel_post.is_published = True
+
+# Access audit trail and timestamps
+print(f"Alice was created at: {alice._timestamp_created}")
+print(f"Profile owner: {alice_profile._owner}")
+print(f"Last updated by: {travel_post._updater}")
+
+# Delete entities (with relationship cleanup)
+bob.delete()  # Also removes bob from tech_post.liked_by
+
+# Database operations
+all_data = db.get_all()                    # Get all stored entities
+json_export = db.dump_json(pretty=True)    # Export database as JSON
 ```
 
 ## API Reference
 
-### Core Classes
-
-- `Database`: Main database engine for storage operations
-- `Entity`: Base class for all database entities
-- `Storage` / `MemoryStorage`: Storage interfaces for data persistence
-
-### Property Types
-
-- `String`: String property type
-- `Integer`: Integer property type
-- `Float`: Float property type
-- `Boolean`: Boolean property type
-
-### Relationship Types
-
-- `OneToOne`: One-to-one relationship between entities
-- `OneToMany`: One-to-many relationship between entities
-- `ManyToOne`: Many-to-one relationship between entities
-- `ManyToMany`: Many-to-many relationship between entities
-
-### Mixins
-
-- `TimestampedMixin`: Adds created_at and updated_at fields to entities
+- **Core**: `Database`, `Entity`
+- **Properties**: `String`, `Integer`, `Float`, `Boolean`
+- **Relationships**: `OneToOne`, `OneToMany`, `ManyToOne`, `ManyToMany`
+- **Mixins**: `TimestampedMixin` (timestamps and ownership tracking)
 
 ## Development
 
@@ -135,6 +161,9 @@ source venv/bin/activate
 
 # Install development dependencies
 pip install -r requirements-dev.txt
+
+# Running tests
+./run_linters.sh && (cd tests && ./run_test.sh && ./run_test_ic.sh)
 ```
 
 ## Contributing
