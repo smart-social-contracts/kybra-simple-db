@@ -6,17 +6,15 @@ A lightweight key-value database with entity relationships and audit logging cap
 [![Test](https://github.com/smart-social-contracts/kybra-simple-db/actions/workflows/test.yml/badge.svg)](https://github.com/smart-social-contracts/kybra-simple-db/actions)
 [![PyPI version](https://badge.fury.io/py/kybra-simple-db.svg)](https://badge.fury.io/py/kybra-simple-db)
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-3107/)
-[![Coverage](https://codecov.io/gh/smart-social-contracts/kybra-simple-db/branch/main/graph/badge.svg)](https://codecov.io/gh/smart-social-contracts/kybra-simple-db)
 [![License](https://img.shields.io/github/license/smart-social-contracts/kybra-simple-db.svg)](https://github.com/smart-social-contracts/kybra-simple-db/blob/main/LICENSE)
 
 ## Features
 
-- **Entity-Relational Database**: Create and manage entities with complex relationships
-- **Type System**: Define properties with proper typing (String, Integer, Float, Boolean)
-- **Relationship Types**: Support for OneToOne, OneToMany, ManyToOne, and ManyToMany relationships
-- **Audit Logging**: Track all changes to your data with built-in audit trails
-- **Timestamped Entities**: Add created/updated timestamps to entities with mixins
-- **Flexible Storage**: Works with Kybra's StableBTreeMap for persistent storage on the Internet Computer
+- **Persistent Storage**: Works with Kybra's StableBTreeMap stable structure for persistent storage on your canister's stable memory so your data persists automatically across canister upgrades.
+- **Entity-Relational Database**: Create, read and write entities with OneToOne, OneToMany, ManyToOne, and ManyToMany relationships.
+- **Audit Logging**: Track all changes to your data with created/updated timestamps and who created and updated each entity.
+- **Ownership**: Assign owners to your data objects to control who can modify them.
+
 
 ## Installation
 
@@ -26,115 +24,100 @@ pip install kybra-simple-db
 
 ## Quick Start
 
-Your canister's storage must be initialized before using Kybra Simple DB. Here's an example of how to do it:
+The database storage must be initialized before using Kybra Simple DB. Here's an example of how to do it:
 
 ```python
 from kybra import StableBTreeMap
 from kybra_simple_db import Database
 
 # Initialize storage and database
-storage = StableBTreeMap[str, str](memory_id=1, max_key_size=100, max_value_size=1000)
-db = Database(storage, audit_enabled=True)
+storage = StableBTreeMap[str, str](memory_id=1, max_key_size=100, max_value_size=1000)  # Use a unique memory ID for each storage instance
+Database(storage, audit_enabled=True)
 ```
 
-then define your entities:
+Read [Kybra's documentation](https://demergent-labs.github.io/kybra/stable_structures.html?highlight=StableBTreeMap) for more information regarding StableBTreeMap and memory IDs.
+
+Next, define your entities:
 
 ```python
 from kybra_simple_db import (
-    Entity, String, Integer, Float, Boolean,
+    Database, Entity, String, Integer,
     OneToOne, OneToMany, ManyToOne, ManyToMany, TimestampedMixin
 )
 
-# Define your entities with relationships
-class User(Entity, TimestampedMixin):
-    age = Integer(min_value=13, max_value=120)
-    posts = OneToMany("Post", "author")
-    profile = OneToOne("Profile", "user")
-    liked_posts = ManyToMany("Post", "liked_by")
-
-
-class Profile(Entity):
-    bio = String(max_length=500)
-    website = String()
-    user = OneToOne("User", "profile")
-
-class Post(Entity, TimestampedMixin):
-    title = String(min_length=3, max_length=100)
-    content = String(min_length=10)
-    is_published = Boolean(default=False)
-    view_count = Integer(default=0)
-    author = ManyToOne("User", "posts")
-    liked_by = ManyToMany("User", "liked_posts")
-    tags = ManyToMany("Tag", "posts")
-
-class Tag(Entity):
-    name = String(min_length=1, max_length=30)
-    posts = ManyToMany("Post", "tags")
+class Person(Entity, TimestampedMixin):
+    name = String(min_length=2, max_length=50)
+    age = Integer(min_value=0, max_value=120)
+    friends = ManyToMany("Person", "friends")
+    mother = ManyToOne("Person", "children")
+    children = OneToMany("Person", "mother")
+    spouse = OneToOne("Person", "spouse")
 ```
 
-This is an example showcasing the use of the library:
+Then use the defined entities to store objects:
 
-```
-# Create users
-alice = User(name="Alice Smith", email="alice@example.com", age=28)
-bob = User(name="Bob Jones", email="bob@example.com", age=34)
+```python
+    # Create and save an object
+    john = Person(name="John", age=30)
 
-# Create profile with one-to-one relationship
-alice_profile = Profile(bio="Software engineer and blogger", website="https://alice.dev")
-alice.profile = alice_profile
+    # Update an object's property
+    john.age = 33  # Type checking and validation happens automatically
 
-# Create posts with author relationship
-tech_post = Post(
-    title="Understanding the IC",
-    content="The Internet Computer is a blockchain that provides...",
-    author=alice
-)
-travel_post = Post(
-    title="My Trip to Japan",
-    content="Last month, I visited Tokyo and Kyoto...",
-    author=alice
-)
+    # use the `_id` property to load an entity with the [] operator
+    Person(_id="peter", name="Peter")
+    peter = Person["peter"]
 
-# Create and assign tags (many-to-many)
-tech_tag = Tag(name="Technology")
-travel_tag = Tag(name="Travel")
-japan_tag = Tag(name="Japan")
+    # Delete an object
+    peter.delete()
 
-tech_post.tags = [tech_tag]
-travel_post.tags = [travel_tag, japan_tag]
+    # Create relationships
+    alice = Person(name="Alice")
+    eva = Person(name="Eva")
+    john.mother = alice
+    assert john in alice.children
+    eva.friends = [alice]
+    assert alice in eva.friends
+    assert eva in alice.friends
 
-# Many-to-many relationship (likes)
-bob.liked_posts = [tech_post]
+    pprint(alice.to_dict())  # Prints the dictionary representation of an object
+    ''' Prints:
 
-# Retrieve entities by ID
-retrieved_user = User[alice.id()]
-assert retrieved_user.name == "Alice Smith"
+    {'_id': '2',
+    '_type': 'Person',
+    'age': None,
+    'creator': 'system',
+    'name': 'Alice',
+    'owner': 'system',
+    'relations': {'children': [{'_id': '1', '_type': 'Person'}],
+                'friends': [{'_id': '3', '_type': 'Person'}]},
+    'timestamp_created': '2025-04-08 20:45:08.957',
+    'timestamp_updated': '2025-04-08 20:45:08.957',
+    'updater': 'system'}
 
-# Query by relationships
-alice_posts = alice.posts                  # All posts by Alice
-assert len(alice_posts) == 2
+    '''
 
-japan_posts = japan_tag.posts              # All posts with Japan tag
-assert japan_posts[0].title == "My Trip to Japan"
+    # Retrieve database contents in JSON format
+    print(Database.get_instance().dump_json(pretty=True))
 
-tech_post_likers = tech_post.liked_by      # Users who liked tech post
-assert bob in tech_post_likers
+    # Audit log
+    audit_records = Database.get_instance().get_audit(id_from=0, id_to=5)
+    pprint(audit_records['0'])
+    ''' Prints:
 
-# Update entities
-travel_post.view_count = 42
-travel_post.is_published = True
+    ['save',
+    1744138342934,
+    'Person@1',
+    {'_id': '1',
+    '_type': 'Person',
+    'age': 30,
+    'creator': 'system',
+    'name': 'John',
+    'owner': 'system',
+    'timestamp_created': '2025-04-08 20:52:22.934',
+    'timestamp_updated': '2025-04-08 20:52:22.934',
+    'updater': 'system'}]
 
-# Access audit trail and timestamps
-print(f"Alice was created at: {alice._timestamp_created}")
-print(f"Profile owner: {alice_profile._owner}")
-print(f"Last updated by: {travel_post._updater}")
-
-# Delete entities (with relationship cleanup)
-bob.delete()  # Also removes bob from tech_post.liked_by
-
-# Database operations
-all_data = db.get_all()                    # Get all stored entities
-json_export = db.dump_json(pretty=True)    # Export database as JSON
+    '''
 ```
 
 ## API Reference
