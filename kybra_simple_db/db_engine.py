@@ -54,7 +54,7 @@ class Database:
             self._db_audit.insert("_max_id", "0")
 
         logger.debug(
-            "self._db_audit.items() = %s" % [i for i in self._db_audit.items()]
+            f"Audit database initialized with {len(list(self._db_audit.items()))} items"
         )
 
         self._entity_types = {}
@@ -84,11 +84,8 @@ class Database:
     def _audit(self, op: str, key: str, data: Any) -> None:
         if self._db_audit and self._audit_enabled:
             timestamp = int(time.time() * 1000)
-            logger.debug(
-                f"self._db_audit.items() 2: {[i for i in self._db_audit.items()]}"
-            )
             id = self._db_audit.get("_max_id")
-            logger.debug(f"id: {id}")
+            logger.debug(f"Audit: Recording {op} operation with ID {id}")
             self._db_audit.insert(str(id), json.dumps([op, timestamp, key, data]))
             self._db_audit.insert("_max_id", str(int(id) + 1))
 
@@ -175,10 +172,7 @@ class Database:
             bool: True if type_name is a subclass of parent_type
         """
         type_obj = self._entity_types.get(type_name)
-        logger.debug(f"Checking if {type_name} is subclass of {parent_type.__name__}")
-        logger.debug(f"Found type object: {type_obj}")
-        if type_obj:
-            logger.debug(f"Bases: {[b.__name__ for b in type_obj.__bases__]}")
+        logger.debug(f"Type check: {type_name} -> {parent_type.__name__}")
         return type_obj and issubclass(type_obj, parent_type)
 
     def dump_json(self, pretty: bool = False) -> str:
@@ -263,10 +257,6 @@ class Entity:
     @property
     def id(self) -> Optional[int]:
         return self.entity_id
-
-    # @classmethod
-    # def db(cls) -> Database:
-    #    return Database(cls._db_storage, cls._db_audit)
 
     @classmethod
     def _construct_key(cls, entity_type: str, entity_id: int) -> str:

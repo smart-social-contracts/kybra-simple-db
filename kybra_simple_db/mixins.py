@@ -14,7 +14,6 @@ class TimestampedMixin:
         self._creator = None
         self._updater = None
         self._owner = None
-        # super().__init__()
 
     def _update_timestamps(self, caller_id: Optional[str] = None) -> None:
         """Update timestamps and track who made the changes.

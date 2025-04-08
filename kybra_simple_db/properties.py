@@ -173,13 +173,6 @@ class Relation:
         else:
             values_list = [value]
 
-        # # Validate all values are Entity instances of correct type
-        # for entity in values_list:
-        #     if not isinstance(entity, Entity):
-        #         raise TypeError(f"{self.name} must be set to Entity instances")
-        #     if entity._type.lower() != self.entity_type.lower():
-        #         raise TypeError(f"{self.name} must be set to {self.entity_type} instances")
-
         # Get existing and new relations as sets
         existing = set(obj.get_relations(self.name))
         new = set(values_list)

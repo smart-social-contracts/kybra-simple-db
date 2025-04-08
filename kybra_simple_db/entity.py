@@ -115,13 +115,10 @@ class Entity:
         data = self.to_dict()
 
         if not self._do_not_save:
-            logger.debug(f"Data to save: {data}")
+            logger.debug(f"Saving entity {self._type}@{self._id} to database")
             db = self.db()
-            logger.debug(f"Database instance: {db}")
             db.save(self._type, self._id, data)
             self._loaded = True
-
-            # print('traceback', '\n'.join(traceback.format_stack()))
 
         return self
 
@@ -137,7 +134,7 @@ class Entity:
         Returns:
             Entity if found, None otherwise
         """
-        logger.debug(f"Loading entity {entity_id} with level {level}")
+        logger.debug(f"Loading entity {entity_id} (level={level})")
         if level == 0:
             return None
 
@@ -147,11 +144,8 @@ class Entity:
         # Use class name for type
         type_name = cls.__name__
         logger.debug(f"Loading entity {type_name}@{entity_id}")
-
         db = cls.db()
-        logger.debug(f"Database instance: {db}")
         data = db.load(type_name, entity_id)
-        logger.debug(f"Loaded data: {data}")
         if not data:
             return None
 
