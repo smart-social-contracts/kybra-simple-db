@@ -1,6 +1,6 @@
 """Example script showing:
 
-1. timestamp and ownership features with properties.
+1. Timestamp and ownership features with properties.
 2. Audit trail
 3. Entity Inheritance
 """
