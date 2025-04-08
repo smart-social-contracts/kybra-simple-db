@@ -2,6 +2,7 @@
 
 A lightweight key-value database with entity relationships and audit logging capabilities, intended for small to medium-sized applications running on the Internet Computer using Kybra.
 
+[![Test on IC](https://github.com/smart-social-contracts/kybra-simple-db/actions/workflows/test_ic.yml/badge.svg)](https://github.com/smart-social-contracts/kybra-simple-db/actions)
 [![Test](https://github.com/smart-social-contracts/kybra-simple-db/actions/workflows/test.yml/badge.svg)](https://github.com/smart-social-contracts/kybra-simple-db/actions)
 [![PyPI version](https://badge.fury.io/py/kybra-simple-db.svg)](https://badge.fury.io/py/kybra-simple-db)
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-3107/)
@@ -58,7 +59,6 @@ class User(Entity):
 
 # Create and save a user
 user = User("johndoe", "john@example.com", 30)
-user.save()
 
 # Retrieve a user by ID
 user_id = user.id()  # Get the user's ID
@@ -85,10 +85,7 @@ class Post(Entity):
 
 # Create related entities
 user = User("johndoe", "john@example.com", 30)
-user.save()
-
 post = Post("First Post", "Hello World!", user)
-post.save()
 
 # Access relationships
 post_author = post.get_relations(User, "author")[0]  # Get the post's author
@@ -130,46 +127,20 @@ user_posts = user.get_relations(Post, "posts")  # Get all posts by the user
 git clone https://github.com/smart-social-contracts/kybra-simple-db.git
 cd kybra-simple-db
 
-# Create a virtual environment
+# Recommended setup
+pyenv install 3.10.7
+pyenv local 3.10.7
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 
 # Install development dependencies
 pip install -r requirements-dev.txt
 ```
 
-### Run Tests
-
-```bash
-pytest tests/
-```
-
-### Run Linters
-
-```bash
-./run_linters.sh
-```
-
-## Versioning
-
-This project uses [bumpversion](https://pypi.org/project/bumpversion/) for version management. To increment the version:
-
-```bash
-# For patch version (0.1.2 -> 0.1.3)
-bumpversion patch
-
-# For minor version (0.1.2 -> 0.2.0)
-bumpversion minor
-
-# For major version (0.1.2 -> 1.0.0)
-bumpversion major
-```
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## License
+
+[MIT](LICENSE).

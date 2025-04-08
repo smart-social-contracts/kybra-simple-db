@@ -75,7 +75,6 @@ class TestMixins:
 
 
 def run():
-    print("Running tests...")
     tester = Tester(TestMixins)
     return tester.run_tests()
 

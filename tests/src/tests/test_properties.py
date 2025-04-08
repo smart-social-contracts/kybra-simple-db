@@ -136,7 +136,6 @@ class TestProperties:
 
 
 def run():
-    print("Running tests...")
     tester = Tester(TestProperties)
     return tester.run_tests()
 

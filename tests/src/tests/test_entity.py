@@ -192,7 +192,6 @@ class TestEntity:
 
 
 def run():
-    print("Running tests...")
     tester = Tester(TestEntity)
     return tester.run_tests()
 

@@ -186,7 +186,6 @@ class TestRelationships:
 
 
 def run():
-    print("Running tests...")
     tester = Tester(TestRelationships)
     return tester.run_tests()
 
