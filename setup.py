@@ -11,7 +11,7 @@ setup(
     description="A lightweight key-value database with entity relationships and audit logging",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/smart-social-contracts/kybra_simple_db",
+    url="https://github.com/smart-social-contracts/kybra-simple-db",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3.10",
