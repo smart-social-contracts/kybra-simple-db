@@ -32,4 +32,4 @@ def run_test(module_name: str) -> int:
 
 @query
 def dump_json() -> str:
-    return Database.get_instance().dump_json()
+    return Database.get_instance().raw_dump_json()

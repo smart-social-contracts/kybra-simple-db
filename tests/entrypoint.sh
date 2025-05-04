@@ -67,19 +67,32 @@ if [ "$TEST_RESULT" != '(0 : int)' ]; then
   exit 1
 fi
 
+echo "Getting database dump before upgrade..."
+BEFORE_UPGRADE=$(dfx canister call test dump_json)
+
 echo "Testing upgrade persistence check..."
 echo "Upgrading canister..."
 dfx deploy --mode=upgrade
+
+echo "Getting database dump after upgrade..."
+AFTER_UPGRADE=$(dfx canister call test dump_json)
+
+echo "Before: $BEFORE_UPGRADE"
+echo "After: $AFTER_UPGRADE"
+
+if [ "$BEFORE_UPGRADE" != "$AFTER_UPGRADE" ]; then
+  echo "ERROR: Database content changed after upgrade!"
+  exit 1
+fi
 
 TEST_ID="upgrade_after"
 TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
 if [ "$TEST_RESULT" != '(0 : int)' ]; then
   echo "Error: test_${TEST_ID}.run() function returned unexpected result: $TEST_RESULT"
-  dfx stop
   exit 1
 fi
 
-echo "Upgrade persistence test passed! Database content maintained across upgrade."
+echo "Upgrade persistence test passed! Database logic consistent across upgrade."
 
 echo "Stopping dfx..."
 dfx stop

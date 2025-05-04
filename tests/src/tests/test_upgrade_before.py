@@ -20,10 +20,11 @@ class Person(Entity):
 
 def run():
     # Create and save a person
-    john = Person(name="John")
-    assert john.name == "John"
+    alice = Person(name="Alice")
+    assert alice.name == "Alice"
 
     assert len(Person.instances()) == 1
+    assert Person["1"].name == "Alice"
 
     return 0
 

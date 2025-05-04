@@ -21,6 +21,14 @@ class Person(Entity):
 def run():
     assert len(Person.instances()) == 1
 
+    bob = Person(name="Bob")
+    assert bob.name == "Bob"
+
+    assert len(Person.instances()) == 2
+
+    assert Person["1"].name == "Alice"
+    assert Person["2"].name == "Bob"
+
     return 0
 
 
