@@ -1,1 +1,1 @@
-kybra-simple-logging
+kybra-simple-logging==0.1.*
