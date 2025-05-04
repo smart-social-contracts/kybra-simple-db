@@ -52,4 +52,36 @@ for TEST_ID in "${TEST_IDS[@]}"; do
   dfx stop
 done
 
+echo "Testing specific upgrade persistence check..."
+echo "Starting dfx..."
+dfx start --clean --background
+
+echo "Deploying test canister..."
+dfx deploy
+
+TEST_ID="upgrade_before"
+TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
+if [ "$TEST_RESULT" != '(0 : int)' ]; then
+  echo "Error: test_${TEST_ID}.run() function returned unexpected result: $TEST_RESULT"
+  dfx stop
+  exit 1
+fi
+
+echo "Testing upgrade persistence check..."
+echo "Upgrading canister..."
+dfx deploy --mode=upgrade
+
+TEST_ID="upgrade_after"
+TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
+if [ "$TEST_RESULT" != '(0 : int)' ]; then
+  echo "Error: test_${TEST_ID}.run() function returned unexpected result: $TEST_RESULT"
+  dfx stop
+  exit 1
+fi
+
+echo "Upgrade persistence test passed! Database content maintained across upgrade."
+
+echo "Stopping dfx..."
+dfx stop
+
 echo "All done!"

@@ -10,6 +10,8 @@ from tests import (
     test_mixins,
     test_properties,
     test_relationships,
+    test_upgrade_after,
+    test_upgrade_before,
 )
 
 db_storage = StableBTreeMap[str, str](
