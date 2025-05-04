@@ -17,8 +17,7 @@ class Department(Entity):
 class TestEntity:
     def setUp(self):
         """Reset Entity class variables before each test."""
-        Entity._context = set()
-        Database._instance = Database(MemoryStorage())
+        Database.get_instance().clear()
 
     def test_entity_creation_and_save(self):
         """Test creating and saving an entity."""
@@ -99,6 +98,7 @@ class TestEntity:
         persons = Person.instances()
 
         # Check that we have the correct number of instances
+        print("len(persons)", len(persons))
         assert len(persons) == 2
 
         # Check that the instances match the saved persons
@@ -117,6 +117,7 @@ class TestEntity:
         departments = Department.instances()
 
         # Check that we have the correct number of instances for each type
+        print("len(persons)", len(persons))
         assert len(persons) == 1
         assert len(departments) == 1
 

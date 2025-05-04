@@ -58,9 +58,7 @@ class TestRelationships:
 
     def setUp(self):
         """Set up test database."""
-        db_storage = MemoryStorage()
-        self.db = Database(db_storage)
-        Database._instance = self.db
+        Database.get_instance().clear()
 
     def test_one_to_one(self):
         """Test one-to-one relationships."""

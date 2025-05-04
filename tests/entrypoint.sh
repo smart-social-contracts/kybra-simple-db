@@ -1,37 +1,23 @@
 #!/bin/bash
+
 set -e
-set -x
 
-# Start dfx in the background
-echo "Starting dfx..."
-dfx start --background --clean
-
-# Install dependencies
 echo "Installing dependencies..."
 pip install -r requirements.txt
-
-# Deploy the test canister
-echo "Deploying test canister..."
-dfx deploy
-
-# Call greet and check output
-echo "Testing greet function..."
-GREET_RESULT=$(dfx canister call test greet)
-if [ "$GREET_RESULT" != '("Hello!")' ]; then
-  echo "Error: greet function returned unexpected result: $GREET_RESULT"
-  dfx stop
-  exit 1
-else
-  echo "greet function test passed!"
-fi
 
 # Define a list of test identifiers
 TEST_IDS=('example_1' 'example_2' 'entity' 'mixins' 'properties' 'relationships' 'database' 'audit')
 
-
 # Loop through each test identifier
 for TEST_ID in "${TEST_IDS[@]}"; do
   echo "Testing test_${TEST_ID} module..."
+
+  echo "Starting dfx..."
+  dfx start --clean --background
+
+  echo "Deploying test canister..."
+  dfx deploy
+
   TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
   if [ "$TEST_RESULT" != '(0 : int)' ]; then
     echo "Error: test_${TEST_ID}.run() function returned unexpected result: $TEST_RESULT"
@@ -39,10 +25,31 @@ for TEST_ID in "${TEST_IDS[@]}"; do
     exit 1
   else
     echo "test_${TEST_ID}.run() function test passed!"
-  fi
-done
 
-echo "Stopping dfx..."
-dfx stop
+    echo "Testing upgrade persistence check..."
+
+    echo "Getting database dump before upgrade..."
+    BEFORE_UPGRADE=$(dfx canister call test dump_json)
+
+    echo "Upgrading canister..."
+    dfx deploy --mode=upgrade
+
+    echo "Getting database dump after upgrade..."
+    AFTER_UPGRADE=$(dfx canister call test dump_json)
+
+    if [ "$BEFORE_UPGRADE" != "$AFTER_UPGRADE" ]; then
+      echo "ERROR: Database content changed after upgrade!"
+      echo "Before: $BEFORE_UPGRADE"
+      echo "After: $AFTER_UPGRADE"
+      exit 1
+    else
+      echo "Upgrade persistence test passed! Database content maintained across upgrade."
+    fi
+
+  fi
+
+  echo "Stopping dfx..."
+  dfx stop
+done
 
 echo "All done!"

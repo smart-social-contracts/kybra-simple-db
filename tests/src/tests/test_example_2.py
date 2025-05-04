@@ -69,4 +69,5 @@ def run():
 
 
 if __name__ == "__main__":
+    ksdb.Database.get_instance().clear()
     exit(run())
