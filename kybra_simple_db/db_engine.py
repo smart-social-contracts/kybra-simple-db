@@ -58,7 +58,6 @@ class Database:
         )
 
         self._entity_types = {}
-        self._next_id: int = 1
 
     def clear(self):
         keys = list(self._db_storage.keys())
@@ -74,12 +73,6 @@ class Database:
 
         self._db_audit.insert("_min_id", "0")
         self._db_audit.insert("_max_id", "0")
-
-    def get_next_id(self) -> int:
-        """Get the next available ID and increment the counter"""
-        current_id = self._next_id
-        self._next_id += 1
-        return current_id
 
     def _audit(self, op: str, key: str, data: Any) -> None:
         if self._db_audit and self._audit_enabled:
@@ -209,10 +202,12 @@ class Database:
         Returns:
             A JSON string representation of the raw storage contents
         """
-        raw_data = self._db_storage._data
+        result = {}
+        for key in self._db_storage.keys():
+            result[key] = self._db_storage.get(key)
         if pretty:
-            return json.dumps(raw_data, indent=2)
-        return json.dumps(raw_data)
+            return json.dumps(result, indent=2)
+        return json.dumps(result)
 
     def get_audit(
         self, id_from: Optional[int] = None, id_to: Optional[int] = None

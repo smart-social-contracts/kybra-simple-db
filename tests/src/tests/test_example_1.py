@@ -68,4 +68,5 @@ def run():
 
 
 if __name__ == "__main__":
+    Database.get_instance().clear()
     exit(run())

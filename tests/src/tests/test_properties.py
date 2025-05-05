@@ -136,6 +136,7 @@ class TestProperties:
 
 
 def run():
+    Database.get_instance().clear()
     tester = Tester(TestProperties)
     return tester.run_tests()
 

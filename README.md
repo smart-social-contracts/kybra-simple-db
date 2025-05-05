@@ -32,7 +32,7 @@ from kybra_simple_db import Database
 
 # Initialize storage and database
 storage = StableBTreeMap[str, str](memory_id=1, max_key_size=100, max_value_size=1000)  # Use a unique memory ID for each storage instance
-Database(storage, audit_enabled=True)
+Database.init(db_storage=storage)
 ```
 
 Read [Kybra's documentation](https://demergent-labs.github.io/kybra/stable_structures.html?highlight=StableBTreeMap) for more information regarding StableBTreeMap and memory IDs.
@@ -119,6 +119,8 @@ Then use the defined entities to store objects:
 
     '''
 ```
+
+For more usage examples, see the [tests](tests/src/tests).
 
 ## API Reference
 

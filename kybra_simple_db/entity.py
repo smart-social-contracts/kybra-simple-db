@@ -87,11 +87,13 @@ class Entity:
             PermissionError: If TimestampedMixin is used and caller is not the owner
         """
 
+        type_name = self.__class__.__name__
+        db = self.__class__.db()
+
         if self._id is None:
-            self._id = str(self.db().get_next_id())
+            self._id = str(int(db.load("_system", "_id") or 0) + 1)
+            db.save("_system", "_id", str(int(self._id)))
         elif not self._loaded:
-            type_name = self.__class__.__name__
-            db = self.__class__.db()
             if db.load(type_name, self._id) is not None:
                 raise ValueError(f"Entity {self._type}@{self._id} already exists")
 
@@ -188,6 +190,7 @@ class Entity:
             List of entities
         """
         db = Database.get_instance()
+        db.register_entity_type(cls)
         instances = []
 
         # Get all keys from storage
