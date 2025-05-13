@@ -30,6 +30,15 @@ class Tester:
                 logger.error(f"{test.__name__} failed: {e}")  # Red for fail
                 logger.error(traceback.format_exc())
                 failed += 1
+            finally:
+                # Call tearDown if it exists, regardless of test result
+                if hasattr(self.test_instance, "tearDown"):
+                    try:
+                        self.test_instance.tearDown()
+                    except Exception as e:
+                        logger.error(f"tearDown failed: {e}")
+                        logger.error(traceback.format_exc())
+                        # Don't increment failed count, as this is not a test failure
         logger.info(
             f"\033[91m{failed} tests failed\033[0m"
             if failed > 0

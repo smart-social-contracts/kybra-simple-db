@@ -13,6 +13,10 @@ class TestAudit:
         self.db = Database.get_instance()
         self.db.clear()
 
+    def tearDown(self):
+        """Clean up after each test by resetting the database singleton."""
+        Database._instance = None
+
     def test_audit_initialization(self):
         """Test if the audit database is initialized correctly."""
         assert self.db._db_audit is not None
@@ -96,10 +100,10 @@ class TestAudit:
         # Create a new database instance with audit_enabled=False
         Database._instance = None  # Reset the singleton
         db_no_audit = Database.init(audit_enabled=False)
-        
+
         # Clear any existing data
         db_no_audit.clear()
-        
+
         # Perform operations that would normally create audit records
         person_data = {
             "name": "Alice",
@@ -108,23 +112,19 @@ class TestAudit:
             "owner": "system",
             "updater": "system",
         }
-        
+
         # Save operation
         db_no_audit.save("Person", "1", person_data)
-        
+
         # Update operation
         db_no_audit.update("Person", "1", "age", 26)
-        
+
         # Delete operation
         db_no_audit.delete("Person", "1")
-        
+
         # Verify that no audit records were created
         # The _db_audit attribute should be None when audit_enabled=False
         assert db_no_audit._db_audit is None
-        
-        # Reset the singleton for other tests
-        Database._instance = None
-        self.db = Database.get_instance()  # Re-initialize with default settings for other tests
 
 
 def run():
