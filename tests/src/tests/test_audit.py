@@ -13,6 +13,10 @@ class TestAudit:
         self.db = Database.get_instance()
         self.db.clear()
 
+    def tearDown(self):
+        """Clean up after each test by resetting the database singleton."""
+        Database._instance = None
+
     def test_audit_initialization(self):
         """Test if the audit database is initialized correctly."""
         assert self.db._db_audit is not None
@@ -90,6 +94,37 @@ class TestAudit:
         assert entity_data["name"] == "John"
         assert "age" in entity_data
         assert entity_data["age"] == 30
+
+    def test_no_audit_when_disabled(self):
+        """Test that no audit records are created when audit_enabled is False."""
+        # Create a new database instance with audit_enabled=False
+        Database._instance = None  # Reset the singleton
+        db_no_audit = Database.init(audit_enabled=False)
+
+        # Clear any existing data
+        db_no_audit.clear()
+
+        # Perform operations that would normally create audit records
+        person_data = {
+            "name": "Alice",
+            "age": 25,
+            "creator": "system",
+            "owner": "system",
+            "updater": "system",
+        }
+
+        # Save operation
+        db_no_audit.save("Person", "1", person_data)
+
+        # Update operation
+        db_no_audit.update("Person", "1", "age", 26)
+
+        # Delete operation
+        db_no_audit.delete("Person", "1")
+
+        # Verify that no audit records were created
+        # The _db_audit attribute should be None when audit_enabled=False
+        assert db_no_audit._db_audit is None
 
 
 def run():

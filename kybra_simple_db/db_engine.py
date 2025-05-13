@@ -53,9 +53,9 @@ class Database:
             self._db_audit.insert("_min_id", "0")
             self._db_audit.insert("_max_id", "0")
 
-        logger.debug(
-            f"Audit database initialized with {len(list(self._db_audit.items()))} items"
-        )
+            logger.debug(
+                f"Audit database initialized with {len(list(self._db_audit.items()))} items"
+            )
 
         self._entity_types = {}
 
