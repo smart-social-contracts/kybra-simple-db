@@ -41,5 +41,10 @@ def read_records(from_id: int, to_id: int) -> int:
     return test_performance.read(from_id=from_id, to_id=to_id)
 
 @query
+def get_record(record_num: int) -> str:
+    ic.print(f"Getting record {record_num}...")
+    return test_performance.get_record_as_dict(record_num)
+
+@query
 def dump_json() -> str:
     return Database.get_instance().raw_dump_json()
