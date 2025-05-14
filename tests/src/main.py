@@ -12,6 +12,7 @@ from tests import (
     test_relationships,
     test_upgrade_after,
     test_upgrade_before,
+    test_performance,
 )
 
 db_storage = StableBTreeMap[str, str](
@@ -29,6 +30,15 @@ def run_test(module_name: str) -> int:
     ic.print(f"Running test_{module_name}...")
     return globals()[f"test_{module_name}"].run()
 
+@update
+def insert_records(num_records: int) -> int:
+    ic.print(f"Inserting {num_records} records...")
+    return test_performance.insert(num_records)
+
+@update
+def read_records(from_id: int, to_id: int) -> int:
+    ic.print(f"Reading {to_id - from_id} records...")
+    return test_performance.read(from_id=from_id, to_id=to_id)
 
 @query
 def dump_json() -> str:
