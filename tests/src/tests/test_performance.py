@@ -31,6 +31,21 @@ class User(Entity):
     favorite_tag = OneToOne("Tag", "favorited_by")
     tags = ManyToMany("Tag", "tagged_users")
 
+
+
+def insert_0(num_records=100):
+    global total_num_records
+    for i in range(num_records):
+        user = User(
+            _id=random_string_from_seed(i + total_num_records, 32),
+            name=f"User {i}",
+            email=f"user{i}@example.com",
+            score=i * 10
+        )
+    total_num_records += num_records
+    return total_num_records
+    
+
 def insert(num_records=100):
     global total_num_records
     
