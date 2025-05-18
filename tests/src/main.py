@@ -1,4 +1,4 @@
-from kybra import StableBTreeMap, ic, query, update
+from kybra import StableBTreeMap, ic, query, update, void
 
 from kybra_simple_db import *
 from tests import (
@@ -18,17 +18,28 @@ from tests import (
 db_storage = StableBTreeMap[str, str](
     memory_id=0, max_key_size=100, max_value_size=1_000
 )
-# db_audit = StableBTreeMap[str, str](
-#     memory_id=1, max_key_size=100_000, max_value_size=1_000_000
-# )
+db_audit = StableBTreeMap[str, str](
+    memory_id=1, max_key_size=100, max_value_size=1_000
+)
 
-Database.init(audit_enabled=False, db_storage=db_storage)
+Database.init(audit_enabled=False, db_storage=db_storage, db_audit=db_audit)
 
 
 @update
 def run_test(module_name: str) -> int:
     ic.print(f"Running test_{module_name}...")
     return globals()[f"test_{module_name}"].run()
+
+@query
+def dump_json() -> str:
+    return Database.get_instance().raw_dump_json()
+
+
+# Performance-specific entrypoints
+
+@update
+def disable_audit() -> void:
+    Database.get_instance()._audit_enabled = False
 
 
 @update
@@ -47,11 +58,6 @@ def read_records(from_id: int, to_id: int) -> int:
 def get_record(record_num: int) -> str:
     ic.print(f"Getting record {record_num}...")
     return test_performance.get_record_as_dict(record_num)
-
-
-@query
-def dump_json() -> str:
-    return Database.get_instance().raw_dump_json()
 
 
 @query
