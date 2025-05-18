@@ -14,6 +14,7 @@ docker run --rm \
     -v "${PWD}/run_test_performance.py:/app/run_test_performance.py" \
     -v "${PWD}/get_canister_status.py:/app/get_canister_status.py" \
     -v "${PWD}/utils.py:/app/utils.py" \
+    -v "${PWD}/management.did:/app/management.did" \
     --entrypoint "/app/entrypoint.sh" \
     $IMAGE_ADDRESS || {
     echo "❌ Tests failed"
