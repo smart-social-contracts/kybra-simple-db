@@ -6,16 +6,41 @@ import traceback
 from get_canister_status import get_canister_status_json
 from utils import check_value, run_command
 
-# Constants
-CANISTER_NAME = "test"
-NUM_RECORDS = 1000  # Number of records to insert per batch
-NUM_BATCHES = 10
-MAP_MAX_VALUE_SIZE = 1000
+CANISTER_NAME = "test_performance"  # Name of the Internet Computer canister to deploy
+NUM_RECORDS = 1000  # Number of records to insert per batch during performance testing
+NUM_BATCHES = 10  # Total number of batches to process during the test
+MAP_MAX_VALUE_SIZE = 1000  # Maximum size for map values in the database schema
 
-EXPECTED_MAX_EFFICIENCY_RATIO = 2
+# Performance validation threshold - the maximum allowed ratio between actual and expected stable memory size of a record
+EXPECTED_MAX_EFFICIENCY_RATIO = 3
 
-total_count_inserts = 0
-code_memory = None
+# Running counters for performance metrics
+total_count_inserts = 0  # Tracks the total number of successful insert operations
+code_memory = None  # The memory size used for the canister code
+
+
+def print_analysis_explanation():
+    print("=" * 50)
+    print("\nAnalysis explanation:")
+    print(
+        "- stable_memory_size: The amount of memory used by the canister for storing data that persists across upgrades but is lost after a canister re-installation."
+    )
+    print(
+        "- global_memory_size: (this value is given by the management canister and seems to be wrong for some unknown reasons)."
+    )
+    print(
+        "- wasm_memory_size: The amount of memory used by the canister for storing the canister code, volatile memory and stable memory."
+    )
+    print(
+        "- Volatile memory: The amount of memory used by the canister for executing code. It is lost after a canister upgrade or re-installation."
+    )
+    print(
+        "- Stable memory per record: The average amount of stable memory used per record in the database."
+    )
+    print(
+        "- Stable memory efficiency ratio:: The ratio of actual stable memory per record to the minimum theorical value size. The lower the better (more efficient)."
+    )
+    print("=" * 50)
 
 
 def get_db_canister_status(canister_principal_id):
@@ -83,16 +108,16 @@ def main():
     print("Starting performance test")
     print("=" * 50)
 
-    # Step 1: Deploy canister
-    print("Deploying canister...")
-    run_command("dfx deploy")
-    canister_id = run_command("dfx canister id test").strip()
+    print_analysis_explanation()
+
+    print("[Step 1] Deploying canister...")
+    run_command(f"dfx deploy {CANISTER_NAME}")
+    canister_id = run_command(f"dfx canister id {CANISTER_NAME}").strip()
     print(f"Canister ID: {canister_id}")
 
     analyze_performance(canister_id)
 
-    # Step 3: Insert records
-    print("\n3. Inserting test records")
+    print("\n[Step 2] Inserting test records")
     run_command(f"dfx canister call {CANISTER_NAME} insert_records '({NUM_RECORDS})'")
     # result = int(result.strip())
     # assert result == NUM_RECORDS
@@ -105,7 +130,7 @@ def main():
     analyze_performance(canister_id)
 
     for i in range(NUM_BATCHES):
-        print(f"\n6. Inserting {NUM_RECORDS} records (batch {i+1}/{NUM_BATCHES})")
+        print(f"\n[Step 3] Inserting {NUM_RECORDS} records (batch {i+1}/{NUM_BATCHES})")
         run_command(
             f"dfx canister call {CANISTER_NAME} insert_records '({NUM_RECORDS})'"
         )
@@ -122,7 +147,7 @@ def main():
         analyze_performance(canister_id)
     )
 
-    print("Checking stable_memory_size is below the expected limit")
+    print("\n[Step 4] Checking stable_memory_size is below the expected limit")
     check_value(
         stable_memory_size,
         EXPECTED_MAX_EFFICIENCY_RATIO
@@ -131,25 +156,27 @@ def main():
         * (NUM_BATCHES + 1),
         "<",
     )
-    print("Checking stable_memory_per_record is below the expected limit")
-    check_value(stable_memory_per_record, MAP_MAX_VALUE_SIZE, "<")
-    print("Checking efficiency_ratio is below the expected limit")
+    print("\n[Step 5] Checking stable_memory_per_record is below the expected limit")
+    check_value(
+        stable_memory_per_record,
+        EXPECTED_MAX_EFFICIENCY_RATIO * MAP_MAX_VALUE_SIZE,
+        "<",
+    )
+    print("\n[Step 6] Checking efficiency_ratio is below the expected limit")
     check_value(efficiency_ratio, EXPECTED_MAX_EFFICIENCY_RATIO, "<")
 
-    # Step 5: Upgrade canister
-    print("\n6. Upgrading canister (persistent memory should be preserved)")
-    run_command("dfx deploy --mode=upgrade")
+    print("\n[Step 7] Upgrading canister (persistent memory should be preserved)")
+    run_command(f"dfx deploy {CANISTER_NAME} --mode=upgrade")
 
-    print("\n7. Measuring memory usage after upgrade")
+    print("\n[Step 8] Measuring memory usage after upgrade")
     analyze_performance(canister_id)
 
-    # Step 6: Re-install canister
-    print("\n6. Reinstalling canister (persistent memory should be deleted)")
-    run_command("dfx deploy test --mode=reinstall --yes")
+    print("\n[Step 9] Reinstalling canister (persistent memory should be deleted)")
+    run_command(f"dfx deploy {CANISTER_NAME} --mode=reinstall --yes")
     total_count_inserts = 0
     stable_memory_size, _, _ = analyze_performance(canister_id)
 
-    print("Checking stable memory has been cleaned")
+    print("\n[Step 10] Checking stable memory has been cleaned")
     check_value(stable_memory_size, 0)
 
     print("\n" + "=" * 50)

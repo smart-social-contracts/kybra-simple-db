@@ -29,23 +29,20 @@ def run_command(command):
     return stdout
 
 
-# def print(message):
-#     """Print a message and flush stdout immediately."""
-#     print(message, flush=True)
-
-
 def check_value(actual, expected, operator="=="):
     if operator == "==":
         if expected != actual:
             raise Exception(
-                f"❌ Value mismatch: expected {expected} {operator} actual {actual}"
+                f"❌ Value mismatch: actual ({actual}) is not {operator} expected ({expected})"
             )
     elif operator == "<":
-        if expected >= actual:
+        if actual >= expected:
             raise Exception(
-                f"❌ Value mismatch: expected {expected} {operator} actual {actual}"
+                f"❌ Value mismatch: actual ({actual}) is not {operator} expected ({expected})"
             )
     else:
         raise Exception(f"❌ Invalid operator: {operator}")
 
-    print(f"✅ Value match: expected {expected} {operator} actual {actual}")
+    print(
+        f"✅ Value match: actual value ({actual}) {operator} expected value ({expected})"
+    )
