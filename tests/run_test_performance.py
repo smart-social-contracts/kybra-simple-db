@@ -11,6 +11,10 @@ NUM_RECORDS = 1000  # Number of records to insert per batch during performance t
 NUM_BATCHES = 10  # Total number of batches to process during the test
 MAP_MAX_VALUE_SIZE = 1000  # Maximum size for map values in the database schema
 
+STABLEBTREEMAP_STABLE_SIZE_BASE = 64 * 1024
+STABLEBTREEMAP_STABLE_SIZE_CHUNK = 8 * 1024 * 1024
+
+
 # Performance validation threshold - the maximum allowed ratio between actual and expected stable memory size of a record
 EXPECTED_MAX_EFFICIENCY_RATIO = 3
 
@@ -127,7 +131,12 @@ def main():
     total_count_inserts += NUM_RECORDS
     check_value(total_count_inserts, count_inserts)
 
-    analyze_performance(canister_id)
+    stable_memory_size, _, _ = analyze_performance(canister_id)
+
+    check_value(
+        stable_memory_size,
+        STABLEBTREEMAP_STABLE_SIZE_BASE + STABLEBTREEMAP_STABLE_SIZE_CHUNK,
+    )
 
     for i in range(NUM_BATCHES):
         print(f"\n[Step 3] Inserting {NUM_RECORDS} records (batch {i+1}/{NUM_BATCHES})")
@@ -145,6 +154,11 @@ def main():
 
     stable_memory_size, stable_memory_per_record, efficiency_ratio = (
         analyze_performance(canister_id)
+    )
+
+    check_value(
+        stable_memory_size,
+        STABLEBTREEMAP_STABLE_SIZE_BASE + STABLEBTREEMAP_STABLE_SIZE_CHUNK * 3,
     )
 
     print("\n[Step 4] Checking stable_memory_size is below the expected limit")
