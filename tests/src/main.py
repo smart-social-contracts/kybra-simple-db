@@ -1,4 +1,4 @@
-from kybra import StableBTreeMap, ic, query, update
+from kybra import StableBTreeMap, ic, query, update, void
 
 from kybra_simple_db import *
 from tests import (
@@ -15,11 +15,9 @@ from tests import (
 )
 
 db_storage = StableBTreeMap[str, str](
-    memory_id=0, max_key_size=100_000, max_value_size=1_000_000
+    memory_id=0, max_key_size=100, max_value_size=1_000
 )
-db_audit = StableBTreeMap[str, str](
-    memory_id=1, max_key_size=100_000, max_value_size=1_000_000
-)
+db_audit = StableBTreeMap[str, str](memory_id=1, max_key_size=100, max_value_size=1_000)
 
 Database.init(audit_enabled=True, db_storage=db_storage, db_audit=db_audit)
 

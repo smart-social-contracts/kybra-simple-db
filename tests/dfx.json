@@ -3,6 +3,10 @@
     "test": {
       "type": "kybra",
       "main": "src/main.py"
+    },
+    "test_performance": {
+      "type": "kybra",
+      "main": "src/main_performance.py"
     }
   },
   "defaults": {

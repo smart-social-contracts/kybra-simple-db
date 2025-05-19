@@ -58,6 +58,8 @@ class Database:
             )
 
         self._entity_types = {}
+        self._count_inserts = 0
+        self._count_updates = 0
 
     def clear(self):
         keys = list(self._db_storage.keys())
@@ -91,6 +93,12 @@ class Database:
             data: Data to store
         """
         key = f"{type_name}@{id}"
+
+        if self._db_storage.get(key):
+            self._count_updates += 1
+        else:
+            self._count_inserts += 1
+
         self._db_storage.insert(key, json.dumps(data))
         self._audit("save", key, data)
 
@@ -226,6 +234,12 @@ class Database:
             if entry:
                 ret[id_str] = json.loads(entry)
         return ret
+
+    def status(self):
+        return {
+            "count_inserts": self._count_inserts,
+            "count_updates": self._count_updates,
+        }
 
 
 class Entity:

@@ -16,7 +16,7 @@ for TEST_ID in "${TEST_IDS[@]}"; do
   dfx start --clean --background
 
   echo "Deploying test canister..."
-  dfx deploy
+  dfx deploy test
 
   TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
   if [ "$TEST_RESULT" != '(0 : int)' ]; then
@@ -32,7 +32,7 @@ for TEST_ID in "${TEST_IDS[@]}"; do
     BEFORE_UPGRADE=$(dfx canister call test dump_json)
 
     echo "Upgrading canister..."
-    dfx deploy --mode=upgrade
+    dfx deploy test --mode=upgrade
 
     echo "Getting database dump after upgrade..."
     AFTER_UPGRADE=$(dfx canister call test dump_json)
@@ -57,7 +57,7 @@ echo "Starting dfx..."
 dfx start --clean --background
 
 echo "Deploying test canister..."
-dfx deploy
+dfx deploy test
 
 TEST_ID="upgrade_before"
 TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
@@ -72,7 +72,7 @@ BEFORE_UPGRADE=$(dfx canister call test dump_json)
 
 echo "Testing upgrade persistence check..."
 echo "Upgrading canister..."
-dfx deploy --mode=upgrade
+dfx deploy test --mode=upgrade
 
 echo "Getting database dump after upgrade..."
 AFTER_UPGRADE=$(dfx canister call test dump_json)

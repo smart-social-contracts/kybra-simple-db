@@ -48,6 +48,7 @@ class TestAudit:
         """Test the get_audit functionality that retrieves audit records by ID range."""
         # Clear any existing data
         self.db.clear()
+        self.db.audit_enabled = True
 
         # Create a Person entity that will generate an audit record
         person_data = {
