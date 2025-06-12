@@ -91,8 +91,8 @@ class Entity:
         db = self.__class__.db()
 
         if self._id is None:
-            self._id = str(int(db.load("_system", "_id") or 0) + 1)
-            db.save("_system", "_id", str(int(self._id)))
+            self._id = str(int(db.load("_system", "%s_id" % type_name) or 0) + 1)
+            db.save("_system", "%s_id" % type_name, str(int(self._id)))
         elif not self._loaded:
             if db.load(type_name, self._id) is not None:
                 raise ValueError(f"Entity {self._type}@{self._id} already exists")
