@@ -345,7 +345,10 @@ class Entity:
             alias_field = cls.__alias__
             # Find entities where the aliased field matches the key
             for instance in cls.instances():
-                if hasattr(instance, alias_field) and getattr(instance, alias_field) == key:
+                if (
+                    hasattr(instance, alias_field)
+                    and getattr(instance, alias_field) == key
+                ):
                     return instance
 
         return None

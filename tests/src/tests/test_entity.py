@@ -7,10 +7,12 @@ from kybra_simple_db import *
 
 class Person(Entity):
     """Test entity class."""
+
     def __init__(self, name: str, age: int = 0, **kwargs):
         super().__init__(**kwargs)
         self.name = name
         self.age = age
+
     name = String(min_length=2, max_length=50)
     age = Integer()
     __alias__ = "name"
@@ -98,27 +100,27 @@ class TestEntity:
         """Test entity lookup by alias (__alias__ functionality)."""
         # Create a person with a specific name
         person = Person(name="Jane", age=28)
-        
+
         # Look up by ID
         by_id = Person[person._id]
         assert by_id is not None
         assert by_id._id == person._id
-        
+
         # Look up by the aliased field (name)
         by_alias = Person["Jane"]
         assert by_alias is not None
         assert by_alias._id == person._id
-        
+
         # Make sure they're the same entity
         assert by_id == by_alias
-        
+
         # Create a numeric ID person to test numeric ID handling
         numeric_person = Person(_id="42", name="NumericTest", age=35)
-        
+
         # Look up by numeric and string ID
         assert Person[42] == numeric_person
         assert Person["42"] == numeric_person
-        
+
         # Verify alias lookup still works
         assert Person["NumericTest"] == numeric_person
 
@@ -231,7 +233,6 @@ class TestEntity:
         for i in range(15):
             Person(name=f"Person{i}")
 
-
         # Test first page (entities 1-10)
         first_page = Person.load_paginated(from_id=1, count=10)
         assert len(first_page) == 10
@@ -303,7 +304,7 @@ class TestEntity:
         first_page = Person.load_paginated(from_id=1, count=10)
         assert len(first_page) == 6
         assert first_page[0].name == "Person0"
-        print('first_page[5].name', first_page[5].name)
+        print("first_page[5].name", first_page[5].name)
         assert first_page[5].name == "Person7"
 
         # Test loading from beyond last entity
