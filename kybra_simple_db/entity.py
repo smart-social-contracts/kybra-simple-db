@@ -270,16 +270,30 @@ class Entity:
         return data
 
     @classmethod
-    def __class_getitem__(cls: Type[T], entity_id: str) -> Optional[T]:
+    def __class_getitem__(cls: Type[T], key: Any) -> Optional[T]:
         """Allow using class[id] syntax to load entities.
 
         Args:
-            id: ID of entity to load
+            key: ID of entity to load or value of aliased field
 
         Returns:
             Entity if found, None otherwise
         """
-        return cls.load(entity_id)
+        # First try as direct ID lookup (convert to string if numeric)
+        str_key = str(key) if isinstance(key, (int, float)) else key
+        entity = cls.load(str_key)
+        if entity:
+            return entity
+
+        # If entity not found by ID and class has __alias__ defined, try by alias
+        if hasattr(cls, "__alias__") and cls.__alias__:
+            alias_field = cls.__alias__
+            # Find entities where the aliased field matches the key
+            for instance in cls.instances():
+                if hasattr(instance, alias_field) and getattr(instance, alias_field) == key:
+                    return instance
+
+        return None
 
     def __eq__(self, other: object) -> bool:
         """Compare entities based on type and ID.

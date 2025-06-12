@@ -8,6 +8,7 @@ from kybra_simple_db import *
 class Person(Entity):
     name = String(min_length=2, max_length=50)
     age = Integer()
+    __alias__ = "name"
 
 
 class Department(Entity):
@@ -87,6 +88,34 @@ class TestEntity:
 
         loaded = Person[person._id]
         assert len(loaded.get_relations("works_in", "Department")) == 1
+
+    def test_entity_alias(self):
+        """Test entity lookup by alias (__alias__ functionality)."""
+        # Create a person with a specific name
+        person = Person(name="Jane", age=28)
+        
+        # Look up by ID
+        by_id = Person[person._id]
+        assert by_id is not None
+        assert by_id._id == person._id
+        
+        # Look up by the aliased field (name)
+        by_alias = Person["Jane"]
+        assert by_alias is not None
+        assert by_alias._id == person._id
+        
+        # Make sure they're the same entity
+        assert by_id == by_alias
+        
+        # Create a numeric ID person to test numeric ID handling
+        numeric_person = Person(_id="42", name="NumericTest", age=35)
+        
+        # Look up by numeric and string ID
+        assert Person[42] == numeric_person
+        assert Person["42"] == numeric_person
+        
+        # Verify alias lookup still works
+        assert Person["NumericTest"] == numeric_person
 
     def test_instances_basic(self):
         """Test basic functionality of instances() method."""
