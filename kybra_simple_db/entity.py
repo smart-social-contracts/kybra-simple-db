@@ -93,6 +93,10 @@ class Entity:
         if self._id is None:
             self._id = str(int(db.load("_system", "%s_id" % type_name) or 0) + 1)
             db.save("_system", "%s_id" % type_name, str(int(self._id)))
+            # Increment the count when a new entity is created
+            count_key = f"{type_name}_count"
+            current_count = int(db.load("_system", count_key) or 0)
+            db.save("_system", count_key, str(current_count + 1))
         elif not self._loaded:
             if db.load(type_name, self._id) is not None:
                 raise ValueError(f"Entity {self._type}@{self._id} already exists")
@@ -226,55 +230,53 @@ class Entity:
             int: Total number of entities
         """
         type_name = cls.__name__
-        last_id = cls.db().load("_system", f"{type_name}_id")
-        return int(last_id) if last_id else 0
+        db = cls.db()
+        count_key = f"{type_name}_count"
+        count = db.load("_system", count_key)
+        return int(count) if count else 0
 
     @classmethod
-    def load_paginated(cls: Type[T], page: int = 0, page_size: int = 10) -> List[T]:
-        """Load a page of entities.
+    def load_paginated(
+        cls: Type[T],
+        from_id: int,
+        count: int = 10,
+    ) -> List[T]:
+        """Load entities with pagination.
 
         Args:
-            page: Page number (0-based)
-            page_size: Number of items per page
+            from_id (int): ID of the first entity to load
+            count (int): Number of entities to load
 
         Returns:
             List[T]: List of entities for the requested page
 
         Raises:
-            ValueError: If page number is negative or page size is not positive
-            IndexError: If the requested page is out of range
+            ValueError: If page or page_size is less than 1
         """
-        if page < 0:
-            raise ValueError("Page number must be non-negative")
-        if page_size <= 0:
-            raise ValueError("Page size must be positive")
+        if from_id < 1:
+            raise ValueError("from_id must be at least 1")
+        if count < 1:
+            raise ValueError("count must be at least 1")
 
-        # Calculate total pages
-        total_entities = cls.count()
-        total_pages = (total_entities + page_size - 1) // page_size  # Ceiling division
+        # Return the slice of entities for the requested page
+        ret = []
+        while len(ret) < count and from_id <= cls.count():
+            entity = cls.load(str(from_id))
+            if entity:
+                ret.append(entity)
+            from_id += 1
 
-        # Check if requested page is out of range
-        if page >= total_pages and total_entities > 0:
-            raise IndexError(f"Page {page} is out of range. Total pages: {total_pages}")
-
-        start = page * page_size + 1
-        end = min(start + page_size, total_entities)
-            
-        page_keys = range(start, end)
-        
-        # Load entities for this page
-        entities = []
-        for key in page_keys:
-            instance = cls.__class_getitem__(key)
-            if instance:
-                entities.append(instance)
-        
-        return entities
+        return ret
 
     def delete(self) -> None:
         logger.debug(f"Deleting entity {self._type}@{self._id}")
         """Delete this entity from the database."""
         self.db().delete(self._type, self._id)
+        # Decrement the count when an entity is deleted
+        type_name = self.__class__.__name__
+        count_key = f"{type_name}_count"
+        current_count = int(self.db().load("_system", count_key) or 0)
+        self.db().save("_system", count_key, str(current_count - 1))
 
         logger.debug(f"Deleted entity {self._type}@{self._id}")
 
