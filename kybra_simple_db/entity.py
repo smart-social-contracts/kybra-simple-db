@@ -218,6 +218,59 @@ class Entity:
 
         return instances
 
+    @classmethod
+    def count(cls: Type[T]) -> int:
+        """Get the total count of entities of this type.
+
+        Returns:
+            int: Total number of entities
+        """
+        type_name = cls.__name__
+        last_id = cls.db().load("_system", f"{type_name}_id")
+        return int(last_id) if last_id else 0
+
+    @classmethod
+    def load_paginated(cls: Type[T], page: int = 0, page_size: int = 10) -> List[T]:
+        """Load a page of entities.
+
+        Args:
+            page: Page number (0-based)
+            page_size: Number of items per page
+
+        Returns:
+            List[T]: List of entities for the requested page
+
+        Raises:
+            ValueError: If page number is negative or page size is not positive
+            IndexError: If the requested page is out of range
+        """
+        if page < 0:
+            raise ValueError("Page number must be non-negative")
+        if page_size <= 0:
+            raise ValueError("Page size must be positive")
+
+        # Calculate total pages
+        total_entities = cls.count()
+        total_pages = (total_entities + page_size - 1) // page_size  # Ceiling division
+
+        # Check if requested page is out of range
+        if page >= total_pages and total_entities > 0:
+            raise IndexError(f"Page {page} is out of range. Total pages: {total_pages}")
+
+        start = page * page_size + 1
+        end = min(start + page_size, total_entities)
+            
+        page_keys = range(start, end)
+        
+        # Load entities for this page
+        entities = []
+        for key in page_keys:
+            instance = cls.__class_getitem__(key)
+            if instance:
+                entities.append(instance)
+        
+        return entities
+
     def delete(self) -> None:
         logger.debug(f"Deleting entity {self._type}@{self._id}")
         """Delete this entity from the database."""
