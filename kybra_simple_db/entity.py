@@ -236,12 +236,12 @@ class Entity:
         return int(count) if count else 0
 
     @classmethod
-    def load_paginated(
+    def load_some(
         cls: Type[T],
         from_id: int,
         count: int = 10,
     ) -> List[T]:
-        """Load entities with pagination.
+        """Load some entities.
 
         Args:
             from_id (int): ID of the first entity to load

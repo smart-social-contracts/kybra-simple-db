@@ -227,71 +227,71 @@ class TestEntity:
         dog_b.delete()
         cat_c.delete()
 
-    def test_pagination_basic(self):
-        """Test basic pagination functionality."""
+    def test_load_some_basic(self):
+        """Test basic load_some functionality."""
         # Create 15 test entities
         for i in range(15):
             Person(name=f"Person{i}")
 
         # Test first page (entities 1-10)
-        first_page = Person.load_paginated(from_id=1, count=10)
+        first_page = Person.load_some(from_id=1, count=10)
         assert len(first_page) == 10
         assert first_page[0].name == "Person0"
         assert first_page[9].name == "Person9"
 
         # Test second page (entities 11-15)
-        second_page = Person.load_paginated(from_id=11, count=10)
+        second_page = Person.load_some(from_id=11, count=10)
         assert len(second_page) == 5
         assert second_page[0].name == "Person10"
         assert second_page[4].name == "Person14"
 
         # Test with different count
-        custom_page = Person.load_paginated(from_id=1, count=5)
+        custom_page = Person.load_some(from_id=1, count=5)
         assert len(custom_page) == 5
         assert custom_page[0].name == "Person0"
         assert custom_page[4].name == "Person4"
 
-    def test_pagination_edge_cases(self):
-        """Test edge cases in pagination."""
+    def test_load_some_edge_cases(self):
+        """Test edge cases in load_some."""
         # Create 5 test entities
         for i in range(5):
             Person(name=f"Person{i}")
 
         # Test loading from start
-        first_page = Person.load_paginated(from_id=1, count=10)
+        first_page = Person.load_some(from_id=1, count=10)
         assert len(first_page) == 5
         assert first_page[0].name == "Person0"
         assert first_page[4].name == "Person4"
 
         # Test loading from beyond last entity
-        empty_page = Person.load_paginated(from_id=6, count=10)
+        empty_page = Person.load_some(from_id=6, count=10)
         assert len(empty_page) == 0
 
-    def test_pagination_errors(self):
-        """Test pagination error handling."""
+    def test_load_some_errors(self):
+        """Test load_some error handling."""
         # Test negative from_id
         try:
-            Person.load_paginated(from_id=-1, count=10)
+            Person.load_some(from_id=-1, count=10)
             assert False, "Should have raised ValueError for negative from_id"
         except ValueError as e:
             assert str(e) == "from_id must be at least 1"
 
         # Test zero count
         try:
-            Person.load_paginated(from_id=1, count=0)
+            Person.load_some(from_id=1, count=0)
             assert False, "Should have raised ValueError for zero count"
         except ValueError as e:
             assert str(e) == "count must be at least 1"
 
         # Test negative count
         try:
-            Person.load_paginated(from_id=1, count=-1)
+            Person.load_some(from_id=1, count=-1)
             assert False, "Should have raised ValueError for negative count"
         except ValueError as e:
             assert str(e) == "count must be at least 1"
 
-    def test_pagination_with_deleted_entities(self):
-        """Test pagination with deleted entities."""
+    def test_load_some_with_deleted_entities(self):
+        """Test load_some with deleted entities."""
         # Create 10 test entities
         for i in range(10):
             Person(name=f"Person{i}")
@@ -301,14 +301,14 @@ class TestEntity:
         Person.__class_getitem__(6).delete()
 
         # Test loading from start (should skip deleted entities)
-        first_page = Person.load_paginated(from_id=1, count=10)
+        first_page = Person.load_some(from_id=1, count=10)
         assert len(first_page) == 6
         assert first_page[0].name == "Person0"
         print("first_page[5].name", first_page[5].name)
         assert first_page[5].name == "Person7"
 
         # Test loading from beyond last entity
-        empty_page = Person.load_paginated(from_id=11, count=10)
+        empty_page = Person.load_some(from_id=11, count=10)
         assert len(empty_page) == 0
 
     def test_count_method(self):
