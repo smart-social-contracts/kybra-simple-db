@@ -91,8 +91,13 @@ class Entity:
         db = self.__class__.db()
 
         if self._id is None:
-            self._id = str(int(db.load("_system", "_id") or 0) + 1)
-            db.save("_system", "_id", str(int(self._id)))
+            # Increment the ID when a new entity is created (never reuse or decrement)
+            self._id = str(int(db.load("_system", f"{type_name}_id") or 0) + 1)
+            db.save("_system", f"{type_name}_id", str(int(self._id)))
+            # Increment the count when a new entity is created and decrement when deleted
+            count_key = f"{type_name}_count"
+            current_count = int(db.load("_system", count_key) or 0)
+            db.save("_system", count_key, str(current_count + 1))
         elif not self._loaded:
             if db.load(type_name, self._id) is not None:
                 raise ValueError(f"Entity {self._type}@{self._id} already exists")
@@ -218,10 +223,79 @@ class Entity:
 
         return instances
 
+    @classmethod
+    def count(cls: Type[T]) -> int:
+        """Get the total count of entities of this type.
+
+        Returns:
+            int: Total number of entities
+        """
+        type_name = cls.__name__
+        db = cls.db()
+        count_key = f"{type_name}_count"
+        count = db.load("_system", count_key)
+        return int(count) if count else 0
+
+    @classmethod
+    def max_id(cls: Type[T]) -> int:
+        """Get the maximum ID assigned to entities of this type.
+
+        Returns:
+            int: Maximum entity ID
+        """
+        type_name = cls.__name__
+        db = cls.db()
+        max_id_key = f"{type_name}_id"
+        max_id = db.load("_system", max_id_key)
+        return int(max_id) if max_id else 0
+
+    @classmethod
+    def load_some(
+        cls: Type[T],
+        from_id: int,
+        count: int = 10,
+    ) -> List[T]:
+        """Load some entities.
+
+        Args:
+            from_id (int): ID of the first entity to load
+            count (int): Number of entities to load
+
+        Returns:
+            List[T]: List of entities for the requested page
+
+        Raises:
+            ValueError: If page or page_size is less than 1
+        """
+        if from_id < 1:
+            raise ValueError("from_id must be at least 1")
+        if count < 1:
+            raise ValueError("count must be at least 1")
+
+        # Return the slice of entities for the requested page
+        ret = []
+        while len(ret) < count and from_id <= cls.max_id():
+            entity = cls.load(str(from_id))
+            if entity:
+                ret.append(entity)
+            from_id += 1
+
+        return ret
+
     def delete(self) -> None:
         logger.debug(f"Deleting entity {self._type}@{self._id}")
         """Delete this entity from the database."""
         self.db().delete(self._type, self._id)
+        # Decrement the count when an entity is deleted
+        type_name = self.__class__.__name__
+        count_key = f"{type_name}_count"
+        current_count = int(self.db().load("_system", count_key) or 0)
+        if current_count > 0:
+            self.db().save("_system", count_key, str(current_count - 1))
+        else:
+            raise ValueError(
+                f"Entity count for {type_name} is already zero; cannot decrement further."
+            )
 
         logger.debug(f"Deleted entity {self._type}@{self._id}")
 
@@ -270,16 +344,33 @@ class Entity:
         return data
 
     @classmethod
-    def __class_getitem__(cls: Type[T], entity_id: str) -> Optional[T]:
+    def __class_getitem__(cls: Type[T], key: Any) -> Optional[T]:
         """Allow using class[id] syntax to load entities.
 
         Args:
-            id: ID of entity to load
+            key: ID of entity to load or value of aliased field
 
         Returns:
             Entity if found, None otherwise
         """
-        return cls.load(entity_id)
+        # First try as direct ID lookup (convert to string if numeric)
+        str_key = str(key) if isinstance(key, (int, float)) else key
+        entity = cls.load(str_key)
+        if entity:
+            return entity
+
+        # If entity not found by ID and class has __alias__ defined, try by alias
+        if hasattr(cls, "__alias__") and cls.__alias__:
+            alias_field = cls.__alias__
+            # Find entities where the aliased field matches the key
+            for instance in cls.instances():
+                if (
+                    hasattr(instance, alias_field)
+                    and getattr(instance, alias_field) == key
+                ):
+                    return instance
+
+        return None
 
     def __eq__(self, other: object) -> bool:
         """Compare entities based on type and ID.

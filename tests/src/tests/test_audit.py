@@ -15,7 +15,8 @@ class TestAudit:
 
     def tearDown(self):
         """Clean up after each test by resetting the database singleton."""
-        Database._instance = None
+        self.db.clear()  # Clear the database first
+        Database._instance = None  # Then reset the singleton
 
     def test_audit_initialization(self):
         """Test if the audit database is initialized correctly."""
