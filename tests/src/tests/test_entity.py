@@ -297,8 +297,8 @@ class TestEntity:
             Person(name=f"Person{i}")
 
         # Delete entities 5 and 6
-        Person.__class_getitem__(5).delete()
-        Person.__class_getitem__(6).delete()
+        Person[5].delete()
+        Person[6].delete()
 
         # Test loading from start (should skip deleted entities)
         first_page = Person.load_some(from_id=1, count=10)
