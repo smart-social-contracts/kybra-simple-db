@@ -46,6 +46,7 @@ from kybra_simple_db import (
 )
 
 class Person(Entity, TimestampedMixin):
+    __alias__ = "name"  # Use `name` as the alias field for lookup by `name`
     name = String(min_length=2, max_length=50)
     age = Integer(min_value=0, max_value=120)
     friends = ManyToMany("Person", "friends")
@@ -64,8 +65,8 @@ Then use the defined entities to store objects:
     john.age = 33  # Type checking and validation happens automatically
 
     # use the `_id` property to load an entity with the [] operator
-    Person(_id="peter", name="Peter")
-    peter = Person["peter"]
+    Person(name="Peter")
+    peter = Person["Peter"]
 
     # Delete an object
     peter.delete()
@@ -95,6 +96,14 @@ Then use the defined entities to store objects:
     'updater': 'system'}
 
     '''
+
+    assert Person.count() == 3
+    assert Person.max_id() == 4
+    assert Person.instances() == [john, alice, eva]
+
+    # Cursor-based pagination
+    assert Person.load_some(0, 2) == [john, alice]
+    assert Person.load_some(2, 2) == [eva]
 
     # Retrieve database contents in JSON format
     print(Database.get_instance().dump_json(pretty=True))
