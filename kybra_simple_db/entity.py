@@ -290,7 +290,10 @@ class Entity:
         type_name = self.__class__.__name__
         count_key = f"{type_name}_count"
         current_count = int(self.db().load("_system", count_key) or 0)
-        self.db().save("_system", count_key, str(current_count - 1))
+        if current_count > 0:
+            self.db().save("_system", count_key, str(current_count - 1))
+        else:
+            raise ValueError(f"Entity count for {type_name} is already zero; cannot decrement further.")
 
         logger.debug(f"Deleted entity {self._type}@{self._id}")
 
