@@ -235,11 +235,11 @@ class Entity:
         count_key = f"{type_name}_count"
         count = db.load("_system", count_key)
         return int(count) if count else 0
-        
+
     @classmethod
     def max_id(cls: Type[T]) -> int:
         """Get the maximum ID assigned to entities of this type.
-        
+
         Returns:
             int: Maximum entity ID
         """
@@ -293,7 +293,9 @@ class Entity:
         if current_count > 0:
             self.db().save("_system", count_key, str(current_count - 1))
         else:
-            raise ValueError(f"Entity count for {type_name} is already zero; cannot decrement further.")
+            raise ValueError(
+                f"Entity count for {type_name} is already zero; cannot decrement further."
+            )
 
         logger.debug(f"Deleted entity {self._type}@{self._id}")
 
