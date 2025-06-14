@@ -302,9 +302,8 @@ class TestEntity:
 
         # Test loading from start (should skip deleted entities)
         first_page = Person.load_some(from_id=1, count=10)
-        assert len(first_page) == 6
+        assert len(first_page) == 8
         assert first_page[0].name == "Person0"
-        print("first_page[5].name", first_page[5].name)
         assert first_page[5].name == "Person7"
 
         # Test loading from beyond last entity

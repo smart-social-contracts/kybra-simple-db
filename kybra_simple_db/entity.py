@@ -91,9 +91,10 @@ class Entity:
         db = self.__class__.db()
 
         if self._id is None:
+            # Increment the ID when a new entity is created (never reuse or decrement)
             self._id = str(int(db.load("_system", "%s_id" % type_name) or 0) + 1)
             db.save("_system", "%s_id" % type_name, str(int(self._id)))
-            # Increment the count when a new entity is created
+            # Increment the count when a new entity is created and decrement when deleted
             count_key = f"{type_name}_count"
             current_count = int(db.load("_system", count_key) or 0)
             db.save("_system", count_key, str(current_count + 1))
@@ -234,6 +235,19 @@ class Entity:
         count_key = f"{type_name}_count"
         count = db.load("_system", count_key)
         return int(count) if count else 0
+        
+    @classmethod
+    def max_id(cls: Type[T]) -> int:
+        """Get the maximum ID assigned to entities of this type.
+        
+        Returns:
+            int: Maximum entity ID
+        """
+        type_name = cls.__name__
+        db = cls.db()
+        max_id_key = f"{type_name}_id"
+        max_id = db.load("_system", max_id_key)
+        return int(max_id) if max_id else 0
 
     @classmethod
     def load_some(
@@ -260,7 +274,7 @@ class Entity:
 
         # Return the slice of entities for the requested page
         ret = []
-        while len(ret) < count and from_id <= cls.count():
+        while len(ret) < count and from_id <= cls.max_id():
             entity = cls.load(str(from_id))
             if entity:
                 ret.append(entity)
