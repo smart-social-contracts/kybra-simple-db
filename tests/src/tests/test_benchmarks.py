@@ -3,7 +3,14 @@
 import statistics
 import time
 
-from kybra import ic  # noqa: E402
+try:
+    from kybra import ic
+except ImportError:
+    class MockIC:
+        def print(self, *args, **kwargs):
+            print(*args, **kwargs)
+    ic = MockIC()
+
 from performance_utils import PerformanceTracker  # noqa: E402
 from tester import Tester  # noqa: E402
 
