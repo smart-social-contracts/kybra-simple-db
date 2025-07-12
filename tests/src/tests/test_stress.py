@@ -2,7 +2,8 @@
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from performance_utils import PerformanceTracker
 from tester import Tester
@@ -13,25 +14,28 @@ MEDIUM_BATCH_SIZE = 10000
 LARGE_BATCH_SIZE = 50000
 STRESS_BATCH_SIZE = 100000
 
+
 class StressTestEntity(Entity):
     """Test entity for stress testing."""
-    
+
     def __init__(self, name: str, value: int = 0, **kwargs):
         super().__init__(**kwargs)
         self.name = name
         self.value = value
-    
+
     name = String(min_length=1, max_length=100)
     value = Integer()
 
+
 class RelatedEntity(Entity):
     """Related entity for relationship stress testing."""
-    
+
     def __init__(self, category: str, **kwargs):
         super().__init__(**kwargs)
         self.category = category
-    
+
     category = String(min_length=1, max_length=50)
+
 
 class TestStress:
     def setUp(self):
@@ -41,7 +45,7 @@ class TestStress:
 
     def tearDown(self):
         """Clean up after each test."""
-        if hasattr(self, 'tracker'):
+        if hasattr(self, "tracker"):
             self.tracker.print_metrics()
 
     def test_bulk_insertion_small(self):
@@ -67,7 +71,7 @@ class TestStress:
             for i in range(count):
                 entity = StressTestEntity(name=f"Entity_{i}", value=i)
                 entities.append(entity)
-        
+
         assert StressTestEntity.count() == count
         print(f"Successfully inserted {count} entities")
 
@@ -77,16 +81,16 @@ class TestStress:
         with self.tracker.track_operation("Setup - Bulk Insert"):
             for i in range(insert_count):
                 StressTestEntity(name=f"Entity_{i}", value=i % 1000)
-        
+
         with self.tracker.track_operation("Query - Count"):
             count = StressTestEntity.count()
             assert count == insert_count
-        
+
         with self.tracker.track_operation("Query - Load by ID"):
-            for i in [1, insert_count//4, insert_count//2, insert_count-1]:
+            for i in [1, insert_count // 4, insert_count // 2, insert_count - 1]:
                 entity = StressTestEntity.load(str(i))
                 assert entity is not None
-        
+
         with self.tracker.track_operation("Query - Pagination"):
             page_size = 100
             total_loaded = 0
@@ -97,33 +101,35 @@ class TestStress:
                 from_id += page_size
                 if len(page) < page_size:
                     break
-            
+
             print(f"Loaded {total_loaded} entities through pagination")
 
     def test_relationship_stress(self):
         """Test relationship performance under stress."""
         main_count = 1000
         related_count = 100
-        
+
         with self.tracker.track_operation("Create Main Entities"):
             main_entities = []
             for i in range(main_count):
                 entity = StressTestEntity(name=f"Main_{i}", value=i)
                 main_entities.append(entity)
-        
+
         with self.tracker.track_operation("Create Related Entities"):
             related_entities = []
             for i in range(related_count):
                 entity = RelatedEntity(category=f"Category_{i}")
                 related_entities.append(entity)
-        
+
         with self.tracker.track_operation("Create Relationships"):
             for i, main_entity in enumerate(main_entities):
                 for j in range(5):
                     related_idx = (i * 7 + j) % related_count
                     related_entity = related_entities[related_idx]
-                    main_entity.add_relation("related_to", "main_entities", related_entity)
-        
+                    main_entity.add_relation(
+                        "related_to", "main_entities", related_entity
+                    )
+
         with self.tracker.track_operation("Query Relationships"):
             sample_entity = main_entities[0]
             relations = sample_entity.get_relations("related_to")
@@ -132,17 +138,17 @@ class TestStress:
     def test_memory_growth_pattern(self):
         """Test memory growth pattern with increasing data."""
         batch_sizes = [1000, 5000, 10000, 20000]
-        
+
         for batch_size in batch_sizes:
             Database.get_instance().clear()
-            
+
             with self.tracker.track_operation(f"Memory Test - {batch_size} entities"):
                 for i in range(batch_size):
                     StressTestEntity(name=f"Entity_{i}", value=i)
-                
+
                 count = StressTestEntity.count()
                 assert count == batch_size
-                
+
                 for i in range(0, min(100, batch_size), 10):
                     entity = StressTestEntity.load(str(i + 1))
                     assert entity is not None
@@ -155,21 +161,23 @@ class TestStress:
             for i in range(create_count):
                 entity = StressTestEntity(name=f"ToDelete_{i}", value=i)
                 entities.append(entity)
-        
+
         with self.tracker.track_operation("Bulk Deletion"):
             deleted_count = 0
             for i in range(0, len(entities), 2):
                 entities[i].delete()
                 deleted_count += 1
-        
+
         remaining_count = StressTestEntity.count()
         expected_remaining = create_count - deleted_count
         assert remaining_count == expected_remaining
         print(f"Deleted {deleted_count} entities, {remaining_count} remaining")
 
+
 def run():
     tester = Tester(TestStress)
     return tester.run_tests()
+
 
 if __name__ == "__main__":
     exit(run())
