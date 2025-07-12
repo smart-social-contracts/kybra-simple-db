@@ -8,6 +8,11 @@ pip install -r requirements.txt
 # Define a list of test identifiers
 TEST_IDS=('example_1' 'example_2' 'entity' 'mixins' 'properties' 'relationships' 'database' 'audit' 'stress' 'benchmarks')
 
+if [ $# -gt 0 ]; then
+  TEST_IDS=("$@")
+  echo "Running specific tests: ${TEST_IDS[@]}"
+fi
+
 # Loop through each test identifier
 for TEST_ID in "${TEST_IDS[@]}"; do
   echo "Testing test_${TEST_ID} module..."
