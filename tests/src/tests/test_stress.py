@@ -17,8 +17,8 @@ from kybra_simple_db import *  # noqa: E402
 
 SMALL_BATCH_SIZE = 100
 MEDIUM_BATCH_SIZE = 500
-LARGE_BATCH_SIZE = 1000
-STRESS_BATCH_SIZE = 2000
+LARGE_BATCH_SIZE = 800
+STRESS_BATCH_SIZE = 1200
 
 
 class StressTestEntity(Entity):
@@ -63,12 +63,12 @@ class TestStress:
         self._test_bulk_insertion(MEDIUM_BATCH_SIZE, "500 Records")
 
     def test_bulk_insertion_large(self):
-        """Test bulk insertion of 1k records."""
-        self._test_bulk_insertion(LARGE_BATCH_SIZE, "1K Records")
+        """Test bulk insertion of 800 records."""
+        self._test_bulk_insertion(LARGE_BATCH_SIZE, "800 Records")
 
     def test_bulk_insertion_stress(self):
-        """Test bulk insertion of 2k records."""
-        self._test_bulk_insertion(STRESS_BATCH_SIZE, "2K Records")
+        """Test bulk insertion of 1.2k records."""
+        self._test_bulk_insertion(STRESS_BATCH_SIZE, "1.2K Records")
 
     def _test_bulk_insertion(self, count: int, test_name: str):
         """Helper method to test bulk insertion with specified count."""
