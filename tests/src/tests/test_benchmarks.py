@@ -1,11 +1,7 @@
 """Benchmark tests for kybra-simple-db performance analysis."""
 
-import os
 import statistics
-import sys
 import time
-
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from kybra import ic  # noqa: E402
 from performance_utils import PerformanceTracker  # noqa: E402

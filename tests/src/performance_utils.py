@@ -37,5 +37,7 @@ class PerformanceTracker:
         ic.print("=" * 60)
         for operation, metrics in self.metrics.items():
             ic.print(f"{operation}:")
-            ic.print(f"  Execution Time: {metrics['execution_time_seconds']:.3f} seconds")
+            ic.print(
+                f"  Execution Time: {metrics['execution_time_seconds']:.3f} seconds"
+            )
         ic.print("=" * 60)

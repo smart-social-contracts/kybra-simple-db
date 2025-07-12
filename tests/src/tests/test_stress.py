@@ -1,9 +1,5 @@
 """Stress tests for kybra-simple-db to test performance under high load."""
 
-import os
-import sys
-
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from kybra import ic  # noqa: E402
 from performance_utils import PerformanceTracker  # noqa: E402
