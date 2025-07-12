@@ -7,9 +7,9 @@ import statistics
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from performance_utils import PerformanceTracker
-from tester import Tester
-from kybra_simple_db import *
+from performance_utils import PerformanceTracker  # noqa: E402
+from tester import Tester  # noqa: E402
+from kybra_simple_db import *  # noqa: E402
 
 
 class BenchmarkEntity(Entity):
