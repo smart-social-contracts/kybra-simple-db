@@ -2,8 +2,6 @@ name: Stress Tests and Benchmarks
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 2 * * 0'
 
 jobs:
   stress-test:
@@ -30,11 +28,3 @@ jobs:
     - name: Run IC stress tests and benchmarks
       run: |
         cd tests && chmod +x run_test_ic_stress.sh && ./run_test_ic_stress.sh
-        
-    - name: Upload performance results
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: performance-results
-        path: tests/performance_*.log
-        retention-days: 30
