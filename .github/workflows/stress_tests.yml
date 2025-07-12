@@ -27,9 +27,9 @@ jobs:
         pip install -r requirements-dev.txt
         pip install .
         
-    - name: Run stress tests and benchmarks
+    - name: Run IC stress tests and benchmarks
       run: |
-        cd tests && chmod +x run_stress_tests.sh && ./run_stress_tests.sh
+        cd tests && chmod +x run_test_ic_stress.sh && ./run_test_ic_stress.sh
         
     - name: Upload performance results
       if: always()

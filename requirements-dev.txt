@@ -5,4 +5,3 @@ isort>=5.0.0
 mypy>=1.0.0
 flake8>=6.0.0
 bumpversion>=0.5.3
-psutil>=5.9.0

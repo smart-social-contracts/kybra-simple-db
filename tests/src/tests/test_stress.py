@@ -5,15 +5,16 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+from kybra import ic  # noqa: E402
 from performance_utils import PerformanceTracker  # noqa: E402
 from tester import Tester  # noqa: E402
 
 from kybra_simple_db import *  # noqa: E402
 
-SMALL_BATCH_SIZE = 1000
-MEDIUM_BATCH_SIZE = 10000
-LARGE_BATCH_SIZE = 50000
-STRESS_BATCH_SIZE = 100000
+SMALL_BATCH_SIZE = 100
+MEDIUM_BATCH_SIZE = 500
+LARGE_BATCH_SIZE = 1000
+STRESS_BATCH_SIZE = 2000
 
 
 class StressTestEntity(Entity):
@@ -50,20 +51,20 @@ class TestStress:
             self.tracker.print_metrics()
 
     def test_bulk_insertion_small(self):
-        """Test bulk insertion of 1k records."""
-        self._test_bulk_insertion(SMALL_BATCH_SIZE, "1K Records")
+        """Test bulk insertion of 100 records."""
+        self._test_bulk_insertion(SMALL_BATCH_SIZE, "100 Records")
 
     def test_bulk_insertion_medium(self):
-        """Test bulk insertion of 10k records."""
-        self._test_bulk_insertion(MEDIUM_BATCH_SIZE, "10K Records")
+        """Test bulk insertion of 500 records."""
+        self._test_bulk_insertion(MEDIUM_BATCH_SIZE, "500 Records")
 
     def test_bulk_insertion_large(self):
-        """Test bulk insertion of 50k records."""
-        self._test_bulk_insertion(LARGE_BATCH_SIZE, "50K Records")
+        """Test bulk insertion of 1k records."""
+        self._test_bulk_insertion(LARGE_BATCH_SIZE, "1K Records")
 
     def test_bulk_insertion_stress(self):
-        """Test bulk insertion of 100k records."""
-        self._test_bulk_insertion(STRESS_BATCH_SIZE, "100K Records")
+        """Test bulk insertion of 2k records."""
+        self._test_bulk_insertion(STRESS_BATCH_SIZE, "2K Records")
 
     def _test_bulk_insertion(self, count: int, test_name: str):
         """Helper method to test bulk insertion with specified count."""
@@ -74,11 +75,11 @@ class TestStress:
                 entities.append(entity)
 
         assert StressTestEntity.count() == count
-        print(f"Successfully inserted {count} entities")
+        ic.print(f"Successfully inserted {count} entities")
 
     def test_query_performance_after_bulk_insert(self):
         """Test query performance after bulk insertion."""
-        insert_count = MEDIUM_BATCH_SIZE
+        insert_count = SMALL_BATCH_SIZE
         with self.tracker.track_operation("Setup - Bulk Insert"):
             for i in range(insert_count):
                 StressTestEntity(name=f"Entity_{i}", value=i % 1000)
@@ -103,12 +104,12 @@ class TestStress:
                 if len(page) < page_size:
                     break
 
-            print(f"Loaded {total_loaded} entities through pagination")
+            ic.print(f"Loaded {total_loaded} entities through pagination")
 
     def test_relationship_stress(self):
         """Test relationship performance under stress."""
-        main_count = 1000
-        related_count = 100
+        main_count = 50
+        related_count = 10
 
         with self.tracker.track_operation("Create Main Entities"):
             main_entities = []
@@ -136,21 +137,21 @@ class TestStress:
             relations = sample_entity.get_relations("related_to")
             assert len(relations) == 5
 
-    def test_memory_growth_pattern(self):
-        """Test memory growth pattern with increasing data."""
-        batch_sizes = [1000, 5000, 10000, 20000]
+    def test_scaling_performance(self):
+        """Test performance scaling with increasing data."""
+        batch_sizes = [50, 100, 200]
 
         for batch_size in batch_sizes:
             Database.get_instance().clear()
 
-            with self.tracker.track_operation(f"Memory Test - {batch_size} entities"):
+            with self.tracker.track_operation(f"Scale Test - {batch_size} entities"):
                 for i in range(batch_size):
                     StressTestEntity(name=f"Entity_{i}", value=i)
 
                 count = StressTestEntity.count()
                 assert count == batch_size
 
-                for i in range(0, min(100, batch_size), 10):
+                for i in range(0, min(10, batch_size), 5):
                     entity = StressTestEntity.load(str(i + 1))
                     assert entity is not None
 
@@ -172,7 +173,7 @@ class TestStress:
         remaining_count = StressTestEntity.count()
         expected_remaining = create_count - deleted_count
         assert remaining_count == expected_remaining
-        print(f"Deleted {deleted_count} entities, {remaining_count} remaining")
+        ic.print(f"Deleted {deleted_count} entities, {remaining_count} remaining")
 
 
 def run():

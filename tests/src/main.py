@@ -3,6 +3,7 @@ from kybra import StableBTreeMap, ic, query, update
 from kybra_simple_db import *
 from tests import (
     test_audit,
+    test_benchmarks,
     test_database,
     test_entity,
     test_example_1,
@@ -10,6 +11,7 @@ from tests import (
     test_mixins,
     test_properties,
     test_relationships,
+    test_stress,
     test_upgrade_after,
     test_upgrade_before,
 )

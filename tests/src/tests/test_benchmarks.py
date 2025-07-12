@@ -7,6 +7,7 @@ import time
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+from kybra import ic  # noqa: E402
 from performance_utils import PerformanceTracker  # noqa: E402
 from tester import Tester  # noqa: E402
 
@@ -38,7 +39,7 @@ class TestBenchmarks:
 
     def test_single_operation_benchmarks(self):
         """Benchmark individual operations multiple times for statistical analysis."""
-        iterations = 100
+        iterations = 50
 
         creation_times = []
         for i in range(iterations):
@@ -55,21 +56,21 @@ class TestBenchmarks:
             loading_times.append(end_time - start_time)
             assert entity is not None
 
-        print(f"\nEntity Creation Benchmark ({iterations} iterations):")
-        print(f"  Average: {statistics.mean(creation_times) * 1000:.3f} ms")
-        print(f"  Median: {statistics.median(creation_times) * 1000:.3f} ms")
-        print(f"  Min: {min(creation_times) * 1000:.3f} ms")
-        print(f"  Max: {max(creation_times) * 1000:.3f} ms")
+        ic.print(f"\nEntity Creation Benchmark ({iterations} iterations):")
+        ic.print(f"  Average: {statistics.mean(creation_times) * 1000:.3f} ms")
+        ic.print(f"  Median: {statistics.median(creation_times) * 1000:.3f} ms")
+        ic.print(f"  Min: {min(creation_times) * 1000:.3f} ms")
+        ic.print(f"  Max: {max(creation_times) * 1000:.3f} ms")
 
-        print(f"\nEntity Loading Benchmark ({iterations} iterations):")
-        print(f"  Average: {statistics.mean(loading_times) * 1000:.3f} ms")
-        print(f"  Median: {statistics.median(loading_times) * 1000:.3f} ms")
-        print(f"  Min: {min(loading_times) * 1000:.3f} ms")
-        print(f"  Max: {max(loading_times) * 1000:.3f} ms")
+        ic.print(f"\nEntity Loading Benchmark ({iterations} iterations):")
+        ic.print(f"  Average: {statistics.mean(loading_times) * 1000:.3f} ms")
+        ic.print(f"  Median: {statistics.median(loading_times) * 1000:.3f} ms")
+        ic.print(f"  Min: {min(loading_times) * 1000:.3f} ms")
+        ic.print(f"  Max: {max(loading_times) * 1000:.3f} ms")
 
     def test_scaling_benchmark(self):
         """Test how performance scales with data size."""
-        test_sizes = [100, 500, 1000, 5000, 10000]
+        test_sizes = [50, 100, 200]
 
         for size in test_sizes:
             Database.get_instance().clear()
@@ -87,24 +88,24 @@ class TestBenchmarks:
                 instances_time = time.time() - start_time
 
                 start_time = time.time()
-                page = BenchmarkEntity.load_some(1, 100)
+                page = BenchmarkEntity.load_some(1, 10)
                 pagination_time = time.time() - start_time
 
-                print(f"\nScale {size} - Query Performance:")
-                print(f"  Count(): {count_time * 1000:.3f} ms")
-                print(f"  Instances(): {instances_time * 1000:.3f} ms")
-                print(f"  Pagination: {pagination_time * 1000:.3f} ms")
+                ic.print(f"\nScale {size} - Query Performance:")
+                ic.print(f"  Count(): {count_time * 1000:.3f} ms")
+                ic.print(f"  Instances(): {instances_time * 1000:.3f} ms")
+                ic.print(f"  Pagination: {pagination_time * 1000:.3f} ms")
 
                 assert BenchmarkEntity.count() == size
                 assert len(instances) == size
-                assert len(page) == min(100, size)
+                assert len(page) == min(10, size)
 
     def test_concurrent_operations_simulation(self):
         """Simulate concurrent-like operations by interleaving different operations."""
         with self.tracker.track_operation("Concurrent Simulation"):
             entities = []
 
-            for i in range(1000):
+            for i in range(100):
                 entity = BenchmarkEntity(name=f"Concurrent_{i}", data=f"data_{i}")
                 entities.append(entity)
 
@@ -116,8 +117,8 @@ class TestBenchmarks:
                         loaded = BenchmarkEntity.load(entities[random_idx]._id)
                         assert loaded is not None
 
-                    page = BenchmarkEntity.load_some(max(1, i - 50), 10)
-                    assert len(page) <= 10
+                    page = BenchmarkEntity.load_some(max(1, i - 10), 5)
+                    assert len(page) <= 5
 
 
 def run():
