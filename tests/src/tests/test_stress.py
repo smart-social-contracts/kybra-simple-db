@@ -57,9 +57,8 @@ class TestStress:
     def test_bulk_insertion_and_load_small(self):
         """Test bulk insertion of 100 records."""
         self._test_bulk_insertion(SMALL_BATCH_SIZE, "100 Records")
-        entity = StressTestEntity[int(SMALL_BATCH_SIZE/2)]
+        entity = StressTestEntity[int(SMALL_BATCH_SIZE / 2)]
         assert entity is not None
-        
 
     # def test_bulk_insertion_medium(self):
     #     """Test bulk insertion of 500 records."""
