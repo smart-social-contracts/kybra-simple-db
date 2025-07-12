@@ -1,8 +1,9 @@
-import time
-import psutil
 import os
-from typing import Dict, Any, Callable
+import time
 from contextlib import contextmanager
+from typing import Any, Callable, Dict
+
+import psutil
 
 
 class PerformanceTracker:
