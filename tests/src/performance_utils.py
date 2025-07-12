@@ -6,9 +6,11 @@ from typing import Any, Dict
 try:
     from kybra import ic
 except ImportError:
+
     class MockIC:
         def print(self, *args, **kwargs):
             print(*args, **kwargs)
+
     ic = MockIC()
 
 
