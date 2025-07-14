@@ -1,20 +1,20 @@
 """Stress tests for querying and loading operations in kybra-simple-db."""
 
 from .stress_test_base import (
-    ic, 
-    StressTestBase, 
-    StressTestEntity, 
+    LARGE_BATCH_SIZE,
+    MEDIUM_BATCH_SIZE,
+    SMALL_BATCH_SIZE,
     RelatedEntity,
-    SMALL_BATCH_SIZE, 
-    MEDIUM_BATCH_SIZE, 
-    LARGE_BATCH_SIZE, 
-    Tester
+    StressTestBase,
+    StressTestEntity,
+    Tester,
+    ic,
 )
 
 
 class TestStressBulkLoad(StressTestBase):
     """Test class for bulk loading and querying performance."""
-    
+
     def test_query_performance_after_bulk_insert(self):
         entities = StressTestEntity.instances()
         len_entities = len(entities)
@@ -25,11 +25,12 @@ class TestStressBulkLoad(StressTestBase):
         entity = StressTestEntity[id]
         ic.print("Id lookup: entity = %s" % entity.to_dict())
         assert entity is not None
-        name = 'Entity_%s' % id
+        name = "Entity_%s" % id
         ic.print("Name lookup: name = %s" % name)
         entity = StressTestEntity[name]
         ic.print("Name lookup: entity = %s" % entity.to_dict())
         assert entity is not None
+
 
 def run():
     tester = Tester(TestStressBulkLoad)

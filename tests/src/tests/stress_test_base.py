@@ -34,7 +34,7 @@ class RelatedEntity(Entity):
 
 class StressTestBase:
     """Base class for all stress tests with common setup and teardown."""
-    
+
     def setUp(self):
         """Reset database before each test."""
         self.tracker = PerformanceTracker()

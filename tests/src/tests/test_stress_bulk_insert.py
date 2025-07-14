@@ -16,14 +16,14 @@ from tester import Tester  # noqa: E402
 from kybra_simple_db import *  # noqa: E402
 
 from .stress_test_base import (
-    ic, 
-    StressTestBase, 
-    StressTestEntity, 
+    LARGE_BATCH_SIZE,
+    MEDIUM_BATCH_SIZE,
+    SMALL_BATCH_SIZE,
     RelatedEntity,
-    SMALL_BATCH_SIZE, 
-    MEDIUM_BATCH_SIZE, 
-    LARGE_BATCH_SIZE, 
-    Tester
+    StressTestBase,
+    StressTestEntity,
+    Tester,
+    ic,
 )
 
 
@@ -41,7 +41,6 @@ class TestStress:
     def test_bulk_insertion_and_load_small(self):
         """Test bulk insertion of 100 records."""
         self._test_bulk_insertion(SMALL_BATCH_SIZE, "100 Records")
-
 
     # def test_bulk_insertion_medium(self):
     #     """Test bulk insertion of 500 records."""
@@ -67,9 +66,13 @@ class TestStress:
 
         actual_count = StressTestEntity.count() - actual_count
         if actual_count == count:
-            ic.print(f"Successfully inserted {count} entities. Total entities = {actual_count}")
+            ic.print(
+                f"Successfully inserted {count} entities. Total entities = {actual_count}"
+            )
         else:
-            raise Exception('Expected %d entities inserted, instead got %d' % (count, actual_count))
+            raise Exception(
+                "Expected %d entities inserted, instead got %d" % (count, actual_count)
+            )
 
     # def test_query_performance_after_bulk_insert(self):
     #     """Test query performance after bulk insertion."""

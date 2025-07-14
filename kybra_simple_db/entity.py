@@ -309,7 +309,10 @@ class Entity:
             alias_field = self.__class__.__alias__
             if hasattr(self, alias_field):
                 alias_value = getattr(self, alias_field)
-                if alias_value is not None and alias_value in self.__class__._alias_mappings:
+                if (
+                    alias_value is not None
+                    and alias_value in self.__class__._alias_mappings
+                ):
                     del self.__class__._alias_mappings[alias_value]
 
         logger.debug(f"Deleted entity {self._type}@{self._id}")
