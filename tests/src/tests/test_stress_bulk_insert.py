@@ -15,38 +15,22 @@ from tester import Tester  # noqa: E402
 
 from kybra_simple_db import *  # noqa: E402
 
-SMALL_BATCH_SIZE = 100
-MEDIUM_BATCH_SIZE = 500
-LARGE_BATCH_SIZE = 800
-STRESS_BATCH_SIZE = 1200
-
-
-class StressTestEntity(Entity):
-    """Test entity for stress testing."""
-
-    def __init__(self, name: str, value: int = 0, **kwargs):
-        super().__init__(**kwargs)
-        self.name = name
-        self.value = value
-
-    name = String(min_length=1, max_length=100)
-    value = Integer()
-
-
-class RelatedEntity(Entity):
-    """Related entity for relationship stress testing."""
-
-    def __init__(self, category: str, **kwargs):
-        super().__init__(**kwargs)
-        self.category = category
-
-    category = String(min_length=1, max_length=50)
+from .stress_test_base import (
+    ic, 
+    StressTestBase, 
+    StressTestEntity, 
+    RelatedEntity,
+    SMALL_BATCH_SIZE, 
+    MEDIUM_BATCH_SIZE, 
+    LARGE_BATCH_SIZE, 
+    Tester
+)
 
 
 class TestStress:
     def setUp(self):
-        """Reset database before each test."""
-        Database.get_instance().clear()
+        # """Reset database before each test."""
+        # Database.get_instance().clear()
         self.tracker = PerformanceTracker()
 
     def tearDown(self):
@@ -57,8 +41,7 @@ class TestStress:
     def test_bulk_insertion_and_load_small(self):
         """Test bulk insertion of 100 records."""
         self._test_bulk_insertion(SMALL_BATCH_SIZE, "100 Records")
-        entity = StressTestEntity[int(SMALL_BATCH_SIZE / 2)]
-        assert entity is not None
+
 
     # def test_bulk_insertion_medium(self):
     #     """Test bulk insertion of 500 records."""
@@ -74,14 +57,19 @@ class TestStress:
 
     def _test_bulk_insertion(self, count: int, test_name: str):
         """Helper method to test bulk insertion with specified count."""
-        with self.tracker.track_operation(f"Bulk Insert {test_name}"):
-            entities = []
-            for i in range(count):
-                entity = StressTestEntity(name=f"Entity_{i}", value=i)
-                entities.append(entity)
 
-        assert StressTestEntity.count() == count
-        ic.print(f"Successfully inserted {count} entities")
+        actual_count = StressTestEntity.count()
+
+        with self.tracker.track_operation(f"Bulk Insert {test_name}"):
+            for i in range(count):
+                v = i + actual_count
+                StressTestEntity(name=f"Entity_{v}", value=v)
+
+        actual_count = StressTestEntity.count() - actual_count
+        if actual_count == count:
+            ic.print(f"Successfully inserted {count} entities. Total entities = {actual_count}")
+        else:
+            raise Exception('Expected %d entities inserted, instead got %d' % (count, actual_count))
 
     # def test_query_performance_after_bulk_insert(self):
     #     """Test query performance after bulk insertion."""

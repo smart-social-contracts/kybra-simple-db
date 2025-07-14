@@ -10,8 +10,9 @@ docker run --rm \
     -v "${PWD}/../kybra_simple_db:/app/src/kybra_simple_db" \
     -v "${PWD}/dfx.json:/app/dfx.json" \
     -v "${PWD}/../requirements.txt:/app/requirements.txt" \
-    -v "${PWD}/entrypoint_stress.sh:/app/entrypoint.sh" \
-    --entrypoint "/app/entrypoint.sh" \
+    -v "${PWD}/entrypoint_stress.sh:/app/entrypoint_stress.sh" \
+    -v "${PWD}/entrypoint_stress.py:/app/entrypoint_stress.py" \
+    --entrypoint "/app/entrypoint_stress.sh" \
     $IMAGE_ADDRESS stress || {
     echo "❌ IC stress tests failed"
     exit 1

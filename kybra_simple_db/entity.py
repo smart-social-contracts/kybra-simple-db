@@ -363,7 +363,7 @@ class Entity:
         if hasattr(cls, "__alias__") and cls.__alias__:
             alias_field = cls.__alias__
             # Find entities where the aliased field matches the key
-            for instance in cls.instances():
+            for instance in cls.instances():  # TODO: this very slow and inneficient
                 if (
                     hasattr(instance, alias_field)
                     and getattr(instance, alias_field) == key
