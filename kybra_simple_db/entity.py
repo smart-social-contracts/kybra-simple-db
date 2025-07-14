@@ -27,6 +27,7 @@ class Entity:
     _entity_type = None  # To be defined in subclasses
     _context: Set["Entity"] = set()  # Set of entities in current context
     _do_not_save = False
+    _alias_mappings = {}  # Class-level attribute for alias mappings
 
     def __init__(self, **kwargs):
         """Initialize a new entity.
@@ -125,6 +126,12 @@ class Entity:
             logger.debug(f"Saving entity {self._type}@{self._id} to database")
             db = self.db()
             db.save(self._type, self._id, data)
+            if hasattr(self.__class__, "__alias__") and self.__class__.__alias__:
+                alias_field = self.__class__.__alias__
+                if hasattr(self, alias_field):
+                    alias_value = getattr(self, alias_field)
+                    if alias_value is not None:
+                        self.__class__._alias_mappings[alias_value] = self._id
             self._loaded = True
 
         return self
@@ -297,6 +304,14 @@ class Entity:
                 f"Entity count for {type_name} is already zero; cannot decrement further."
             )
 
+        # Remove from alias mappings when deleted
+        if hasattr(self.__class__, "__alias__") and self.__class__.__alias__:
+            alias_field = self.__class__.__alias__
+            if hasattr(self, alias_field):
+                alias_value = getattr(self, alias_field)
+                if alias_value is not None and alias_value in self.__class__._alias_mappings:
+                    del self.__class__._alias_mappings[alias_value]
+
         logger.debug(f"Deleted entity {self._type}@{self._id}")
 
         # Remove from context
@@ -361,14 +376,9 @@ class Entity:
 
         # If entity not found by ID and class has __alias__ defined, try by alias
         if hasattr(cls, "__alias__") and cls.__alias__:
-            alias_field = cls.__alias__
-            # Find entities where the aliased field matches the key
-            for instance in cls.instances():  # TODO: this very slow and inneficient
-                if (
-                    hasattr(instance, alias_field)
-                    and getattr(instance, alias_field) == key
-                ):
-                    return instance
+            actual_key = cls._alias_mappings.get(str_key)
+            if actual_key:
+                return cls[actual_key]
 
         return None
 
