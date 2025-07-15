@@ -2,6 +2,9 @@ import subprocess
 import sys
 import time
 
+TIMEOUT_MAX = 10
+
+
 def run_command(command, check=True, timeout=None):
     """Run a shell command and return its output"""
     print(f"Running command: {command}", flush=True)
@@ -48,12 +51,14 @@ def main():
     num_iterations = 100
     for i in range(1, num_iterations + 1):
         run_command(
-            f"dfx canister call test run_test (\"test_stress\", \"test_bulk_insertion_and_load_small\", \"\")", timeout=180
+            'dfx canister call test run_test \'("stress", "test_bulk_insertion_and_load_small", "")\'',
+            timeout=TIMEOUT_MAX,
         )
         run_command(
-            f"dfx canister call test run_test (\"test_stress\", \"test_query_performance_after_bulk_insert\", \"\")", timeout=180
+            'dfx canister call test run_test \'("stress", "test_query_performance_after_bulk_insert", "")\'',
+            timeout=TIMEOUT_MAX,
         )
 
-    
+
 if __name__ == "__main__":
     main()
