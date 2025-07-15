@@ -48,17 +48,23 @@ def run_command(command, check=True, timeout=None):
 
 def main():
 
-    num_iterations = 100
-    for i in range(1, num_iterations + 1):
-        run_command(
-            'dfx canister call test run_test \'("stress", "test_bulk_insertion_and_load_small", "")\'',
-            timeout=TIMEOUT_MAX,
-        )
-        run_command(
-            'dfx canister call test run_test \'("stress", "test_query_performance_after_bulk_insert", "")\'',
-            timeout=TIMEOUT_MAX,
-        )
-
+    num_max_iterations = 100
+    try:
+        for i in range(1, num_max_iterations + 1):
+            print(f"Running iteration {i}/{num_max_iterations}")
+            run_command(
+                'dfx canister call test run_test \'("stress", "test_bulk_insertion_and_load_small", "")\'',
+                timeout=TIMEOUT_MAX,
+            )
+            run_command(
+                'dfx canister call test run_test \'("stress", "test_query_performance_after_bulk_insert", "")\'',
+                timeout=TIMEOUT_MAX,
+            )
+    except Exception as e:
+        print('Test lasted %d iterations' % i)
+        raise e
+   
+    print("Done")
 
 if __name__ == "__main__":
     main()
