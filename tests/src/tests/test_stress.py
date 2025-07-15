@@ -74,6 +74,25 @@ class TestStress:
                 "Expected %d entities inserted, instead got %d" % (count, actual_count)
             )
 
+
+    def test_query_performance_after_bulk_insert(self):
+        # entities = StressTestEntity.instances()
+        # len_entities = len(entities)
+        # ic.print("len(entities) = %d" % len_entities)
+        # # ic.print("entities[0] = %s" % entities[0].to_dict())
+        # id = int(len_entities / 2)
+        # ic.print("Id lookup: id = %s" % id)
+        # entity = StressTestEntity[id]
+        # ic.print("Id lookup: entity = %s" % entity.to_dict())
+        # assert entity is not None
+        # id = 
+        name = "Entity_%s" % (StressTestEntity.count() - 1)
+        ic.print("Name lookup: name = %s" % name)
+        entity = StressTestEntity[name]
+        ic.print("Name lookup: entity = %s" % entity.to_dict())
+        assert entity is not None
+
+
     # def test_query_performance_after_bulk_insert(self):
     #     """Test query performance after bulk insertion."""
     #     insert_count = SMALL_BATCH_SIZE

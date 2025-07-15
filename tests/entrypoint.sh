@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 echo "Installing dependencies..."
 pip install -r requirements.txt
@@ -23,7 +24,7 @@ for TEST_ID in "${TEST_IDS[@]}"; do
   echo "Deploying test canister..."
   dfx deploy
 
-  TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
+  TEST_RESULT=$(dfx canister call test run_test '("'"${TEST_ID}"'", "", "")')
   if [ "$TEST_RESULT" != '(0 : int)' ]; then
     echo "Error: test_${TEST_ID}.run() function returned unexpected result: $TEST_RESULT"
     dfx stop
@@ -65,7 +66,7 @@ echo "Deploying test canister..."
 dfx deploy
 
 TEST_ID="upgrade_before"
-TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
+TEST_RESULT=$(dfx canister call test run_test '("'"${TEST_ID}"'", "", "")')
 if [ "$TEST_RESULT" != '(0 : int)' ]; then
   echo "Error: test_${TEST_ID}.run() function returned unexpected result: $TEST_RESULT"
   dfx stop
@@ -91,7 +92,7 @@ if [ "$BEFORE_UPGRADE" != "$AFTER_UPGRADE" ]; then
 fi
 
 TEST_ID="upgrade_after"
-TEST_RESULT=$(dfx canister call test run_test ${TEST_ID})
+TEST_RESULT=$(dfx canister call test run_test '("'"${TEST_ID}"'", "", "")')
 if [ "$TEST_RESULT" != '(0 : int)' ]; then
   echo "Error: test_${TEST_ID}.run() function returned unexpected result: $TEST_RESULT"
   exit 1

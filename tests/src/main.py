@@ -12,8 +12,7 @@ from tests import (
     test_relationships,
     test_upgrade_after,
     test_upgrade_before,
-    test_stress_bulk_insert,
-    test_stress_bulk_load,
+    test_stress
 )
 
 db_storage = StableBTreeMap[str, str](
