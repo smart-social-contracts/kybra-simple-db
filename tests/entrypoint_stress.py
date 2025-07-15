@@ -61,10 +61,11 @@ def main():
                 timeout=TIMEOUT_MAX,
             )
     except Exception as e:
-        print('Test lasted %d iterations' % i)
+        print("Test lasted %d iterations" % i)
         raise e
-   
+
     print("Done")
+
 
 if __name__ == "__main__":
     main()
