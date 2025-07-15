@@ -18,7 +18,7 @@ class Person(Entity):
     name = String(min_length=2, max_length=50)
 
 
-def run():
+def run(test_name: str = None, test_var: str = None):
     # Create and save a person
     alice = Person(name="Alice")
     assert alice.name == "Alice"

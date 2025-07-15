@@ -183,7 +183,7 @@ class TestRelationships:
             assert student1 in course.students
 
 
-def run():
+def run(test_name: str = None, test_var: str = None):
     tester = Tester(TestRelationships)
     return tester.run_tests()
 

@@ -331,7 +331,7 @@ class TestEntity:
         assert Person.count() == 8
 
 
-def run():
+def run(test_name: str = None, test_var: str = None):
     tester = Tester(TestEntity)
     return tester.run_tests()
 

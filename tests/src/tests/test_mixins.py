@@ -73,7 +73,7 @@ class TestMixins:
         system_time.clear_time()
 
 
-def run():
+def run(test_name: str = None, test_var: str = None):
     tester = Tester(TestMixins)
     return tester.run_tests()
 

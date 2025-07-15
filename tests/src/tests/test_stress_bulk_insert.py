@@ -173,7 +173,7 @@ class TestStress:
     #     ic.print(f"Deleted {deleted_count} entities, {remaining_count} remaining")
 
 
-def run():
+def run(test_name: str = None, test_var: str = None):
     tester = Tester(TestStress)
     return tester.run_tests()
 
