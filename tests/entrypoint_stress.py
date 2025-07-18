@@ -3,9 +3,9 @@ import sys
 import time
 
 TIMEOUT_MAX = 30
-BULK_INSERT_COUNT = 100
-MAX_ITERATIONS = 5
-MIN_ITERATIONS = 2
+BULK_INSERT_COUNT = 500
+MAX_ITERATIONS = 100
+MIN_ITERATIONS = 70
 
 # ANSI color codes
 GREEN = "\033[92m"
@@ -34,7 +34,7 @@ def run_command(command, check=True, timeout=None):
             flush=True,
         )
         print(f"Command executed in {elapsed_time:.2f} seconds", flush=True)
-        return result.stdout.strip()
+        return (result.stdout.strip(), elapsed_time)
     except subprocess.TimeoutExpired:
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -58,24 +58,35 @@ def main():
             "Starting stress test with %d iterations and %d entities per iteration"
             % (MAX_ITERATIONS, BULK_INSERT_COUNT)
         )
+        insert_times = []
+        query_times = []
         count = 0
         for i in range(1, MAX_ITERATIONS + 1):
             print(f"Running iteration {i}/{MAX_ITERATIONS}")
-            run_command(
+            (_, elapsed_time) = run_command(
                 'dfx canister call test run_test \'("stress", "bulk_insert", "%d")\''
                 % BULK_INSERT_COUNT,
                 timeout=TIMEOUT_MAX,
             )
+            insert_times.append(elapsed_time)
             count += BULK_INSERT_COUNT
             name = "Entity_%s" % (count - 1)
-            run_command(
+            (_, elapsed_time) = run_command(
                 'dfx canister call test run_test \'("stress", "query", "%s")\'' % name,
                 timeout=TIMEOUT_MAX,
             )
+            query_times.append(elapsed_time)
     except Exception as e:
         print("Error running test after %d iterations" % i)
         print("Exception: %s" % e)
     finally:
+        print(
+            "Average times: insert = %f, query = %f"
+            % (
+                sum(insert_times) / len(insert_times),
+                sum(query_times) / len(query_times),
+            )
+        )
         if i >= MIN_ITERATIONS:
             print(f"{GREEN}Test SUCCESS after {i} iterations{RESET}")
             return 0
