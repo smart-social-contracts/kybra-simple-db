@@ -20,9 +20,7 @@ db_storage = StableBTreeMap[str, str](
 )
 db_audit = StableBTreeMap[str, str](memory_id=1, max_key_size=100, max_value_size=2048)
 
-# Database.init(audit_enabled=False, db_storage=db_storage, db_audit=db_audit)
-
-Database.init(audit_enabled=False, db_storage=db_storage, db_audit=None)
+Database.init(audit_enabled=False, db_storage=db_storage, db_audit=db_audit)
 
 
 @update
