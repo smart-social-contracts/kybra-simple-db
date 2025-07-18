@@ -25,6 +25,7 @@ class Tester:
         random.shuffle(test_methods)  # catch hidden dependencies among tests
         failed = 0
         for test in test_methods:
+            logger.info(f"Running test {test.__name__} ...")
             try:
                 # Call setUp if it exists
                 if hasattr(self.test_instance, "setUp"):
