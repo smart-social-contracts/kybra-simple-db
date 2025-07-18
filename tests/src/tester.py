@@ -15,7 +15,6 @@ class Tester:
         test_method(test_var)
         return 0
 
-
     def run_tests(self):
         """Run all test methods in the test class and report results."""
         test_methods = [

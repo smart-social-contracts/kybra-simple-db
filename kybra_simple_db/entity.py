@@ -385,7 +385,7 @@ class Entity:
                 return cls.load(actual_key)
             else:
                 logger.debug(f"Entity not found by alias {str_key}")
-        
+
         return None
 
     def __eq__(self, other: object) -> bool:

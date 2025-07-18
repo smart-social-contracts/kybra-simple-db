@@ -16,6 +16,7 @@ from kybra_simple_db import *  # noqa: E402
 
 from .stress_test_base import StressTestEntity
 
+
 class TestStress:
     def bulk_insert(self, quantity: str):
         quantity = int(quantity)
@@ -32,7 +33,8 @@ class TestStress:
             )
         else:
             raise Exception(
-                "Expected %d entities inserted, instead got %d" % (quantity, actual_count)
+                "Expected %d entities inserted, instead got %d"
+                % (quantity, actual_count)
             )
 
     def query(self, name: str):

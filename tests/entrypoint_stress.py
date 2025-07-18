@@ -54,12 +54,16 @@ def run_command(command, check=True, timeout=None):
 
 def main():
     try:
-        print("Starting stress test with %d iterations and %d entities per iteration" % (MAX_ITERATIONS, BULK_INSERT_COUNT))
+        print(
+            "Starting stress test with %d iterations and %d entities per iteration"
+            % (MAX_ITERATIONS, BULK_INSERT_COUNT)
+        )
         count = 0
         for i in range(1, MAX_ITERATIONS + 1):
             print(f"Running iteration {i}/{MAX_ITERATIONS}")
             run_command(
-                'dfx canister call test run_test \'("stress", "bulk_insert", "%d")\'' % BULK_INSERT_COUNT,
+                'dfx canister call test run_test \'("stress", "bulk_insert", "%d")\''
+                % BULK_INSERT_COUNT,
                 timeout=TIMEOUT_MAX,
             )
             count += BULK_INSERT_COUNT
