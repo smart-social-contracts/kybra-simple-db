@@ -10,6 +10,12 @@ class Tester:
     def __init__(self, test_class):
         self.test_instance = test_class()
 
+    def run_test(self, test_name: str = None, test_var: str = None):
+        test_method = getattr(self.test_instance, test_name)
+        test_method(test_var)
+        return 0
+
+
     def run_tests(self):
         """Run all test methods in the test class and report results."""
         test_methods = [

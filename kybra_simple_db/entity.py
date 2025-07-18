@@ -27,7 +27,6 @@ class Entity:
     _entity_type = None  # To be defined in subclasses
     _context: Set["Entity"] = set()  # Set of entities in current context
     _do_not_save = False
-    _alias_mappings = {}  # Class-level attribute for alias mappings
 
     def __init__(self, **kwargs):
         """Initialize a new entity.
@@ -131,7 +130,7 @@ class Entity:
                 if hasattr(self, alias_field):
                     alias_value = getattr(self, alias_field)
                     if alias_value is not None:
-                        self.__class__._alias_mappings[alias_value] = self._id
+                        db.save(self._type + "_alias", alias_value, self._id)
             self._loaded = True
 
         return self
@@ -309,11 +308,8 @@ class Entity:
             alias_field = self.__class__.__alias__
             if hasattr(self, alias_field):
                 alias_value = getattr(self, alias_field)
-                if (
-                    alias_value is not None
-                    and alias_value in self.__class__._alias_mappings
-                ):
-                    del self.__class__._alias_mappings[alias_value]
+                if alias_value is not None:
+                    self.db().delete(self._type + "_alias", alias_value)
 
         logger.debug(f"Deleted entity {self._type}@{self._id}")
 
@@ -371,18 +367,25 @@ class Entity:
         Returns:
             Entity if found, None otherwise
         """
+        logger.debug(f"Loading entity with key {key}")
         # First try as direct ID lookup (convert to string if numeric)
         str_key = str(key) if isinstance(key, (int, float)) else key
         entity = cls.load(str_key)
         if entity:
             return entity
 
+        logger.debug(f"Entity not found by ID {str_key}")
+
         # If entity not found by ID and class has __alias__ defined, try by alias
         if hasattr(cls, "__alias__") and cls.__alias__:
-            actual_key = cls._alias_mappings.get(str_key)
+            logger.debug(f"Trying to find entity by alias {str_key}")
+            actual_key = cls.db().load(cls.__name__ + "_alias", str_key)
             if actual_key:
-                return cls[actual_key]
-
+                logger.debug(f"Found entity by alias {str_key}")
+                return cls.load(actual_key)
+            else:
+                logger.debug(f"Entity not found by alias {str_key}")
+        
         return None
 
     def __eq__(self, other: object) -> bool:
