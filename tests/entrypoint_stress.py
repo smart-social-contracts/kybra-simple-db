@@ -53,14 +53,16 @@ def run_command(command, check=True, timeout=None):
 
 
 def main():
+    i = 0
+    insert_times = []
+    query_times = []
+    count = 0
+
+    print(
+        f"Starting stress test with {MAX_ITERATIONS} iterations and {BULK_INSERT_COUNT} entities per iteration"
+    )
+
     try:
-        print(
-            "Starting stress test with %d iterations and %d entities per iteration"
-            % (MAX_ITERATIONS, BULK_INSERT_COUNT)
-        )
-        insert_times = []
-        query_times = []
-        count = 0
         for i in range(1, MAX_ITERATIONS + 1):
             print(f"Running iteration {i}/{MAX_ITERATIONS}")
             (_, elapsed_time) = run_command(
@@ -77,15 +79,11 @@ def main():
             )
             query_times.append(elapsed_time)
     except Exception as e:
-        print("Error running test after %d iterations" % i)
-        print("Exception: %s" % e)
+        print(f"Error running test after {i} iterations")
+        print(f"Exception: {e}")
     finally:
         print(
-            "Average times: insert = %f, query = %f"
-            % (
-                sum(insert_times) / len(insert_times),
-                sum(query_times) / len(query_times),
-            )
+            f"Average times: insert = {sum(insert_times) / len(insert_times)}, query = {sum(query_times) / len(query_times)}"
         )
         if i >= MIN_ITERATIONS:
             print(f"{GREEN}Test SUCCESS after {i} iterations{RESET}")

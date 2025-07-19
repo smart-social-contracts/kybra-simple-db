@@ -15,10 +15,13 @@ from tests import (
     test_upgrade_before,
 )
 
-DB_STORAGE_MEMORY_ID = 0
-DB_AUDIT_MEMORY_ID = 1
-DB_MAX_KEY_SIZE = 100
-DB_MAX_VALUE_SIZE = 2048
+# Unique memory IDs for stable storage isolation
+DB_STORAGE_MEMORY_ID = 0  # Main database storage
+DB_AUDIT_MEMORY_ID = 1    # Audit log storage
+
+# Size limits for stable storage maps
+DB_MAX_KEY_SIZE = 100     # Maximum key size in bytes
+DB_MAX_VALUE_SIZE = 2048  # Maximum value size in bytes (2KB)
 
 db_storage = StableBTreeMap[str, str](
     memory_id=DB_STORAGE_MEMORY_ID,
