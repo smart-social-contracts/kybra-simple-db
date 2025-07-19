@@ -19,7 +19,7 @@ from kybra_simple_db import (
 logger = get_logger(__name__)
 
 
-def run():
+def run(test_name: str = None, test_var: str = None):
     class Person(Entity):
         name = String(min_length=2, max_length=50)
         age = Integer(min_value=0, max_value=150)

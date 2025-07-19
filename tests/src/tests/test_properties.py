@@ -135,7 +135,7 @@ class TestProperties:
         assert loaded1 in loaded2.friends
 
 
-def run():
+def run(test_name: str = None, test_var: str = None):
     Database.get_instance().clear()
     tester = Tester(TestProperties)
     return tester.run_tests()

@@ -128,7 +128,7 @@ class TestAudit:
         assert db_no_audit._db_audit is None
 
 
-def run():
+def run(test_name: str = None, test_var: str = None):
     tester = Tester(TestAudit)
     return tester.run_tests()
 

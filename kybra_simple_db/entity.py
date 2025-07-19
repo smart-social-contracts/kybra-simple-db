@@ -125,9 +125,19 @@ class Entity:
             logger.debug(f"Saving entity {self._type}@{self._id} to database")
             db = self.db()
             db.save(self._type, self._id, data)
+            if hasattr(self.__class__, "__alias__") and self.__class__.__alias__:
+                alias_field = self.__class__.__alias__
+                if hasattr(self, alias_field):
+                    alias_value = getattr(self, alias_field)
+                    if alias_value is not None:
+                        db.save(self._type + "_alias", alias_value, self._id)
             self._loaded = True
 
         return self
+
+    @classmethod
+    def _alias_key(cls: Type[T]) -> str:
+        return cls.__name__ + "_alias"
 
     @classmethod
     def load(
@@ -297,6 +307,14 @@ class Entity:
                 f"Entity count for {type_name} is already zero; cannot decrement further."
             )
 
+        # Remove from alias mappings when deleted
+        if hasattr(self.__class__, "__alias__") and self.__class__.__alias__:
+            alias_field = self.__class__.__alias__
+            if hasattr(self, alias_field):
+                alias_value = getattr(self, alias_field)
+                if alias_value is not None:
+                    self.db().delete(self._alias_key(), alias_value)
+
         logger.debug(f"Deleted entity {self._type}@{self._id}")
 
         # Remove from context
@@ -353,22 +371,31 @@ class Entity:
         Returns:
             Entity if found, None otherwise
         """
+        logger.debug(f"Loading entity with key {key}")
         # First try as direct ID lookup (convert to string if numeric)
         str_key = str(key) if isinstance(key, (int, float)) else key
         entity = cls.load(str_key)
         if entity:
             return entity
 
+        logger.debug(f"Entity not found by ID {str_key}")
+
         # If entity not found by ID and class has __alias__ defined, try by alias
         if hasattr(cls, "__alias__") and cls.__alias__:
-            alias_field = cls.__alias__
-            # Find entities where the aliased field matches the key
-            for instance in cls.instances():
-                if (
-                    hasattr(instance, alias_field)
-                    and getattr(instance, alias_field) == key
-                ):
-                    return instance
+            alias_key = cls._alias_key()
+            logger.debug(
+                f"Trying to find entity by alias key {alias_key} with value {str_key}"
+            )
+            actual_key = cls.db().load(alias_key, str_key)
+            if actual_key:
+                logger.debug(
+                    f"Found entity by alias key {alias_key} with value {str_key}"
+                )
+                return cls.load(actual_key)
+            else:
+                logger.debug(
+                    f"Entity not found by alias key {alias_key} with value {str_key}"
+                )
 
         return None
 

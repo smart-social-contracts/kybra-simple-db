@@ -67,7 +67,7 @@ class TestDatabase:
         assert json.loads(pretty_dumped) == dumped
 
 
-def run():
+def run(test_name: str = None, test_var: str = None):
     tester = Tester(TestDatabase)
     return tester.run_tests()
 

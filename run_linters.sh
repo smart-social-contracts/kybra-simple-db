@@ -48,7 +48,7 @@ fi
 # Lint with flake8 (no auto-fix available)
 echo "Running flake8..."
 # Using configuration from setup.cfg
-flake8 kybra_simple_db tests
+flake8 kybra_simple_db tests --exclude=tests/venv,tests/.kybra,*/.kybra/*,*/__pycache__/*
 
 # Type check with mypy (no auto-fix available)
 echo "Running mypy..."

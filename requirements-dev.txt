@@ -1,3 +1,4 @@
+kybra>=0.7.1
 pytest>=7.0.0
 pytest-cov>=4.0.0
 black>=22.0.0

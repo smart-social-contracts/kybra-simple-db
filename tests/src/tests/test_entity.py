@@ -124,6 +124,17 @@ class TestEntity:
         # Verify alias lookup still works
         assert Person["NumericTest"] == numeric_person
 
+        # Test that alias lookup returns None after entity deletion
+
+        # Delete the first person (Jane)
+        person.delete()
+
+        # Verify that lookup by ID returns None
+        assert Person[person._id] is None
+
+        # Verify that lookup by alias (name) returns None
+        assert Person["Jane"] is None
+
     def test_instances_basic(self):
         """Test basic functionality of instances() method."""
         # Create multiple persons
@@ -331,7 +342,7 @@ class TestEntity:
         assert Person.count() == 8
 
 
-def run():
+def run(test_name: str = None, test_var: str = None):
     tester = Tester(TestEntity)
     return tester.run_tests()
 
