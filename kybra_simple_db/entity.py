@@ -136,6 +136,10 @@ class Entity:
         return self
 
     @classmethod
+    def _alias_key(cls: Type[T]) -> str:
+        return cls.__alias__ + "_alias"
+
+    @classmethod
     def load(
         cls: Type[T], entity_id: str = None, level: int = LEVEL_MAX_DEFAULT
     ) -> Optional[T]:
@@ -309,7 +313,7 @@ class Entity:
             if hasattr(self, alias_field):
                 alias_value = getattr(self, alias_field)
                 if alias_value is not None:
-                    self.db().delete(self._type + "_alias", alias_value)
+                    self.db().delete(self._alias_key(), alias_value)
 
         logger.debug(f"Deleted entity {self._type}@{self._id}")
 
@@ -378,7 +382,7 @@ class Entity:
 
         # If entity not found by ID and class has __alias__ defined, try by alias
         if hasattr(cls, "__alias__") and cls.__alias__:
-            alias_key = cls.__alias__ + "_alias"
+            alias_key = cls._alias_key()
             logger.debug(
                 f"Trying to find entity by alias key {alias_key} with value {str_key}"
             )
