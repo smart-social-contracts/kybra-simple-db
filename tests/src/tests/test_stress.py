@@ -1,20 +1,13 @@
-"""Stress tests for kybra-simple-db to test performance under high load."""
-
-try:
-    from kybra import ic
-except ImportError:
-
-    class MockIC:
-        def print(self, *args, **kwargs):
-            print(*args, **kwargs)
-
-    ic = MockIC()
-
+from kybra import ic
 from tester import Tester  # noqa: E402
 
 from kybra_simple_db import *  # noqa: E402
 
-from .stress_test_base import StressTestEntity
+
+class StressTestEntity(Entity):
+    __alias__ = "name"
+    name = String(min_length=1, max_length=100)
+    value = Integer()
 
 
 class TestStress:
