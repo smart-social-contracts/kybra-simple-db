@@ -135,9 +135,8 @@ class Entity:
 
         return self
 
-    @classmethod
     def _alias_key(cls: Type[T]) -> str:
-        return cls.__alias__ + "_alias"
+        return cls.__name__ + "_alias"
 
     @classmethod
     def load(
