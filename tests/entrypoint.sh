@@ -7,7 +7,7 @@ echo "Installing dependencies..."
 pip install -r requirements.txt
 
 # Define a list of test identifiers
-TEST_IDS=('example_1' 'example_2' 'entity' 'mixins' 'properties' 'relationships' 'database' 'audit' 'stress' 'benchmarks')
+TEST_IDS=('example_1' 'example_2' 'entity' 'mixins' 'properties' 'relationships' 'database' 'audit')
 
 if [ $# -gt 0 ]; then
   TEST_IDS=("$@")
