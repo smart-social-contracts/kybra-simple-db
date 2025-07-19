@@ -16,23 +16,22 @@ from tests import (
 )
 
 # Unique memory IDs for stable storage isolation
-DB_STORAGE_MEMORY_ID = 0  # Main database storage
-DB_AUDIT_MEMORY_ID = 1  # Audit log storage
-
+# memory_id = 0  # Main database storage
+# memory_id = 1  # Audit log storage
 # Size limits for stable storage maps
-DB_MAX_KEY_SIZE = 100  # Maximum key size in bytes
-DB_MAX_VALUE_SIZE = 2048  # Maximum value size in bytes (2KB)
+# max_key_size = 100  # Maximum key size in bytes
+# max_value_size = 2048  # Maximum value size in bytes (2KB)
 
 db_storage = StableBTreeMap[str, str](
-    memory_id=DB_STORAGE_MEMORY_ID,
-    max_key_size=DB_MAX_KEY_SIZE,
-    max_value_size=DB_MAX_VALUE_SIZE,
+    memory_id=0,
+    max_key_size=100,
+    max_value_size=2048,
 )
 
 db_audit = StableBTreeMap[str, str](
-    memory_id=DB_AUDIT_MEMORY_ID,
-    max_key_size=DB_MAX_KEY_SIZE,
-    max_value_size=DB_MAX_VALUE_SIZE,
+    memory_id=1,
+    max_key_size=100,
+    max_value_size=2048,
 )
 
 Database.init(audit_enabled=True, db_storage=db_storage, db_audit=db_audit)
