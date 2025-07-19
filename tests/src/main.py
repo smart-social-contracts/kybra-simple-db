@@ -17,10 +17,10 @@ from tests import (
 
 # Unique memory IDs for stable storage isolation
 DB_STORAGE_MEMORY_ID = 0  # Main database storage
-DB_AUDIT_MEMORY_ID = 1    # Audit log storage
+DB_AUDIT_MEMORY_ID = 1  # Audit log storage
 
 # Size limits for stable storage maps
-DB_MAX_KEY_SIZE = 100     # Maximum key size in bytes
+DB_MAX_KEY_SIZE = 100  # Maximum key size in bytes
 DB_MAX_VALUE_SIZE = 2048  # Maximum value size in bytes (2KB)
 
 db_storage = StableBTreeMap[str, str](
