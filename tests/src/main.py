@@ -15,10 +15,22 @@ from tests import (
     test_upgrade_before,
 )
 
+DB_STORAGE_MEMORY_ID = 0
+DB_AUDIT_MEMORY_ID = 1
+DB_MAX_KEY_SIZE = 100
+DB_MAX_VALUE_SIZE = 2048
+
 db_storage = StableBTreeMap[str, str](
-    memory_id=0, max_key_size=100, max_value_size=2048
+    memory_id=DB_STORAGE_MEMORY_ID,
+    max_key_size=DB_MAX_KEY_SIZE,
+    max_value_size=DB_MAX_VALUE_SIZE,
 )
-db_audit = StableBTreeMap[str, str](memory_id=1, max_key_size=100, max_value_size=2048)
+
+db_audit = StableBTreeMap[str, str](
+    memory_id=DB_AUDIT_MEMORY_ID,
+    max_key_size=DB_MAX_KEY_SIZE,
+    max_value_size=DB_MAX_VALUE_SIZE,
+)
 
 Database.init(audit_enabled=True, db_storage=db_storage, db_audit=db_audit)
 

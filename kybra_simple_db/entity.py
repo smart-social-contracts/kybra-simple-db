@@ -378,13 +378,20 @@ class Entity:
 
         # If entity not found by ID and class has __alias__ defined, try by alias
         if hasattr(cls, "__alias__") and cls.__alias__:
-            logger.debug(f"Trying to find entity by alias {str_key}")
-            actual_key = cls.db().load(cls.__name__ + "_alias", str_key)
+            alias_key = cls.__alias__ + "_alias"
+            logger.debug(
+                f"Trying to find entity by alias key {alias_key} with value {str_key}"
+            )
+            actual_key = cls.db().load(alias_key, str_key)
             if actual_key:
-                logger.debug(f"Found entity by alias {str_key}")
+                logger.debug(
+                    f"Found entity by alias key {alias_key} with value {str_key}"
+                )
                 return cls.load(actual_key)
             else:
-                logger.debug(f"Entity not found by alias {str_key}")
+                logger.debug(
+                    f"Entity not found by alias key {alias_key} with value {str_key}"
+                )
 
         return None
 
