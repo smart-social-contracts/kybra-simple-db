@@ -226,4 +226,3 @@ class Database:
             if entry:
                 ret[id_str] = json.loads(entry)
         return ret
-

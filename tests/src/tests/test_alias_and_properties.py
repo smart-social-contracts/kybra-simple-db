@@ -1,17 +1,20 @@
 """Test demonstrating Entity creation and property storage behavior."""
 
 from tester import Tester
-from kybra_simple_db import Entity, String, Database
+
+from kybra_simple_db import Database, Entity, String
 
 
 class User(Entity):
     """User entity with name alias."""
+
     __alias__ = "name"
     name = String(min_length=2, max_length=50)
 
 
 class UserWithId(Entity):
     """User entity with id alias to demonstrate property storage fix."""
+
     __alias__ = "id"
     id = String(min_length=1, max_length=20)
 
@@ -24,7 +27,7 @@ class TestAliasAndProperties:
     def test_basic_entity_creation(self):
         """Test basic entity creation with auto-generated ID."""
         user = User(name="alice")
-        
+
         # Verify internal storage
         assert user._id == "1"  # Auto-generated ID
         assert user.name == "alice"
@@ -35,7 +38,7 @@ class TestAliasAndProperties:
     def test_entity_with_custom_id(self):
         """Test entity creation with custom ID field."""
         user_with_id = UserWithId(id="bob")
-        
+
         # Verify the fix: id property doesn't interfere with _id
         assert user_with_id._id == "1"  # Auto-generated database ID
         assert user_with_id.id == "bob"  # User-provided id field
@@ -45,13 +48,13 @@ class TestAliasAndProperties:
     def test_alias_lookup(self):
         """Test entity lookup by alias."""
         # Create entities
-        user1 = User(name="charlie")
-        user2 = UserWithId(id="dave")
-        
+        User(name="charlie")
+        UserWithId(id="dave")
+
         # Test alias lookups
         found_user1 = User["charlie"]
         found_user2 = UserWithId["dave"]
-        
+
         assert found_user1 is not None
         assert found_user1.name == "charlie"
         assert found_user2 is not None
@@ -61,13 +64,13 @@ class TestAliasAndProperties:
         """Test that count() and instances() are consistent."""
         initial_count = UserWithId.count()
         initial_instances = len(UserWithId.instances())
-        
+
         # Create a new entity
         UserWithId(id="eve")
-        
+
         final_count = UserWithId.count()
         final_instances = len(UserWithId.instances())
-        
+
         assert final_count == initial_count + 1
         assert final_instances == initial_instances + 1
         assert final_count == final_instances
@@ -75,14 +78,14 @@ class TestAliasAndProperties:
     def test_property_storage_separation(self):
         """Test that property storage doesn't interfere with Entity internals."""
         user = UserWithId(id="test_user")
-        
+
         # Verify separation of concerns
-        assert hasattr(user, '_id')  # Entity internal ID
-        assert hasattr(user, 'id')   # User property
-        assert user._id != user.id   # They should be different
-        assert user._id == "1"       # Auto-generated
+        assert hasattr(user, "_id")  # Entity internal ID
+        assert hasattr(user, "id")  # User property
+        assert user._id != user.id  # They should be different
+        assert user._id == "1"  # Auto-generated
         assert user.id == "test_user"  # User-provided
-        
+
         # Verify property storage uses correct prefix
         assert "_prop_id" in user.__dict__
         assert user.__dict__["_prop_id"] == "test_user"
