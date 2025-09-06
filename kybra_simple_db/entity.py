@@ -92,7 +92,7 @@ class Entity:
         if self._id is None:
             # Increment the ID when a new entity is created (never reuse or decrement)
             self._id = str(int(db.load("_system", f"{type_name}_id") or 0) + 1)
-            db.save("_system", f"{type_name}_id", str(int(self._id)))
+            db.save("_system", f"{type_name}_id", self._id)
             # Increment the count when a new entity is created and decrement when deleted
             if not self._counted:
                 count_key = f"{type_name}_count"

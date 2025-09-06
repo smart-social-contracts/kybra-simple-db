@@ -8,14 +8,15 @@ from kybra_simple_db import *
 class Person(Entity):
     """Test entity class."""
 
-    def __init__(self, name: str, age: int = 0, **kwargs):
-        super().__init__(**kwargs)
-        self.name = name
-        self.age = age
+    # Example on how to override __init__
+    # def __init__(self, name: str, age: int = 0, **kwargs):
+    #     super().__init__(**kwargs)
+    #     self.name = name
+    #     self.age = age
 
+    __alias__ = "name"
     name = String(min_length=2, max_length=50)
     age = Integer()
-    __alias__ = "name"
 
 
 class Department(Entity):
