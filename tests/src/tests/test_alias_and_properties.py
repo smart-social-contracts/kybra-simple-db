@@ -13,7 +13,8 @@ class User(Entity):
 
 
 class UserWithId(Entity):
-    """User entity with id alias to demonstrate property storage fix."""
+    """User entity with id alias to demonstrate
+    proper naming of property storage that avoids name conflicts."""
 
     __alias__ = "id"
     id = String(min_length=1, max_length=20)
