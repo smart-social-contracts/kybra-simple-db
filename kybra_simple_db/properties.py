@@ -30,7 +30,7 @@ class Property:
         """Get the property value."""
         if obj is None:
             return self
-        return obj.__dict__.get(f"_{self.name}", self.default)
+        return obj.__dict__.get(f"_prop_{self.name}", self.default)
 
     def __set__(self, obj, value):
         """Set the property value with type checking and validation."""
@@ -52,7 +52,7 @@ class Property:
             if self.validator and not self.validator(value):
                 raise ValueError(f"Invalid value for {self.name}: {value}")
 
-        obj.__dict__[f"_{self.name}"] = value
+        obj.__dict__[f"_prop_{self.name}"] = value
         obj._save()
 
 
