@@ -5,6 +5,9 @@ from typing import Any, Callable, Optional, Type
 
 from .entity import Entity
 
+# Prefix used for storing property values in entity __dict__
+PROPERTY_STORAGE_PREFIX = "prop"
+
 
 @dataclass
 class Property:
@@ -30,7 +33,7 @@ class Property:
         """Get the property value."""
         if obj is None:
             return self
-        return obj.__dict__.get(f"_{self.name}", self.default)
+        return obj.__dict__.get(f"_{PROPERTY_STORAGE_PREFIX}_{self.name}", self.default)
 
     def __set__(self, obj, value):
         """Set the property value with type checking and validation."""
@@ -52,7 +55,7 @@ class Property:
             if self.validator and not self.validator(value):
                 raise ValueError(f"Invalid value for {self.name}: {value}")
 
-        obj.__dict__[f"_{self.name}"] = value
+        obj.__dict__[f"_{PROPERTY_STORAGE_PREFIX}_{self.name}"] = value
         obj._save()
 
 

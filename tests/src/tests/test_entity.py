@@ -8,14 +8,15 @@ from kybra_simple_db import *
 class Person(Entity):
     """Test entity class."""
 
-    def __init__(self, name: str, age: int = 0, **kwargs):
-        super().__init__(**kwargs)
-        self.name = name
-        self.age = age
+    # Example on how to override __init__
+    # def __init__(self, name: str, age: int = 0, **kwargs):
+    #     super().__init__(**kwargs)
+    #     self.name = name
+    #     self.age = age
 
+    __alias__ = "name"
     name = String(min_length=2, max_length=50)
     age = Integer()
-    __alias__ = "name"
 
 
 class Department(Entity):
@@ -321,25 +322,34 @@ class TestEntity:
         empty_page = Person.load_some(from_id=11, count=10)
         assert len(empty_page) == 0
 
-    def test_count_method(self):
-        """Test the count method."""
+    def test_count_and_instances_method(self):
+        """Test the count and instances method."""
         # Test count with no entities
         assert Person.count() == 0
+        assert len(Person.instances()) == 0
 
         # Create some entities
         for i in range(5):
             Person(name=f"Person{i}", age=20 + i)
         assert Person.count() == 5
+        assert len(Person.instances()) == 5
+
+        for i in range(5):
+            person = Person[f"Person{i}"]
+            assert person.name == f"Person{i}"
+            assert person.age == 20 + i
 
         # Delete some entities
         Person[1].delete()
         Person[2].delete()
         assert Person.count() == 3  # Count should still be 5 as it uses last_id
+        assert len(Person.instances()) == 3
 
         # Create more entities
         for i in range(5, 10):
             Person(name=f"Person{i}", age=20 + i)
         assert Person.count() == 8
+        assert len(Person.instances()) == 8
 
 
 def run(test_name: str = None, test_var: str = None):

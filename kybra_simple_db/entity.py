@@ -17,11 +17,50 @@ T = TypeVar("T", bound="Entity")
 class Entity:
     """Base class for database entities with enhanced features.
 
-    Attributes:
-        _type (str): Type of the entity
-        _id (str): Unique identifier for the entity
-        _relations (dict): Dictionary of related entities
-        _entity_type (str): Entity type for subclasses (optional)
+    This is the core class for all database entities. It provides automatic ID generation,
+    property storage, relationship management, and alias-based lookups.
+
+    Usage Examples:
+        # Basic entity with auto-generated ID
+        class User(Entity):
+            name = String(min_length=2, max_length=50)
+            age = Integer(min_value=0)
+
+        user = User(name="John", age=30)  # Creates entity with _id="1"
+
+        # Entity with alias for lookups
+        class Person(Entity):
+            __alias__ = "name"  # Enables Person["John"] lookup
+            name = String()
+
+        person = Person(name="Jane")
+        found = Person["Jane"]  # Lookup by alias
+
+    Key Features:
+        - Auto-generated sequential IDs (_id: "1", "2", "3", ...)
+        - Property validation and type checking via descriptors
+        - Relationship management (OneToOne, OneToMany, ManyToMany)
+        - Alias-based entity lookup (Entity["alias_value"])
+        - Automatic persistence to database on creation/update
+        - Entity counting and pagination support
+
+    Internally managed attributes:
+        _type (str): Entity class name (e.g., "User", "Person")
+        _id (str): Unique sequential identifier ("1", "2", "3", ...)
+        _loaded (bool): True if loaded from DB, False if newly created
+        _counted (bool): True if entity has been counted (prevents double-counting)
+        _relations (dict): Dictionary mapping relation names to related entities
+        _do_not_save (bool): Temporary flag to prevent saving during initialization
+
+    Class-level attributes:
+        __alias__ (str): Optional field name for alias-based lookups
+        _entity_type (str): Optional entity type for subclasses
+        _context (Set[Entity]): Set of all entities in current context
+
+    Property Storage:
+        User-defined properties (String, Integer, etc.) are stored as _prop_{name}
+        in the entity's __dict__ to avoid conflicts with internal attributes.
+        Example: name = String() stores value in _prop_name
     """
 
     _entity_type = None  # To be defined in subclasses
@@ -31,10 +70,31 @@ class Entity:
     def __init__(self, **kwargs):
         """Initialize a new entity.
 
+        Creates a new entity instance with auto-generated ID and sets up all internal
+        attributes. User-provided properties are validated and stored using the
+        _prop_{name} pattern to avoid conflicts with internal attributes.
+
+        The entity is automatically:
+        - Assigned a sequential ID (_id)
+        - Registered with the database
+        - Added to the class context
+        - Persisted to storage via _save()
+
         Args:
-            type_name: Type name for the entity. If not provided, uses class name
-            id: Optional ID for the entity. If not provided, one will be generated.
-            **kwargs: Additional attributes to set on the entity
+            **kwargs: User-defined attributes to set on the entity.
+                     These correspond to properties defined on the class
+                     (e.g., name="John" for a String() property named 'name').
+
+                     Special internal kwargs (used internally by the system):
+                     - _id: Custom ID string (bypasses auto-generation)
+
+        Example:
+            class User(Entity):
+                name = String(min_length=2)
+                age = Integer(min_value=0)
+
+            # Creates new entity with _id="1", validates and stores properties
+            user = User(name="Alice", age=25)
         """
         # Initialize any mixins
         super().__init__() if hasattr(super(), "__init__") else None
@@ -44,6 +104,7 @@ class Entity:
         # Get next sequential ID from storage
         self._id = None if kwargs.get("_id") is None else kwargs["_id"]
         self._loaded = False if kwargs.get("_loaded") is None else kwargs["_loaded"]
+        self._counted = False  # Track if this entity has been counted
 
         self._relations = {}
 
@@ -93,14 +154,24 @@ class Entity:
         if self._id is None:
             # Increment the ID when a new entity is created (never reuse or decrement)
             self._id = str(int(db.load("_system", f"{type_name}_id") or 0) + 1)
-            db.save("_system", f"{type_name}_id", str(int(self._id)))
+            db.save("_system", f"{type_name}_id", self._id)
             # Increment the count when a new entity is created and decrement when deleted
-            count_key = f"{type_name}_count"
-            current_count = int(db.load("_system", count_key) or 0)
-            db.save("_system", count_key, str(current_count + 1))
-        elif not self._loaded:
-            if db.load(type_name, self._id) is not None:
-                raise ValueError(f"Entity {self._type}@{self._id} already exists")
+            if not self._counted:
+                count_key = f"{type_name}_count"
+                current_count = int(db.load("_system", count_key) or 0)
+                db.save("_system", count_key, str(current_count + 1))
+                self._counted = True
+        else:
+            if not self._loaded:
+                if db.load(type_name, self._id) is not None:
+                    raise ValueError(f"Entity {self._type}@{self._id} already exists")
+                else:
+                    # Increment count for new entities with custom IDs
+                    if not self._counted:
+                        count_key = f"{type_name}_count"
+                        current_count = int(db.load("_system", count_key) or 0)
+                        db.save("_system", count_key, str(current_count + 1))
+                        self._counted = True
 
         logger.debug(f"Saving entity {self._type}@{self._id}")
 
