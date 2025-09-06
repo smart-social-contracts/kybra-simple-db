@@ -17,7 +17,7 @@ T = TypeVar("T", bound="Entity")
 class Entity:
     """Base class for database entities with enhanced features.
 
-    Attributes:
+    Internally managed attributes:
         _type (str): Type of the entity
         _id (str): Unique identifier for the entity
         _relations (dict): Dictionary of related entities
@@ -32,8 +32,6 @@ class Entity:
         """Initialize a new entity.
 
         Args:
-            type_name: Type name for the entity. If not provided, uses class name
-            id: Optional ID for the entity. If not provided, one will be generated.
             **kwargs: Additional attributes to set on the entity
         """
         # Initialize any mixins
@@ -44,6 +42,7 @@ class Entity:
         # Get next sequential ID from storage
         self._id = None if kwargs.get("_id") is None else kwargs["_id"]
         self._loaded = False if kwargs.get("_loaded") is None else kwargs["_loaded"]
+        self._counted = False  # Track if this entity has been counted
 
         self._relations = {}
 
@@ -95,12 +94,22 @@ class Entity:
             self._id = str(int(db.load("_system", f"{type_name}_id") or 0) + 1)
             db.save("_system", f"{type_name}_id", str(int(self._id)))
             # Increment the count when a new entity is created and decrement when deleted
-            count_key = f"{type_name}_count"
-            current_count = int(db.load("_system", count_key) or 0)
-            db.save("_system", count_key, str(current_count + 1))
-        elif not self._loaded:
-            if db.load(type_name, self._id) is not None:
-                raise ValueError(f"Entity {self._type}@{self._id} already exists")
+            if not self._counted:
+                count_key = f"{type_name}_count"
+                current_count = int(db.load("_system", count_key) or 0)
+                db.save("_system", count_key, str(current_count + 1))
+                self._counted = True
+        else:
+            if not self._loaded:
+                if db.load(type_name, self._id) is not None:
+                    raise ValueError(f"Entity {self._type}@{self._id} already exists")
+                else:
+                    # Increment count for new entities with custom IDs
+                    if not self._counted:
+                        count_key = f"{type_name}_count"
+                        current_count = int(db.load("_system", count_key) or 0)
+                        db.save("_system", count_key, str(current_count + 1))
+                        self._counted = True
 
         logger.debug(f"Saving entity {self._type}@{self._id}")
 
