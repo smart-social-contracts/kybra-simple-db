@@ -95,19 +95,29 @@ class TestEnhancedRelations:
         # Set using entity instance
         user1.department = dept
         assert user1.department == dept, "user1.department should be set to dept"
-        assert user1 in dept.employees, "user1 should be in dept.employees (reverse relation)"
+        assert (
+            user1 in dept.employees
+        ), "user1 should be in dept.employees (reverse relation)"
 
         # Set using string ID
         user2.department = dept._id
-        assert user2.department == dept, f"user2.department should be set to dept using ID '{dept._id}'"
-        assert user2 in dept.employees, "user2 should be in dept.employees (reverse relation)"
+        assert (
+            user2.department == dept
+        ), f"user2.department should be set to dept using ID '{dept._id}'"
+        assert (
+            user2 in dept.employees
+        ), "user2 should be in dept.employees (reverse relation)"
         assert len(dept.employees) == 2, "dept.employees should now have 2 members"
 
         # Set using alias/name
         user3 = User(username="charlie", email="charlie@example.com")
         user3.department = "Engineering"
-        assert user3.department == dept, "user3.department should be set to dept using name 'Engineering'"
-        assert user3 in dept.employees, "user3 should be in dept.employees (reverse relation)"
+        assert (
+            user3.department == dept
+        ), "user3.department should be set to dept using name 'Engineering'"
+        assert (
+            user3 in dept.employees
+        ), "user3 should be in dept.employees (reverse relation)"
         assert len(dept.employees) == 3, "dept.employees should now have 3 members"
 
     def test_one_to_many_entity_resolution(self):
@@ -129,7 +139,9 @@ class TestEnhancedRelations:
         dept.employees = [user3, user4._id, "alice"]  # Mix of entity, ID, and name
         expected_usernames = {"charlie", "diana", "alice"}
         actual_usernames = {emp.username for emp in dept.employees}
-        assert actual_usernames == expected_usernames, f"dept.employees should contain {expected_usernames}, got {actual_usernames}"
+        assert (
+            actual_usernames == expected_usernames
+        ), f"dept.employees should contain {expected_usernames}, got {actual_usernames}"
 
         # Verify reverse relations
         assert user3.department == dept, "user3.department should be set to dept"
@@ -154,7 +166,9 @@ class TestEnhancedRelations:
         project1.members = [user1, user2._id, "charlie"]  # Mix of entity, ID, and name
         expected_usernames = {"alice", "bob", "charlie"}
         actual_usernames = {member.username for member in project1.members}
-        assert actual_usernames == expected_usernames, f"project1.members should contain {expected_usernames}, got {actual_usernames}"
+        assert (
+            actual_usernames == expected_usernames
+        ), f"project1.members should contain {expected_usernames}, got {actual_usernames}"
 
         # Verify reverse relations
         assert project1 in user1.projects, "project1 should be in user1.projects"
@@ -172,14 +186,22 @@ class TestEnhancedRelations:
 
         # Test single entity assignment
         user1.projects = project1
-        assert project1 in user1.projects, "project1 should be in user1.projects after single entity assignment"
-        assert user1 in project1.members, "user1 should be in project1.members (reverse relation)"
+        assert (
+            project1 in user1.projects
+        ), "project1 should be in user1.projects after single entity assignment"
+        assert (
+            user1 in project1.members
+        ), "user1 should be in project1.members (reverse relation)"
         assert len(user1.projects) == 1, "user1.projects should have exactly 1 project"
 
         # Test single entity assignment using string name
         user1.projects = "WebApp"
-        assert project1 in user1.projects, "project1 should still be in user1.projects after string name assignment"
-        assert len(user1.projects) == 1, "user1.projects should still have exactly 1 project"
+        assert (
+            project1 in user1.projects
+        ), "project1 should still be in user1.projects after string name assignment"
+        assert (
+            len(user1.projects) == 1
+        ), "user1.projects should still have exactly 1 project"
 
     def test_relation_list_add_with_entity_resolution(self):
         """Test RelationList.add with entity, ID, and name resolution."""
@@ -192,17 +214,27 @@ class TestEnhancedRelations:
 
         # Add using string ID
         project1.members.add(user1._id)
-        assert user1 in project1.members, f"user1 should be in project1.members after adding by ID '{user1._id}'"
-        assert project1 in user1.projects, "project1 should be in user1.projects (reverse relation)"
+        assert (
+            user1 in project1.members
+        ), f"user1 should be in project1.members after adding by ID '{user1._id}'"
+        assert (
+            project1 in user1.projects
+        ), "project1 should be in user1.projects (reverse relation)"
         assert len(project1.members) == 1, "project1.members should have 1 member"
 
         # Add using alias/name
         project1.members.add("bob")
-        assert user2 in project1.members, "user2 should be in project1.members after adding by alias 'bob'"
-        assert project1 in user2.projects, "project1 should be in user2.projects (reverse relation)"
+        assert (
+            user2 in project1.members
+        ), "user2 should be in project1.members after adding by alias 'bob'"
+        assert (
+            project1 in user2.projects
+        ), "project1 should be in user2.projects (reverse relation)"
         expected_usernames = {"alice", "bob"}
         actual_usernames = {m.username for m in project1.members}
-        assert actual_usernames == expected_usernames, f"project1.members should contain {expected_usernames}, got {actual_usernames}"
+        assert (
+            actual_usernames == expected_usernames
+        ), f"project1.members should contain {expected_usernames}, got {actual_usernames}"
 
     def test_invalid_entity_resolution(self):
         """Test error handling for invalid entity resolution."""
@@ -214,14 +246,18 @@ class TestEnhancedRelations:
             user1.projects = "nonexistent_id"
             assert False, "Should have raised ValueError for nonexistent ID"
         except ValueError as e:
-            assert "No entity of types" in str(e), f"Expected 'No entity of types' in error message, got: {str(e)}"
+            assert "No entity of types" in str(
+                e
+            ), f"Expected 'No entity of types' in error message, got: {str(e)}"
 
         # Test invalid type
         try:
             user1.projects = 123.45  # float is not supported
             assert False, "Should have raised TypeError for invalid type"
         except TypeError as e:
-            assert "must be set to an entity or list of entities" in str(e), f"Expected type error message, got: {str(e)}"
+            assert "must be set to an entity or list of entities" in str(
+                e
+            ), f"Expected type error message, got: {str(e)}"
 
     def test_mixed_relation_scenarios(self):
         """Test complex scenarios with mixed relation types and entity resolution."""
@@ -240,13 +276,25 @@ class TestEnhancedRelations:
 
         # Verify all relationships
         assert user1.profile == profile1, "OneToOne relationship should be established"
-        assert profile1.user == user1, "OneToOne reverse relationship should be established"
+        assert (
+            profile1.user == user1
+        ), "OneToOne reverse relationship should be established"
         assert user1.department == dept, "ManyToOne relationship should be established"
-        assert user1 in dept.employees, "ManyToOne reverse relationship should be established"
-        assert project1 in user1.projects, "ManyToMany relationship with project1 should be established"
-        assert project2 in user1.projects, "ManyToMany relationship with project2 should be established"
-        assert user1 in project1.members, "ManyToMany reverse relationship with project1 should be established"
-        assert user1 in project2.members, "ManyToMany reverse relationship with project2 should be established"
+        assert (
+            user1 in dept.employees
+        ), "ManyToOne reverse relationship should be established"
+        assert (
+            project1 in user1.projects
+        ), "ManyToMany relationship with project1 should be established"
+        assert (
+            project2 in user1.projects
+        ), "ManyToMany relationship with project2 should be established"
+        assert (
+            user1 in project1.members
+        ), "ManyToMany reverse relationship with project1 should be established"
+        assert (
+            user1 in project2.members
+        ), "ManyToMany reverse relationship with project2 should be established"
 
 
 def run(test_name: str = None, test_var: str = None):
