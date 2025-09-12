@@ -215,23 +215,27 @@ class Relation:
 
     def resolve_entity(self, obj, value):
         """Resolve a value to an Entity instance.
-        
+
         Args:
             obj: The entity object that owns this relation
             value: Can be an Entity instance, string ID, or string name/alias
-            
+
         Returns:
             Entity instance or None
         """
         if value is None:
             return None
-            
+
         if isinstance(value, Entity):
             return value
-            
+
         if isinstance(value, (str, int)):
             # Try to find entity by ID or name (alias) using each allowed entity type
-            entity_types = [self.entity_types] if isinstance(self.entity_types, str) else self.entity_types
+            entity_types = (
+                [self.entity_types]
+                if isinstance(self.entity_types, str)
+                else self.entity_types
+            )
             for entity_type_name in entity_types:
                 # Get the entity class from the database registry
                 entity_class = obj.db()._entity_types.get(entity_type_name)
@@ -239,10 +243,14 @@ class Relation:
                     found_entity = entity_class[value]
                     if found_entity:
                         return found_entity
-            
-            raise ValueError(f"No entity of types {self.entity_types} found with ID or name '{value}'")
-        
-        raise TypeError(f"{self.name} must be set to an Entity instance, string ID, or string name")
+
+            raise ValueError(
+                f"No entity of types {self.entity_types} found with ID or name '{value}'"
+            )
+
+        raise TypeError(
+            f"{self.name} must be set to an Entity instance, string ID, or string name"
+        )
 
 
 class RelationList:
@@ -335,7 +343,7 @@ class OneToOne(Relation):
                 raise ValueError(
                     f"{value._type} instance is already related to another entity"
                 )
-            
+
             # obj.add_relation(self.name, self.reverse_name, value)
             # value.add_relation(self.reverse_name, self.name, obj)
 

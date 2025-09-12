@@ -245,14 +245,14 @@ class Entity:
 
         # Use class name for type
         type_name = cls.__name__
-        
+
         # Check entity registry first
         db = cls.db()
         existing_entity = db.get_entity(type_name, entity_id)
         if existing_entity is not None:
             logger.debug(f"Found entity {type_name}@{entity_id} in registry")
             return existing_entity
-        
+
         logger.debug(f"Loading entity {type_name}@{entity_id} from database")
         data = db.load(type_name, entity_id)
         if not data:
@@ -388,10 +388,10 @@ class Entity:
         logger.debug(f"Deleting entity {self._type}@{self._id}")
         """Delete this entity from the database."""
         self.db().delete(self._type, self._id)
-        
+
         # Remove from entity registry
         self.db().unregister_entity(self._type, self._id)
-        
+
         # Decrement the count when an entity is deleted
         type_name = self.__class__.__name__
         count_key = f"{type_name}_count"

@@ -85,7 +85,7 @@ class Database:
         key = (entity_instance._type, entity_instance._id)
         # Use weak reference to allow garbage collection
         self._entity_registry[key] = weakref.ref(entity_instance)
-        
+
     def get_entity(self, type_name: str, entity_id: str):
         """Get entity from registry if it exists."""
         key = (type_name, entity_id)
@@ -98,11 +98,11 @@ class Database:
                 # Clean up dead reference
                 del self._entity_registry[key]
         return None
-        
+
     def clear_registry(self):
         """Clear the entity registry (useful for testing)."""
         self._entity_registry.clear()
-        
+
     def unregister_entity(self, type_name: str, entity_id: str):
         """Remove an entity from the registry (used when deleting)."""
         key = (type_name, entity_id)

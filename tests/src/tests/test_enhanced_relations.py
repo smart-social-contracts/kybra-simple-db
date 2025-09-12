@@ -1,10 +1,12 @@
 """Tests for enhanced relation functionality with string ID/name resolution."""
 
-import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 
 from tester import Tester
+
 from kybra_simple_db import *
 
 
@@ -50,7 +52,6 @@ class TestEnhancedRelations:
         user2 = User(username="bob", email="bob@example.com")
         profile1 = Profile(name="Alice Smith", bio="Software Engineer")
         profile2 = Profile(name="Bob Jones", bio="Product Manager")
-        
 
         # Verify initial state
         assert user1.profile is None, "user1.profile should initially be None"
@@ -61,12 +62,18 @@ class TestEnhancedRelations:
         # Set using entity instance
         user1.profile = profile1
         assert user1.profile == profile1, "user1.profile should be set to profile1"
-        assert profile1.user == user1, "profile1.user should be set to user1 (reverse relation)"
+        assert (
+            profile1.user == user1
+        ), "profile1.user should be set to user1 (reverse relation)"
 
         # Set using string ID
         user2.profile = profile2._id
-        assert user2.profile == profile2, f"user2.profile should be set to profile2 using ID '{profile2._id}'"
-        assert profile2.user == user2, "profile2.user should be set to user2 (reverse relation)"
+        assert (
+            user2.profile == profile2
+        ), f"user2.profile should be set to profile2 using ID '{profile2._id}'"
+        assert (
+            profile2.user == user2
+        ), "profile2.user should be set to user2 (reverse relation)"
 
         # # Set using alias/name - should switch profile2 from user2 to user1
         # profile2.user = "alice"
