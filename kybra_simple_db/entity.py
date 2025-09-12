@@ -450,11 +450,16 @@ class Entity:
         reference_name = "_id"  # TODO: make this configurable, e.g. take alias instead
         for rel_name, rel_entities in self._relations.items():
             if rel_entities:
-                if len(rel_entities) == 1:
-                    # Single relation - store as single reference
+                # Check if this is a *ToMany relation that should always be a list
+                rel_prop = getattr(self.__class__, rel_name, None)
+                from kybra_simple_db.properties import OneToMany, ManyToMany
+                is_to_many = isinstance(rel_prop, (OneToMany, ManyToMany))
+                
+                if len(rel_entities) == 1 and not is_to_many:
+                    # Single relation for OneToOne/ManyToOne - store as single reference
                     data[rel_name] = getattr(rel_entities[0], reference_name)
                 else:
-                    # Multiple relations - store as list of references
+                    # Multiple relations or *ToMany relations - store as list of references
                     data[rel_name] = [getattr(e, reference_name) for e in rel_entities]
 
         return data
