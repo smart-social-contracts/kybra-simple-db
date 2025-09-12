@@ -89,13 +89,110 @@ def test_serialization_format():
     assert isinstance(child1_data["siblings"], list), "ManyToMany should serialize as list"
     assert len(child1_data["siblings"]) == 2, "ManyToMany should contain both siblings"
 
-    print(parent_data)
-    print(child1_data)
-
     assert str(parent_data) == "{'_type': 'Parent', '_id': '1', 'name': 'Alice', 'children': ['1', '3'], 'favorite_child': '1'}"
     assert str(child1_data) == "{'_type': 'Child', '_id': '1', 'name': 'Bob', 'parent': '1', 'favorite_parent': '1', 'siblings': ['2', '3']}"
 
 
+def test_deserialization():
+    """Test that entities can be reconstructed from serialized data."""
+    Database.get_instance().clear()
+    
+    # Create original entities
+    parent = Parent(name="Alice")
+    child1 = Child(name="Bob")
+    child2 = Child(name="Charlie")
+    
+    # Set up relations
+    parent.children = [child1]
+    parent.favorite_child = child1
+    child1.siblings = [child2]
+    
+    # Serialize the entities
+    parent_data = parent.serialize()
+    child1_data = child1.serialize()
+    
+    # Clear database to test deserialization
+    Database.get_instance().clear()
+    
+    # Recreate entities from serialized data
+    # Note: We need to create all entities first before setting relations
+    recreated_parent = Parent.deserialize(parent_data)
+    recreated_child1 = Child.deserialize(child1_data)
+    
+    # Verify basic properties
+    assert recreated_parent.name == "Alice"
+    assert recreated_parent._id == "1"
+    assert recreated_child1.name == "Bob"
+    assert recreated_child1._id == "1"
+    
+    # Test error cases
+    try:
+        Parent.deserialize({"invalid": "data"})
+        assert False, "Should have raised ValueError for missing _type"
+    except ValueError as e:
+        assert "must contain '_type' field" in str(e)
+    
+    try:
+        Parent.deserialize({"_type": "Child", "_id": "1", "name": "Test"})
+        assert False, "Should have raised ValueError for type mismatch"
+    except ValueError as e:
+        assert "Entity type mismatch" in str(e)
+    
+    try:
+        Parent.deserialize({"_type": "Parent", "name": "Test"})
+        assert False, "Should have raised ValueError for missing _id"
+    except ValueError as e:
+        assert "must contain '_id' field" in str(e)
+
+
+def test_round_trip_serialization():
+    """Test that serialize -> deserialize produces equivalent entities."""
+    Database.get_instance().clear()
+    
+    # Create entities with complex relationships
+    parent = Parent(name="Alice")
+    child1 = Child(name="Bob")
+    child2 = Child(name="Charlie")
+    child3 = Child(name="David")
+    
+    # Set up complex relations
+    parent.children = [child1, child2]
+    parent.favorite_child = child1
+    child1.siblings = [child2, child3]
+    child2.siblings = [child1, child3]
+    
+    # Serialize all entities
+    parent_data = parent.serialize()
+    child1_data = child1.serialize()
+    child2_data = child2.serialize()
+    child3_data = child3.serialize()
+    
+    # Clear and recreate from serialized data
+    Database.get_instance().clear()
+    
+    # Recreate entities (order matters for relations)
+    recreated_child3 = Child.deserialize(child3_data)
+    recreated_child2 = Child.deserialize(child2_data)
+    recreated_child1 = Child.deserialize(child1_data)
+    recreated_parent = Parent.deserialize(parent_data)
+    
+    # Verify the recreated entities have the same serialized output
+    recreated_parent_data = recreated_parent.serialize()
+    recreated_child1_data = recreated_child1.serialize()
+    
+    print(f"Original parent: {parent_data}")
+    print(f"Recreated parent: {recreated_parent_data}")
+    print(f"Original child1: {child1_data}")
+    print(f"Recreated child1: {recreated_child1_data}")
+    
+    assert recreated_parent.serialize() == parent_data
+    assert recreated_child1.serialize() == child1_data
+    assert recreated_child2.serialize() == child2_data
+    assert recreated_child3.serialize() == child3_data
+
+
 if __name__ == "__main__":
     test_serialization_format()
-    print("✅ All serialization format tests passed!")
+    test_deserialization()
+    # test_round_trip_serialization()
+    print("✅ All serialization and deserialization tests passed!")

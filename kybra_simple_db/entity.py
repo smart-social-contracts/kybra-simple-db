@@ -465,6 +465,103 @@ class Entity:
         return data
 
     @classmethod
+    def deserialize(cls: Type[T], data: Dict[str, Any]) -> T:
+        """Create an entity from serialized data.
+        
+        Args:
+            data: Dictionary containing serialized entity data
+            
+        Returns:
+            Entity instance reconstructed from the data
+            
+        Raises:
+            ValueError: If data is invalid or entity type mismatch
+        """
+        if not isinstance(data, dict):
+            raise ValueError("Data must be a dictionary")
+            
+        # Validate entity type
+        if "_type" not in data:
+            raise ValueError("Serialized data must contain '_type' field")
+            
+        entity_type = data["_type"]
+        if entity_type != cls.__name__:
+            raise ValueError(f"Entity type mismatch: expected {cls.__name__}, got {entity_type}")
+            
+        # Extract core fields
+        entity_id = data.get("_id")
+        if not entity_id:
+            raise ValueError("Serialized data must contain '_id' field")
+            
+        # Prepare kwargs for entity creation
+        kwargs = {"_id": entity_id, "_loaded": True}
+        
+        # Add properties and instance attributes (excluding relations and internal fields)
+        from kybra_simple_db.properties import Property, Relation
+        
+        for key, value in data.items():
+            if key.startswith("_"):
+                continue  # Skip internal fields
+                
+            # Check if this is a relation property
+            prop = getattr(cls, key, None)
+            if isinstance(prop, Relation):
+                continue  # Skip relations for now, handle them after entity creation
+                
+            kwargs[key] = value
+            
+        # Create the entity instance
+        entity = cls(**kwargs)
+        
+        # Now handle relations
+        for key, value in data.items():
+            if key.startswith("_"):
+                continue
+                
+            prop = getattr(cls, key, None)
+            if isinstance(prop, Relation):
+                if value is None:
+                    continue
+                    
+                # Handle different relation types
+                from kybra_simple_db.properties import OneToMany, ManyToMany
+                
+                if isinstance(prop, (OneToMany, ManyToMany)):
+                    # Should be a list of IDs
+                    if not isinstance(value, list):
+                        raise ValueError(f"Relation '{key}' should be a list, got {type(value)}")
+                    
+                    # Load related entities
+                    related_entities = []
+                    for related_id in value:
+                        # Get the target entity type
+                        target_type = prop.entity_types[0] if prop.entity_types else cls.__name__
+                        target_class = entity.db()._entity_types.get(target_type)
+                        if target_class:
+                            related_entity = target_class.load(str(related_id))
+                            if related_entity:
+                                related_entities.append(related_entity)
+                    
+                    # Set the relation
+                    if related_entities:
+                        setattr(entity, key, related_entities)
+                        
+                else:
+                    # OneToOne or ManyToOne - should be a single ID
+                    if isinstance(value, list):
+                        raise ValueError(f"Relation '{key}' should be a single value, got list")
+                    
+                    # Load related entity
+                    target_type = prop.entity_types[0] if prop.entity_types else cls.__name__
+                    target_class = entity.db()._entity_types.get(target_type)
+                    if target_class:
+                        related_entity = target_class.load(str(value))
+                        if related_entity:
+                            setattr(entity, key, related_entity)
+        
+        return entity
+
+    @classmethod
     def __class_getitem__(cls: Type[T], key: Any) -> Optional[T]:
         """Allow using class[id] syntax to load entities.
 
