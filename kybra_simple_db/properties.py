@@ -213,6 +213,37 @@ class Relation:
                 f"{self.name} must be set an Entity instance of any of the following types: {self.entity_types}"
             )
 
+    def resolve_entity(self, obj, value):
+        """Resolve a value to an Entity instance.
+        
+        Args:
+            obj: The entity object that owns this relation
+            value: Can be an Entity instance, string ID, or string name/alias
+            
+        Returns:
+            Entity instance or None
+        """
+        if value is None:
+            return None
+            
+        if isinstance(value, Entity):
+            return value
+            
+        if isinstance(value, (str, int)):
+            # Try to find entity by ID or name (alias) using each allowed entity type
+            entity_types = [self.entity_types] if isinstance(self.entity_types, str) else self.entity_types
+            for entity_type_name in entity_types:
+                # Get the entity class from the database registry
+                entity_class = obj.db()._entity_types.get(entity_type_name)
+                if entity_class:
+                    found_entity = entity_class[value]
+                    if found_entity:
+                        return found_entity
+            
+            raise ValueError(f"No entity of types {self.entity_types} found with ID or name '{value}'")
+        
+        raise TypeError(f"{self.name} must be set to an Entity instance, string ID, or string name")
+
 
 class RelationList:
     """Helper class for managing lists of related entities."""
@@ -283,12 +314,10 @@ class OneToOne(Relation):
                 )
 
             # Validate entity type
-            if not isinstance(value, Entity):
-                raise TypeError(f"{self.name} must be set to an Entity instance")
-            if value._type not in self.entity_types:
-                raise TypeError(
-                    f"{self.name} must be set an Entity instance of any of the following types: {self.entity_types}"
-                )
+            value = self.resolve_entity(obj, value)
+
+            print('value', value)
+            print('self.reverse_name', self.reverse_name)
 
             # Check that the reverse property is OneToOne
             reverse_prop = value.__class__.__dict__.get(self.reverse_name)
@@ -297,8 +326,10 @@ class OneToOne(Relation):
                     f"Reverse property '{self.reverse_name}' must be OneToOne"
                 )
 
+            print('reverse_prop', reverse_prop)
             # Get current value if any
             current = self.__get__(obj)
+            print('current', current)
             if current is not None:
                 # Remove existing relation
                 obj.remove_relation(self.name, self.reverse_name, current)
@@ -309,6 +340,9 @@ class OneToOne(Relation):
                 raise ValueError(
                     f"{value._type} instance is already related to another entity"
                 )
+            
+            # obj.add_relation(self.name, self.reverse_name, value)
+            # value.add_relation(self.reverse_name, self.name, obj)
 
         # Set the new relation
         super().__set__(obj, value)
