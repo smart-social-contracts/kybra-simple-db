@@ -1,13 +1,9 @@
-"""Tests for enhanced relation functionality with string ID/name resolution."""
-
-import os
-import sys
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
-
+from kybra_simple_logging import get_logger
 from tester import Tester
 
 from kybra_simple_db import *
+
+logger = get_logger(__name__)
 
 
 # Test entities for comprehensive relation testing
@@ -239,7 +235,7 @@ class TestEnhancedRelations:
     def test_invalid_entity_resolution(self):
         """Test error handling for invalid entity resolution."""
         user1 = User(username="alice", email="alice@example.com")
-        project1 = Project(name="WebApp", description="Main web application")
+        Project(name="WebApp", description="Main web application")
 
         # Test invalid ID
         try:
@@ -263,7 +259,7 @@ class TestEnhancedRelations:
         """Test complex scenarios with mixed relation types and entity resolution."""
         # Create entities
         user1 = User(username="alice", email="alice@example.com")
-        user2 = User(username="bob", email="bob@example.com")
+        User(username="bob", email="bob@example.com")
         profile1 = Profile(name="Alice Smith", bio="Software Engineer")
         dept = Department(name="Engineering", budget=100000)
         project1 = Project(name="WebApp", description="Main web application")
