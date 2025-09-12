@@ -265,10 +265,32 @@ class TestSerialization:
         print(f"Original child1: {child1_data}")
         print(f"Recreated child1: {recreated_child1_data}")
 
-        # For now, just check that basic properties are preserved
+        # Verify that serialized data matches (allowing for different ordering in many-to-many relations)
+        assert (
+            recreated_parent_data == parent_data
+        ), f"Parent data mismatch:\nOriginal: {parent_data}\nRecreated: {recreated_parent_data}"
+
+        # For child1, check each field individually to handle list ordering
+        for key, value in child1_data.items():
+            if key == "siblings":  # ManyToMany relation - check set equality
+                assert set(recreated_child1_data[key]) == set(
+                    value
+                ), f"Siblings mismatch: {recreated_child1_data[key]} != {value}"
+            else:
+                assert (
+                    recreated_child1_data[key] == value
+                ), f"Field {key} mismatch: {recreated_child1_data[key]} != {value}"
+
+        # Verify basic properties are preserved
         assert recreated_parent.name == "Alice"
         assert recreated_child1.name == "Bob"
-        # TODO: Fix relation restoration in round-trip serialization
+
+        # Verify relations are properly restored
+        assert len(recreated_parent.children) == 2, "Parent should have 2 children"
+        assert (
+            recreated_parent.favorite_child is not None
+        ), "Parent should have a favorite child"
+        assert len(recreated_child1.siblings) == 2, "Child1 should have 2 siblings"
 
 
 def run(test_name: str = None, test_var: str = None):

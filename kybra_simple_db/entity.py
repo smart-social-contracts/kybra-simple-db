@@ -588,10 +588,10 @@ class Entity:
                         if related_entity:
                             related_entities.append(related_entity)
 
-                # Set the relation
+                # Set the relation using the property's __set__ method
                 if related_entities:
                     logger.debug(f"Setting {key} to {related_entities}")
-                    setattr(entity, key, related_entities)
+                    prop.__set__(entity, related_entities)
                 else:
                     logger.debug(f"No related entities found for {key}")
 
@@ -620,7 +620,7 @@ class Entity:
                     logger.debug(f"Loaded entity: {related_entity}")
                     if related_entity:
                         logger.debug(f"Setting {key} to {related_entity}")
-                        setattr(entity, key, related_entity)
+                        prop.__set__(entity, related_entity)
 
         # Clear pending relations after processing
         entity._pending_relations = {}
