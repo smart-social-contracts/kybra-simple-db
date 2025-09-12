@@ -447,13 +447,15 @@ class Entity:
                 data[k] = v
 
         # Add relations as references
-        relations = {}
+        reference_name = "_id"  # TODO: make this configurable, e.g. take alias instead
         for rel_name, rel_entities in self._relations.items():
-            relations[rel_name] = [
-                {"_type": e._type, "_id": e._id} for e in rel_entities
-            ]
-        if relations:
-            data["relations"] = relations
+            if rel_entities:
+                if len(rel_entities) == 1:
+                    # Single relation - store as single reference
+                    data[rel_name] = getattr(rel_entities[0], reference_name)
+                else:
+                    # Multiple relations - store as list of references
+                    data[rel_name] = [getattr(e, reference_name) for e in rel_entities]
 
         return data
 
