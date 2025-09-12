@@ -262,8 +262,8 @@ class RelationList:
 
     def add(self, entity):
         """Add a new relation."""
-        if not isinstance(entity, Entity):
-            raise TypeError(f"{self.prop.name} must be set to Entity instances")
+        # Resolve entity (supports string ID/name)
+        entity = self.prop.resolve_entity(self.obj, entity)
 
         if entity._type not in self.prop.entity_types:
             raise TypeError(
@@ -337,15 +337,13 @@ class OneToOne(Relation):
                 # Remove existing relation
                 obj.remove_relation(self.name, self.reverse_name, current)
 
-            # Check if value is already related to another entity
+            # Check if value is already related to another entity and remove that relation
             existing = value.get_relations(self.reverse_name)
             if existing:
-                raise ValueError(
-                    f"{value._type} instance is already related to another entity"
-                )
-
-            # obj.add_relation(self.name, self.reverse_name, value)
-            # value.add_relation(self.reverse_name, self.name, obj)
+                existing_entity = existing[0]
+                # Remove the existing relation from both sides
+                existing_entity.remove_relation(self.name, self.reverse_name, value)
+                value.remove_relation(self.reverse_name, self.name, existing_entity)
 
         # Set the new relation
         super().__set__(obj, value)
@@ -374,23 +372,25 @@ class OneToMany(Relation):
         if not isinstance(values, (list, tuple)):
             raise TypeError(f"{self.name} must be set to a list of entities")
 
+        resolved_values = []
         for value in values:
-            # Validate entity type
-            if not isinstance(value, Entity):
-                raise TypeError(f"{self.name} must contain Entity instances")
-            if value._type not in self.entity_types:
+            # Resolve value to Entity instance
+            resolved_value = self.resolve_entity(obj, value)
+            if resolved_value._type not in self.entity_types:
                 raise TypeError(
-                    f"Trying to set an Entity instance of type '{value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
+                    f"Trying to set an Entity instance of type '{resolved_value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
                 )
+            resolved_values.append(resolved_value)
 
             # Check that the reverse property is ManyToOne
-            reverse_prop = value.__class__.__dict__.get(self.reverse_name)
+            reverse_prop = resolved_value.__class__.__dict__.get(self.reverse_name)
             if not isinstance(reverse_prop, ManyToOne):
                 raise ValueError(
                     f"Reverse property '{self.reverse_name}' must be ManyToOne"
                 )
 
-        super().__set__(obj, values)
+        # Replace original values with resolved entities
+        super().__set__(obj, resolved_values)
 
     def __get__(self, obj, objtype=None):
         """Get related entities as a RelationList."""
@@ -425,9 +425,8 @@ class ManyToOne(Relation):
                     f"{self.name} cannot be set to multiple values (many-to-one relationship)"
                 )
 
-            # Validate entity type
-            if not isinstance(value, Entity):
-                raise TypeError(f"{self.name} must be set to an Entity instance")
+            # Resolve value to Entity instance
+            value = self.resolve_entity(obj, value)
 
             if value._type not in self.entity_types:
                 raise TypeError(
@@ -471,25 +470,32 @@ class ManyToMany(Relation):
         # Convert single entity to list for convenience
         if isinstance(values, Entity):
             values = [values]
+        elif isinstance(values, (str, int)):
+            # Handle single string ID/name
+            values = [values]
         elif values is not None and not isinstance(values, (list, tuple)):
             raise TypeError(f"{self.name} must be set to an entity or list of entities")
 
         if values is not None:
+            resolved_values = []
             for value in values:
-                # Validate entity type
-                if not isinstance(value, Entity):
-                    raise TypeError(f"{self.name} must contain Entity instances")
-                if value._type not in self.entity_types:
+                # Resolve value to Entity instance
+                resolved_value = self.resolve_entity(obj, value)
+                if resolved_value._type not in self.entity_types:
                     raise TypeError(
-                        f"Trying to set an Entity instance of type '{value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
+                        f"Trying to set an Entity instance of type '{resolved_value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
                     )
+                resolved_values.append(resolved_value)
 
                 # Check that the reverse property is ManyToMany
-                reverse_prop = value.__class__.__dict__.get(self.reverse_name)
+                reverse_prop = resolved_value.__class__.__dict__.get(self.reverse_name)
                 if not isinstance(reverse_prop, ManyToMany):
                     raise ValueError(
                         f"Reverse property '{self.reverse_name}' must be ManyToMany"
                     )
+
+            # Replace original values with resolved entities
+            values = resolved_values
 
         super().__set__(obj, values)
 
