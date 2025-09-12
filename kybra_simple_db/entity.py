@@ -114,6 +114,20 @@ class Entity:
         # Register this type with the database
         self.db().register_entity_type(self.__class__)
 
+        # Generate ID if not provided
+        if self._id is None:
+            db = self.db()
+            type_name = self._type
+            current_id = db.load("_system", f"{type_name}_id")
+            if current_id is None:
+                current_id = "0"
+            next_id = str(int(current_id) + 1)
+            self._id = next_id
+            db.save("_system", f"{type_name}_id", self._id)
+
+        # Register this instance in the entity registry
+        self.db().register_entity(self)
+
         self._do_not_save = True
         # Set additional attributes
         for k, v in kwargs.items():
@@ -231,8 +245,15 @@ class Entity:
 
         # Use class name for type
         type_name = cls.__name__
-        logger.debug(f"Loading entity {type_name}@{entity_id}")
+        
+        # Check entity registry first
         db = cls.db()
+        existing_entity = db.get_entity(type_name, entity_id)
+        if existing_entity is not None:
+            logger.debug(f"Found entity {type_name}@{entity_id} in registry")
+            return existing_entity
+        
+        logger.debug(f"Loading entity {type_name}@{entity_id} from database")
         data = db.load(type_name, entity_id)
         if not data:
             return None
@@ -367,6 +388,10 @@ class Entity:
         logger.debug(f"Deleting entity {self._type}@{self._id}")
         """Delete this entity from the database."""
         self.db().delete(self._type, self._id)
+        
+        # Remove from entity registry
+        self.db().unregister_entity(self._type, self._id)
+        
         # Decrement the count when an entity is deleted
         type_name = self.__class__.__name__
         count_key = f"{type_name}_count"

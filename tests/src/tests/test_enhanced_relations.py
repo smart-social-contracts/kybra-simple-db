@@ -65,9 +65,6 @@ class TestEnhancedRelations:
 
         # Set using string ID
         user2.profile = profile2._id
-
-        profile2 = Profile[profile2._id]
-        
         assert user2.profile == profile2, f"user2.profile should be set to profile2 using ID '{profile2._id}'"
         assert profile2.user == user2, "profile2.user should be set to user2 (reverse relation)"
 

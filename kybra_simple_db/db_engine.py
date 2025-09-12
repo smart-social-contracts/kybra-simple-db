@@ -4,6 +4,7 @@ Core database engine implementation
 
 import json
 import time
+import weakref
 from typing import Any, Dict, List, Optional, Tuple
 
 from kybra_simple_logging import get_logger
@@ -58,11 +59,16 @@ class Database:
             )
 
         self._entity_types = {}
+        # Entity registry: {(type_name, entity_id): weakref to entity instance}
+        self._entity_registry = {}
 
     def clear(self):
         keys = list(self._db_storage.keys())
         for key in keys:
             self._db_storage.remove(key)
+
+        # Also clear the entity registry
+        self.clear_registry()
 
         if not self._db_audit:
             return
@@ -73,6 +79,35 @@ class Database:
 
         self._db_audit.insert("_min_id", "0")
         self._db_audit.insert("_max_id", "0")
+
+    def register_entity(self, entity_instance):
+        """Register an entity instance in the identity map."""
+        key = (entity_instance._type, entity_instance._id)
+        # Use weak reference to allow garbage collection
+        self._entity_registry[key] = weakref.ref(entity_instance)
+        
+    def get_entity(self, type_name: str, entity_id: str):
+        """Get entity from registry if it exists."""
+        key = (type_name, entity_id)
+        if key in self._entity_registry:
+            entity_ref = self._entity_registry[key]
+            entity = entity_ref()  # Get object from weak reference
+            if entity is not None:
+                return entity
+            else:
+                # Clean up dead reference
+                del self._entity_registry[key]
+        return None
+        
+    def clear_registry(self):
+        """Clear the entity registry (useful for testing)."""
+        self._entity_registry.clear()
+        
+    def unregister_entity(self, type_name: str, entity_id: str):
+        """Remove an entity from the registry (used when deleting)."""
+        key = (type_name, entity_id)
+        if key in self._entity_registry:
+            del self._entity_registry[key]
 
     def _audit(self, op: str, key: str, data: Any) -> None:
         if self._db_audit and self._audit_enabled:

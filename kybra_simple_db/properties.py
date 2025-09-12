@@ -316,9 +316,6 @@ class OneToOne(Relation):
             # Validate entity type
             value = self.resolve_entity(obj, value)
 
-            print('value', value)
-            print('self.reverse_name', self.reverse_name)
-
             # Check that the reverse property is OneToOne
             reverse_prop = value.__class__.__dict__.get(self.reverse_name)
             if not isinstance(reverse_prop, OneToOne):
@@ -326,10 +323,8 @@ class OneToOne(Relation):
                     f"Reverse property '{self.reverse_name}' must be OneToOne"
                 )
 
-            print('reverse_prop', reverse_prop)
             # Get current value if any
             current = self.__get__(obj)
-            print('current', current)
             if current is not None:
                 # Remove existing relation
                 obj.remove_relation(self.name, self.reverse_name, current)
