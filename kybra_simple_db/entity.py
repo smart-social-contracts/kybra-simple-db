@@ -516,61 +516,114 @@ class Entity:
         # Create the entity instance
         entity = cls(**kwargs)
 
-        # Now handle relations
+        # Store relation data for later processing
+        entity._pending_relations = {}
         for key, value in data.items():
             if key.startswith("_"):
                 continue
 
             prop = getattr(cls, key, None)
             if isinstance(prop, Relation):
-                if value is None:
-                    continue
-
-                # Handle different relation types
-                from kybra_simple_db.properties import ManyToMany, OneToMany
-
-                if isinstance(prop, (OneToMany, ManyToMany)):
-                    # Should be a list of IDs
-                    if not isinstance(value, list):
-                        raise ValueError(
-                            f"Relation '{key}' should be a list, got {type(value)}"
-                        )
-
-                    # Load related entities
-                    related_entities = []
-                    for related_id in value:
-                        # Get the target entity type
-                        target_type = (
-                            prop.entity_types[0] if prop.entity_types else cls.__name__
-                        )
-                        target_class = entity.db()._entity_types.get(target_type)
-                        if target_class:
-                            related_entity = target_class.load(str(related_id))
-                            if related_entity:
-                                related_entities.append(related_entity)
-
-                    # Set the relation
-                    if related_entities:
-                        setattr(entity, key, related_entities)
-
-                else:
-                    # OneToOne or ManyToOne - should be a single ID
-                    if isinstance(value, list):
-                        raise ValueError(
-                            f"Relation '{key}' should be a single value, got list"
-                        )
-
-                    # Load related entity
-                    target_type = (
-                        prop.entity_types[0] if prop.entity_types else cls.__name__
-                    )
-                    target_class = entity.db()._entity_types.get(target_type)
-                    if target_class:
-                        related_entity = target_class.load(str(value))
-                        if related_entity:
-                            setattr(entity, key, related_entity)
+                if value is not None:
+                    entity._pending_relations[key] = value
 
         return entity
+
+    @classmethod
+    def resolve_pending_relations(cls):
+        """Resolve all pending relations for all entities in the database."""
+        db = cls.db()
+
+        # Get all entity instances that have pending relations
+        for entity_type_name, entity_class in db._entity_types.items():
+            for entity in entity_class.instances():
+                if hasattr(entity, "_pending_relations") and entity._pending_relations:
+                    cls._resolve_entity_relations(entity)
+
+    @classmethod
+    def _resolve_entity_relations(cls, entity):
+        """Resolve pending relations for a specific entity."""
+        if not hasattr(entity, "_pending_relations"):
+            return
+
+        from kybra_simple_db.properties import ManyToMany, OneToMany, Relation
+
+        logger.debug(
+            f"Resolving relations for {entity._type}@{entity._id}: {entity._pending_relations}"
+        )
+
+        for key, value in entity._pending_relations.items():
+            prop = getattr(entity.__class__, key, None)
+            logger.debug(f"Processing relation {key}: prop={prop}, value={value}")
+
+            if not isinstance(prop, Relation):
+                logger.debug(f"Skipping {key}: not a Relation property")
+                continue
+
+            if isinstance(prop, (OneToMany, ManyToMany)):
+                # Should be a list of IDs
+                if not isinstance(value, list):
+                    logger.debug(f"Skipping {key}: expected list, got {type(value)}")
+                    continue
+
+                # Load related entities
+                related_entities = []
+                for related_id in value:
+                    # Handle both string and list entity_types
+                    if isinstance(prop.entity_types, str):
+                        target_type = prop.entity_types
+                    elif isinstance(prop.entity_types, list) and prop.entity_types:
+                        target_type = prop.entity_types[0]
+                    else:
+                        target_type = entity.__class__.__name__
+
+                    target_class = entity.db()._entity_types.get(target_type)
+                    logger.debug(
+                        f"Looking for {target_type} with ID {related_id}, target_class={target_class}"
+                    )
+
+                    if target_class:
+                        related_entity = target_class.load(str(related_id))
+                        logger.debug(f"Loaded entity: {related_entity}")
+                        if related_entity:
+                            related_entities.append(related_entity)
+
+                # Set the relation
+                if related_entities:
+                    logger.debug(f"Setting {key} to {related_entities}")
+                    setattr(entity, key, related_entities)
+                else:
+                    logger.debug(f"No related entities found for {key}")
+
+            else:
+                # OneToOne or ManyToOne - should be a single ID
+                if isinstance(value, list):
+                    logger.debug(f"Skipping {key}: expected single value, got list")
+                    continue
+
+                # Load related entity
+                # Handle both string and list entity_types
+                if isinstance(prop.entity_types, str):
+                    target_type = prop.entity_types
+                elif isinstance(prop.entity_types, list) and prop.entity_types:
+                    target_type = prop.entity_types[0]
+                else:
+                    target_type = entity.__class__.__name__
+
+                target_class = entity.db()._entity_types.get(target_type)
+                logger.debug(
+                    f"Looking for {target_type} with ID {value}, target_class={target_class}"
+                )
+
+                if target_class:
+                    related_entity = target_class.load(str(value))
+                    logger.debug(f"Loaded entity: {related_entity}")
+                    if related_entity:
+                        logger.debug(f"Setting {key} to {related_entity}")
+                        setattr(entity, key, related_entity)
+
+        # Clear pending relations after processing
+        entity._pending_relations = {}
 
     @classmethod
     def __class_getitem__(cls: Type[T], key: Any) -> Optional[T]:
