@@ -59,7 +59,7 @@ class TestMixins:
         entity._save()  # Should work now
 
         # Verify changes in dictionary format
-        data = entity.to_dict()
+        data = entity.serialize()
         assert "timestamp_created" in data
         assert "timestamp_updated" in data
         assert "creator" in data

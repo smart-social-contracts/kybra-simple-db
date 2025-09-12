@@ -204,7 +204,7 @@ class Entity:
             self._update_timestamps(caller_id)
 
         # Save to database
-        data = self.to_dict()
+        data = self.serialize()
 
         if not self._do_not_save:
             logger.debug(f"Saving entity {self._type}@{self._id} to database")
@@ -284,7 +284,7 @@ class Entity:
     @classmethod
     def find(cls: Type[T], d) -> List[T]:
         D = d
-        L = [_.to_dict() for _ in cls.instances()]
+        L = [_.serialize() for _ in cls.instances()]
         return [
             cls.load(d["_id"]) for d in L if all(d.get(k) == v for k, v in D.items())
         ]
@@ -416,14 +416,14 @@ class Entity:
         # Remove from context
         self.__class__._context.discard(self)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert the entity to a dictionary.
+    def serialize(self) -> Dict[str, Any]:
+        """Convert the entity to a serializable dictionary.
 
         Returns:
-            Dict containing the entity's data
+            Dict containing the entity's serializable data
         """
         # Get mixin data first if available
-        data = super().to_dict() if hasattr(super(), "to_dict") else {}
+        data = super().serialize() if hasattr(super(), "serialize") else {}
 
         # Add core entity data
         data.update(
