@@ -1,5 +1,6 @@
 """Test serialization format for different relation types."""
 
+from tester import Tester
 from kybra_simple_db import (
     Database,
     Entity,
@@ -191,8 +192,21 @@ def test_round_trip_serialization():
     assert recreated_child3.serialize() == child3_data
 
 
+def run(test_name: str = None, test_var: str = None):
+    tester = Tester(TestSerialization)
+    return tester.run_test(test_name, test_var)
+
+
+class TestSerialization:
+    def serialization_format(self):
+        test_serialization_format()
+    
+    def deserialization(self):
+        test_deserialization()
+    
+    def round_trip_serialization(self):
+        test_round_trip_serialization()
+
+
 if __name__ == "__main__":
-    test_serialization_format()
-    test_deserialization()
-    # test_round_trip_serialization()
-    print("✅ All serialization and deserialization tests passed!")
+    exit(run())
