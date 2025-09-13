@@ -326,7 +326,7 @@ class TestSerialization:
         Database.get_instance().clear()
         original = Parent(name="Test")
         roundtrip = Entity.deserialize(original.serialize())
-        
+
         assert isinstance(roundtrip, Parent), "Round-trip should preserve type"
         assert roundtrip.name == "Test", "Round-trip should preserve properties"
         assert roundtrip._id == original._id, "Round-trip should preserve ID"

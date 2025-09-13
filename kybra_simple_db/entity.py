@@ -486,7 +486,7 @@ class Entity:
             raise ValueError("Serialized data must contain '_type' field")
 
         entity_type = data["_type"]
-        
+
         # If called on base Entity class, look up the specific entity class
         if cls.__name__ == "Entity":
             db = cls.db()
@@ -495,7 +495,7 @@ class Entity:
                 raise ValueError(f"Unknown entity type: {entity_type}")
             # Delegate to the specific entity class
             return target_class.deserialize(data)
-        
+
         # If called on specific entity class, validate type matches
         if entity_type != cls.__name__:
             raise ValueError(
