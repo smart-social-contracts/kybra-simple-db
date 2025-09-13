@@ -466,8 +466,8 @@ class Entity:
         return data
 
     @classmethod
-    def deserialize(cls: Type[T], data: Dict[str, Any]) -> T:
-        """Create an entity from serialized data.
+    def deserialize(cls, data: dict):
+        """Deserialize entity from dictionary data.
 
         Args:
             data: Dictionary containing serialized entity data
@@ -476,7 +476,7 @@ class Entity:
             Entity instance reconstructed from the data
 
         Raises:
-            ValueError: If data is invalid or entity type mismatch
+            ValueError: If data is invalid or entity type not found
         """
         if not isinstance(data, dict):
             raise ValueError("Data must be a dictionary")
@@ -486,6 +486,17 @@ class Entity:
             raise ValueError("Serialized data must contain '_type' field")
 
         entity_type = data["_type"]
+        
+        # If called on base Entity class, look up the specific entity class
+        if cls.__name__ == "Entity":
+            db = cls.db()
+            target_class = db._entity_types.get(entity_type)
+            if not target_class:
+                raise ValueError(f"Unknown entity type: {entity_type}")
+            # Delegate to the specific entity class
+            return target_class.deserialize(data)
+        
+        # If called on specific entity class, validate type matches
         if entity_type != cls.__name__:
             raise ValueError(
                 f"Entity type mismatch: expected {cls.__name__}, got {entity_type}"

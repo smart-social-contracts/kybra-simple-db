@@ -292,6 +292,58 @@ class TestSerialization:
         ), "Parent should have a favorite child"
         assert len(recreated_child1.siblings) == 2, "Child1 should have 2 siblings"
 
+    def test_generic_deserialization(self):
+        """Test that Entity.deserialize() works without knowing the entity type."""
+        Database.get_instance().clear()
+
+        # Create entities
+        parent = Parent(name="Alice")
+        child = Child(name="Bob")
+        parent.children = [child]
+
+        # Serialize entities
+        parent_data = parent.serialize()
+        child_data = child.serialize()
+
+        # Clear database
+        Database.get_instance().clear()
+
+        # Test generic deserialization using Entity.deserialize()
+        from kybra_simple_db import Entity
+
+        recreated_parent = Entity.deserialize(parent_data)
+        recreated_child = Entity.deserialize(child_data)
+
+        # Verify types and properties
+        assert isinstance(recreated_parent, Parent), "Should recreate Parent instance"
+        assert isinstance(recreated_child, Child), "Should recreate Child instance"
+        assert recreated_parent.name == "Alice"
+        assert recreated_child.name == "Bob"
+        assert recreated_parent._id == "1"
+        assert recreated_child._id == "1"
+
+        # Test the round-trip pattern: student = Entity.deserialize(student.serialize())
+        Database.get_instance().clear()
+        original = Parent(name="Test")
+        roundtrip = Entity.deserialize(original.serialize())
+        
+        assert isinstance(roundtrip, Parent), "Round-trip should preserve type"
+        assert roundtrip.name == "Test", "Round-trip should preserve properties"
+        assert roundtrip._id == original._id, "Round-trip should preserve ID"
+
+        # Test error cases
+        try:
+            Entity.deserialize({"invalid": "data"})
+            assert False, "Should raise ValueError for missing _type"
+        except ValueError as e:
+            assert "must contain '_type' field" in str(e)
+
+        try:
+            Entity.deserialize({"_type": "NonExistentEntity", "_id": "1"})
+            assert False, "Should raise ValueError for unknown entity type"
+        except ValueError as e:
+            assert "Unknown entity type" in str(e)
+
 
 def run(test_name: str = None, test_var: str = None):
     tester = Tester(TestSerialization)
