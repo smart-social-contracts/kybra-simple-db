@@ -467,13 +467,19 @@ class Entity:
 
     @classmethod
     def deserialize(cls, data: dict):
-        """Deserialize entity from dictionary data.
+        """Deserialize entity from dictionary data with upsert functionality.
+
+        This method will:
+        - Update an existing entity if found by _id or alias
+        - Create a new entity if not found
+        - Handle proper ID generation and counting for new entities
+        - Update alias mappings when alias fields change
 
         Args:
             data: Dictionary containing serialized entity data
 
         Returns:
-            Entity instance reconstructed from the data
+            Entity instance (either updated existing or newly created)
 
         Raises:
             ValueError: If data is invalid or entity type not found
@@ -502,43 +508,117 @@ class Entity:
                 f"Entity type mismatch: expected {cls.__name__}, got {entity_type}"
             )
 
-        # Extract core fields
+        # Try to find existing entity
+        existing_entity = None
+
+        # First try by _id if provided
         entity_id = data.get("_id")
-        if not entity_id:
-            raise ValueError("Serialized data must contain '_id' field")
+        if entity_id:
+            existing_entity = cls.load(str(entity_id))
 
-        # Prepare kwargs for entity creation
-        kwargs = {"_id": entity_id, "_loaded": True}
+        # If not found by ID and class has alias, try by alias
+        if not existing_entity and hasattr(cls, "__alias__") and cls.__alias__:
+            alias_field = cls.__alias__
+            if alias_field in data:
+                alias_value = data[alias_field]
+                if alias_value is not None:
+                    # Use the same lookup logic as __class_getitem__
+                    alias_key = cls._alias_key()
+                    actual_id = cls.db().load(alias_key, str(alias_value))
+                    if actual_id:
+                        existing_entity = cls.load(actual_id)
 
-        # Add properties and instance attributes (excluding relations and internal fields)
-        from kybra_simple_db.properties import Property, Relation
+        if existing_entity:
+            # UPDATE existing entity
+            from kybra_simple_db.properties import Property, Relation
 
-        for key, value in data.items():
-            if key.startswith("_"):
-                continue  # Skip internal fields
+            # Store old alias value for cleanup if it changes
+            old_alias_value = None
+            if hasattr(cls, "__alias__") and cls.__alias__:
+                alias_field = cls.__alias__
+                if hasattr(existing_entity, alias_field):
+                    old_alias_value = getattr(existing_entity, alias_field)
 
-            # Check if this is a relation property
-            prop = getattr(cls, key, None)
-            if isinstance(prop, Relation):
-                continue  # Skip relations for now, handle them after entity creation
+            # Update properties (merge mode - only update provided fields)
+            existing_entity._do_not_save = True
+            for key, value in data.items():
+                if key.startswith("_"):
+                    continue  # Skip internal fields
 
-            kwargs[key] = value
+                # Check if this is a relation property
+                prop = getattr(cls, key, None)
+                if isinstance(prop, Relation):
+                    continue  # Skip relations for now, handle them after
 
-        # Create the entity instance
-        entity = cls(**kwargs)
+                # Update the property
+                setattr(existing_entity, key, value)
 
-        # Store relation data for later processing
-        entity._pending_relations = {}
-        for key, value in data.items():
-            if key.startswith("_"):
-                continue
+            # Handle alias update if alias field changed
+            if hasattr(cls, "__alias__") and cls.__alias__:
+                alias_field = cls.__alias__
+                if alias_field in data:
+                    new_alias_value = data[alias_field]
+                    if old_alias_value != new_alias_value:
+                        # Remove old alias mapping
+                        if old_alias_value is not None:
+                            cls.db().delete(cls._alias_key(), str(old_alias_value))
+                        # New alias mapping will be created when entity is saved
 
-            prop = getattr(cls, key, None)
-            if isinstance(prop, Relation):
-                if value is not None:
-                    entity._pending_relations[key] = value
+            existing_entity._do_not_save = False
 
-        return entity
+            # Store relation data for later processing
+            existing_entity._pending_relations = {}
+            for key, value in data.items():
+                if key.startswith("_"):
+                    continue
+
+                prop = getattr(cls, key, None)
+                if isinstance(prop, Relation):
+                    if value is not None:
+                        existing_entity._pending_relations[key] = value
+
+            # Save the updated entity
+            existing_entity._save()
+            return existing_entity
+
+        else:
+            # CREATE new entity
+            from kybra_simple_db.properties import Property, Relation
+
+            # Prepare kwargs for entity creation (exclude relations)
+            kwargs = {}
+
+            # Include _id if provided (for proper deserialization)
+            if entity_id:
+                kwargs["_id"] = entity_id
+
+            # Add properties and instance attributes (excluding relations and other internal fields)
+            for key, value in data.items():
+                if key.startswith("_") and key != "_id":
+                    continue  # Skip internal fields except _id
+
+                # Check if this is a relation property
+                prop = getattr(cls, key, None)
+                if isinstance(prop, Relation):
+                    continue  # Skip relations for now, handle them after entity creation
+
+                kwargs[key] = value
+
+            # Create the entity instance
+            entity = cls(**kwargs)
+
+            # Store relation data for later processing
+            entity._pending_relations = {}
+            for key, value in data.items():
+                if key.startswith("_"):
+                    continue
+
+                prop = getattr(cls, key, None)
+                if isinstance(prop, Relation):
+                    if value is not None:
+                        entity._pending_relations[key] = value
+
+            return entity
 
     @classmethod
     def resolve_pending_relations(cls):
