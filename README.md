@@ -80,22 +80,8 @@ Then use the defined entities to store objects:
     assert alice in eva.friends
     assert eva in alice.friends
 
-    pprint(alice.to_dict())  # Prints the dictionary representation of an object
-    ''' Prints:
-
-    {'_id': '2',
-    '_type': 'Person',
-    'age': None,
-    'creator': 'system',
-    'name': 'Alice',
-    'owner': 'system',
-    'relations': {'children': [{'_id': '1', '_type': 'Person'}],
-                'friends': [{'_id': '3', '_type': 'Person'}]},
-    'timestamp_created': '2025-04-08 20:45:08.957',
-    'timestamp_updated': '2025-04-08 20:45:08.957',
-    'updater': 'system'}
-
-    '''
+    print(alice.serialize())  # Prints the dictionary representation of an object
+    # Prints: {'timestamp_created': '2025-09-12 22:15:35.882', 'timestamp_updated': '2025-09-12 22:15:35.883', 'creator': 'system', 'updater': 'system', 'owner': 'system', '_type': 'Person', '_id': '3', 'name': 'Alice', 'age': None, 'children': '1', 'friends': '4'}
 
     assert Person.count() == 3
     assert Person.max_id() == 4

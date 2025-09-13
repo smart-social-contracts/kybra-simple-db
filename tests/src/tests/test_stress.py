@@ -33,7 +33,7 @@ class TestStress:
     def query(self, name: str):
         ic.print("Name lookup: name = %s" % name)
         entity = StressTestEntity[name]
-        ic.print("Name lookup: entity = %s" % entity.to_dict())
+        ic.print("Name lookup: entity = %s" % entity.serialize())
         assert entity is not None
 
 

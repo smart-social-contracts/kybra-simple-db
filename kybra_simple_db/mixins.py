@@ -49,7 +49,7 @@ class TimestampedMixin:
         """
         return self._owner == caller_id
 
-    def to_dict(self) -> Dict[str, Any]:
+    def serialize(self) -> Dict[str, Any]:
         """Convert timestamps and ownership info to a dictionary.
 
         Returns:

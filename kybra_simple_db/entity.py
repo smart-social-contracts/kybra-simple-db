@@ -114,6 +114,20 @@ class Entity:
         # Register this type with the database
         self.db().register_entity_type(self.__class__)
 
+        # Generate ID if not provided
+        if self._id is None:
+            db = self.db()
+            type_name = self._type
+            current_id = db.load("_system", f"{type_name}_id")
+            if current_id is None:
+                current_id = "0"
+            next_id = str(int(current_id) + 1)
+            self._id = next_id
+            db.save("_system", f"{type_name}_id", self._id)
+
+        # Register this instance in the entity registry
+        self.db().register_entity(self)
+
         self._do_not_save = True
         # Set additional attributes
         for k, v in kwargs.items():
@@ -190,7 +204,7 @@ class Entity:
             self._update_timestamps(caller_id)
 
         # Save to database
-        data = self.to_dict()
+        data = self.serialize()
 
         if not self._do_not_save:
             logger.debug(f"Saving entity {self._type}@{self._id} to database")
@@ -231,8 +245,15 @@ class Entity:
 
         # Use class name for type
         type_name = cls.__name__
-        logger.debug(f"Loading entity {type_name}@{entity_id}")
+
+        # Check entity registry first
         db = cls.db()
+        existing_entity = db.get_entity(type_name, entity_id)
+        if existing_entity is not None:
+            logger.debug(f"Found entity {type_name}@{entity_id} in registry")
+            return existing_entity
+
+        logger.debug(f"Loading entity {type_name}@{entity_id} from database")
         data = db.load(type_name, entity_id)
         if not data:
             return None
@@ -263,7 +284,7 @@ class Entity:
     @classmethod
     def find(cls: Type[T], d) -> List[T]:
         D = d
-        L = [_.to_dict() for _ in cls.instances()]
+        L = [_.serialize() for _ in cls.instances()]
         return [
             cls.load(d["_id"]) for d in L if all(d.get(k) == v for k, v in D.items())
         ]
@@ -367,6 +388,10 @@ class Entity:
         logger.debug(f"Deleting entity {self._type}@{self._id}")
         """Delete this entity from the database."""
         self.db().delete(self._type, self._id)
+
+        # Remove from entity registry
+        self.db().unregister_entity(self._type, self._id)
+
         # Decrement the count when an entity is deleted
         type_name = self.__class__.__name__
         count_key = f"{type_name}_count"
@@ -391,14 +416,14 @@ class Entity:
         # Remove from context
         self.__class__._context.discard(self)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert the entity to a dictionary.
+    def serialize(self) -> Dict[str, Any]:
+        """Convert the entity to a serializable dictionary.
 
         Returns:
-            Dict containing the entity's data
+            Dict containing the entity's serializable data
         """
         # Get mixin data first if available
-        data = super().to_dict() if hasattr(super(), "to_dict") else {}
+        data = super().serialize() if hasattr(super(), "serialize") else {}
 
         # Add core entity data
         data.update(
@@ -422,15 +447,194 @@ class Entity:
                 data[k] = v
 
         # Add relations as references
-        relations = {}
+        reference_name = "_id"  # TODO: make this configurable, e.g. take alias instead
         for rel_name, rel_entities in self._relations.items():
-            relations[rel_name] = [
-                {"_type": e._type, "_id": e._id} for e in rel_entities
-            ]
-        if relations:
-            data["relations"] = relations
+            if rel_entities:
+                # Check if this is a *ToMany relation that should always be a list
+                rel_prop = getattr(self.__class__, rel_name, None)
+                from kybra_simple_db.properties import ManyToMany, OneToMany
+
+                is_to_many = isinstance(rel_prop, (OneToMany, ManyToMany))
+
+                if len(rel_entities) == 1 and not is_to_many:
+                    # Single relation for OneToOne/ManyToOne - store as single reference
+                    data[rel_name] = getattr(rel_entities[0], reference_name)
+                else:
+                    # Multiple relations or *ToMany relations - store as list of references
+                    data[rel_name] = [getattr(e, reference_name) for e in rel_entities]
 
         return data
+
+    @classmethod
+    def deserialize(cls, data: dict):
+        """Deserialize entity from dictionary data.
+
+        Args:
+            data: Dictionary containing serialized entity data
+
+        Returns:
+            Entity instance reconstructed from the data
+
+        Raises:
+            ValueError: If data is invalid or entity type not found
+        """
+        if not isinstance(data, dict):
+            raise ValueError("Data must be a dictionary")
+
+        # Validate entity type
+        if "_type" not in data:
+            raise ValueError("Serialized data must contain '_type' field")
+
+        entity_type = data["_type"]
+
+        # If called on base Entity class, look up the specific entity class
+        if cls.__name__ == "Entity":
+            db = cls.db()
+            target_class = db._entity_types.get(entity_type)
+            if not target_class:
+                raise ValueError(f"Unknown entity type: {entity_type}")
+            # Delegate to the specific entity class
+            return target_class.deserialize(data)
+
+        # If called on specific entity class, validate type matches
+        if entity_type != cls.__name__:
+            raise ValueError(
+                f"Entity type mismatch: expected {cls.__name__}, got {entity_type}"
+            )
+
+        # Extract core fields
+        entity_id = data.get("_id")
+        if not entity_id:
+            raise ValueError("Serialized data must contain '_id' field")
+
+        # Prepare kwargs for entity creation
+        kwargs = {"_id": entity_id, "_loaded": True}
+
+        # Add properties and instance attributes (excluding relations and internal fields)
+        from kybra_simple_db.properties import Property, Relation
+
+        for key, value in data.items():
+            if key.startswith("_"):
+                continue  # Skip internal fields
+
+            # Check if this is a relation property
+            prop = getattr(cls, key, None)
+            if isinstance(prop, Relation):
+                continue  # Skip relations for now, handle them after entity creation
+
+            kwargs[key] = value
+
+        # Create the entity instance
+        entity = cls(**kwargs)
+
+        # Store relation data for later processing
+        entity._pending_relations = {}
+        for key, value in data.items():
+            if key.startswith("_"):
+                continue
+
+            prop = getattr(cls, key, None)
+            if isinstance(prop, Relation):
+                if value is not None:
+                    entity._pending_relations[key] = value
+
+        return entity
+
+    @classmethod
+    def resolve_pending_relations(cls):
+        """Resolve all pending relations for all entities in the database."""
+        db = cls.db()
+
+        # Get all entity instances that have pending relations
+        for entity_type_name, entity_class in db._entity_types.items():
+            for entity in entity_class.instances():
+                if hasattr(entity, "_pending_relations") and entity._pending_relations:
+                    cls._resolve_entity_relations(entity)
+
+    @classmethod
+    def _resolve_entity_relations(cls, entity):
+        """Resolve pending relations for a specific entity."""
+        if not hasattr(entity, "_pending_relations"):
+            return
+
+        from kybra_simple_db.properties import ManyToMany, OneToMany, Relation
+
+        logger.debug(
+            f"Resolving relations for {entity._type}@{entity._id}: {entity._pending_relations}"
+        )
+
+        for key, value in entity._pending_relations.items():
+            prop = getattr(entity.__class__, key, None)
+            logger.debug(f"Processing relation {key}: prop={prop}, value={value}")
+
+            if not isinstance(prop, Relation):
+                logger.debug(f"Skipping {key}: not a Relation property")
+                continue
+
+            if isinstance(prop, (OneToMany, ManyToMany)):
+                # Should be a list of IDs
+                if not isinstance(value, list):
+                    logger.debug(f"Skipping {key}: expected list, got {type(value)}")
+                    continue
+
+                # Load related entities
+                related_entities = []
+                for related_id in value:
+                    # Handle both string and list entity_types
+                    if isinstance(prop.entity_types, str):
+                        target_type = prop.entity_types
+                    elif isinstance(prop.entity_types, list) and prop.entity_types:
+                        target_type = prop.entity_types[0]
+                    else:
+                        target_type = entity.__class__.__name__
+
+                    target_class = entity.db()._entity_types.get(target_type)
+                    logger.debug(
+                        f"Looking for {target_type} with ID {related_id}, target_class={target_class}"
+                    )
+
+                    if target_class:
+                        related_entity = target_class.load(str(related_id))
+                        logger.debug(f"Loaded entity: {related_entity}")
+                        if related_entity:
+                            related_entities.append(related_entity)
+
+                # Set the relation using the property's __set__ method
+                if related_entities:
+                    logger.debug(f"Setting {key} to {related_entities}")
+                    prop.__set__(entity, related_entities)
+                else:
+                    logger.debug(f"No related entities found for {key}")
+
+            else:
+                # OneToOne or ManyToOne - should be a single ID
+                if isinstance(value, list):
+                    logger.debug(f"Skipping {key}: expected single value, got list")
+                    continue
+
+                # Load related entity
+                # Handle both string and list entity_types
+                if isinstance(prop.entity_types, str):
+                    target_type = prop.entity_types
+                elif isinstance(prop.entity_types, list) and prop.entity_types:
+                    target_type = prop.entity_types[0]
+                else:
+                    target_type = entity.__class__.__name__
+
+                target_class = entity.db()._entity_types.get(target_type)
+                logger.debug(
+                    f"Looking for {target_type} with ID {value}, target_class={target_class}"
+                )
+
+                if target_class:
+                    related_entity = target_class.load(str(value))
+                    logger.debug(f"Loaded entity: {related_entity}")
+                    if related_entity:
+                        logger.debug(f"Setting {key} to {related_entity}")
+                        prop.__set__(entity, related_entity)
+
+        # Clear pending relations after processing
+        entity._pending_relations = {}
 
     @classmethod
     def __class_getitem__(cls: Type[T], key: Any) -> Optional[T]:

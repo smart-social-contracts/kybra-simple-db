@@ -53,7 +53,7 @@ def run(test_name: str = None, test_var: str = None):
     assert user._updater == "alice"
 
     # Get user data dictionary
-    user_dict = user.to_dict()
+    user_dict = user.serialize()
     assert "name" in user_dict
     assert user_dict["name"] == "Test User"
     assert user_dict["age"] == 31
