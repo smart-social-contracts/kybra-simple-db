@@ -181,11 +181,12 @@ class TestSerialization:
         except ValueError as e:
             assert "Entity type mismatch" in str(e)
 
-        try:
-            Parent.deserialize({"_type": "Parent", "name": "Test"})
-            assert False, "Should have raised ValueError for missing _id"
-        except ValueError as e:
-            assert "must contain '_id' field" in str(e)
+        # Test that missing _id now creates a new entity (upsert behavior)
+        Database.get_instance().clear()  # Clear to avoid conflicts
+        result = Parent.deserialize({"_type": "Parent", "name": "Test"})
+        assert result is not None, "Should create new entity when _id is missing"
+        assert result.name == "Test", "Should set name property"
+        assert result._id is not None, "Should auto-generate _id"
 
     def test_round_trip_serialization(self):
         """Test that serialize -> deserialize produces equivalent entities."""
@@ -343,6 +344,155 @@ class TestSerialization:
             assert False, "Should raise ValueError for unknown entity type"
         except ValueError as e:
             assert "Unknown entity type" in str(e)
+
+    def test_upsert_functionality(self):
+        """Test the upsert functionality of Entity.deserialize method."""
+        Database.get_instance().clear()
+
+        # Test 1: Create new entity when no _id provided
+        data = {"_type": "Parent", "name": "John"}
+        parent = Parent.deserialize(data)
+
+        assert parent is not None
+        assert parent.name == "John"
+        assert parent._id == "1"  # Auto-generated ID
+        assert Parent.count() == 1
+
+        # Test 2: Create new entity when provided _id doesn't exist
+        data = {"_type": "Parent", "_id": "999", "name": "Jane"}
+        parent2 = Parent.deserialize(data)
+
+        assert parent2 is not None
+        assert parent2.name == "Jane"
+        assert (
+            parent2._id == "999"
+        )  # Now preserves provided _id when creating new entity
+        assert Parent.count() == 2
+
+        # Test 3: Update existing entity by _id
+        original_id = parent._id
+        data = {"_type": "Parent", "_id": original_id, "name": "John Updated"}
+        updated = Parent.deserialize(data)
+
+        assert updated is not None
+        assert updated._id == original_id  # Same ID
+        assert updated.name == "John Updated"
+        assert Parent.count() == 2  # Count didn't increase
+        assert updated is parent  # Same entity instance due to registry
+
+        # Test 4: Partial update (merge mode)
+        # First create entity with multiple properties
+        Database.get_instance().clear()
+
+        class TestEntity(Entity):
+            name = String()
+            description = String()
+
+        original = TestEntity(name="Test", description="Original description")
+        original_id = original._id
+
+        # Update only one field
+        data = {"_type": "TestEntity", "_id": original_id, "name": "Updated Test"}
+        updated = TestEntity.deserialize(data)
+
+        assert updated._id == original_id
+        assert updated.name == "Updated Test"  # Updated
+        assert updated.description == "Original description"  # Unchanged
+        assert TestEntity.count() == 1
+
+    def test_upsert_with_alias(self):
+        """Test upsert functionality with alias fields."""
+        Database.get_instance().clear()
+
+        # Create entity class with alias
+        class User(Entity):
+            __alias__ = "name"
+            name = String()
+            age = String()
+
+        # Test 1: Create new entity with alias (no existing match)
+        data = {"_type": "User", "name": "Alice", "age": "30"}
+        user = User.deserialize(data)
+
+        assert user is not None
+        assert user.name == "Alice"
+        assert user.age == "30"
+        assert user._id == "1"
+        assert User.count() == 1
+
+        # Test 2: Update existing entity by alias (no _id provided)
+        data = {"_type": "User", "name": "Alice", "age": "31"}
+        updated = User.deserialize(data)
+
+        assert updated is not None
+        assert updated._id == "1"  # Same ID
+        assert updated.name == "Alice"  # Same name
+        assert updated.age == "31"  # Updated age
+        assert User.count() == 1  # Count didn't increase
+        assert updated is user  # Same entity instance
+
+        # Test 3: Create new entity when alias doesn't match
+        data = {"_type": "User", "name": "Bob", "age": "25"}
+        bob = User.deserialize(data)
+
+        assert bob is not None
+        assert bob.name == "Bob"
+        assert bob.age == "25"
+        assert bob._id == "2"
+        assert User.count() == 2
+
+        # Test 4: Update alias field itself
+        original_id = user._id
+        data = {"_type": "User", "_id": original_id, "name": "Alicia", "age": "32"}
+        updated = User.deserialize(data)
+
+        assert updated._id == original_id
+        assert updated.name == "Alicia"
+        assert updated.age == "32"
+
+        # Verify old alias no longer works
+        assert User["Alice"] is None
+
+        # Verify new alias works
+        found = User["Alicia"]
+        assert found is not None
+        assert found._id == original_id
+
+    def test_upsert_with_relations(self):
+        """Test that upsert handles relations correctly via pending relations."""
+        Database.get_instance().clear()
+
+        # Create entities first
+        parent = Parent(name="Alice")
+        child = Child(name="Bob")
+
+        # Test create with relations
+        data = {
+            "_type": "Child",
+            "name": "Charlie",
+            "parent": parent._id,  # This should go to pending relations
+        }
+        charlie = Child.deserialize(data)
+
+        assert charlie.name == "Charlie"
+        assert hasattr(charlie, "_pending_relations")
+        assert "parent" in charlie._pending_relations
+        assert charlie._pending_relations["parent"] == parent._id
+
+        # Test update with relations
+        update_data = {
+            "_type": "Child",
+            "_id": child._id,
+            "name": "Bob Updated",
+            "parent": parent._id,
+        }
+        updated_child = Child.deserialize(update_data)
+
+        assert updated_child.name == "Bob Updated"
+        assert hasattr(updated_child, "_pending_relations")
+        assert "parent" in updated_child._pending_relations
+        assert updated_child._pending_relations["parent"] == parent._id
+        assert updated_child is child  # Same instance
 
 
 def run(test_name: str = None, test_var: str = None):
