@@ -114,7 +114,7 @@ class Entity:
         # Register this type with the database
         self.db().register_entity_type(self.__class__)
 
-        # Generate ID if not provided
+        # Generate ID if not provided, or update max_id if custom ID is higher
         if self._id is None:
             db = self.db()
             type_name = self._type
@@ -124,6 +124,23 @@ class Entity:
             next_id = str(int(current_id) + 1)
             self._id = next_id
             db.save("_system", f"{type_name}_id", self._id)
+        else:
+            # Update max_id if custom ID is higher than current max
+            db = self.db()
+            type_name = self._type
+            current_max_id = db.load("_system", f"{type_name}_id")
+            if current_max_id is None:
+                current_max_id = "0"
+            
+            # Only update if the custom ID is numeric and higher than current max
+            try:
+                custom_id_int = int(self._id)
+                current_max_int = int(current_max_id)
+                if custom_id_int > current_max_int:
+                    db.save("_system", f"{type_name}_id", self._id)
+            except ValueError:
+                # If custom ID is not numeric, don't update max_id counter
+                pass
 
         # Register this instance in the entity registry
         self.db().register_entity(self)
@@ -369,6 +386,8 @@ class Entity:
         Raises:
             ValueError: If page or page_size is less than 1
         """
+        logger.info(f"Loading entities from {from_id} to {from_id + count}")
+
         if from_id < 1:
             raise ValueError("from_id must be at least 1")
         if count < 1:
@@ -376,7 +395,9 @@ class Entity:
 
         # Return the slice of entities for the requested page
         ret = []
+        print(cls.max_id())
         while len(ret) < count and from_id <= cls.max_id():
+            logger.info(f"Loading entity {from_id}")
             entity = cls.load(str(from_id))
             if entity:
                 ret.append(entity)

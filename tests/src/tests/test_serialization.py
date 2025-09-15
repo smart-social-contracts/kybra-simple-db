@@ -494,6 +494,172 @@ class TestSerialization:
         assert updated_child._pending_relations["parent"] == parent._id
         assert updated_child is child  # Same instance
 
+    def test_deserialize_max_id_count_consistency(self):
+        """Test that deserialize handles max_id and count correctly in all scenarios."""
+        Database.get_instance().clear()
+
+        # Create a test entity class
+        class TestEntity(Entity):
+            name = String()
+
+        # Scenario 1: Normal entity creation should increment both max_id and count
+        initial_max_id = TestEntity.max_id()
+        initial_count = TestEntity.count()
+        
+        entity1 = TestEntity(name="Entity1")
+        assert TestEntity.max_id() == initial_max_id + 1, "max_id should increment on new entity"
+        assert TestEntity.count() == initial_count + 1, "count should increment on new entity"
+        assert entity1._id == "1", "First entity should have ID '1'"
+
+        # Scenario 2: Deserialize without _id should create new entity with auto-generated ID
+        data = {"_type": "TestEntity", "name": "Entity2"}
+        entity2 = TestEntity.deserialize(data)
+        
+        assert TestEntity.max_id() == 2, "max_id should increment to 2"
+        assert TestEntity.count() == 2, "count should increment to 2"
+        assert entity2._id == "2", "Auto-generated ID should be '2'"
+
+        # Scenario 3: Deserialize with custom ID higher than current max_id
+        data = {"_type": "TestEntity", "_id": "10", "name": "Entity10"}
+        entity10 = TestEntity.deserialize(data)
+        
+        assert TestEntity.max_id() == 10, "max_id should update to highest ID (10)"
+        assert TestEntity.count() == 3, "count should increment to 3"
+        assert entity10._id == "10", "Entity should have custom ID '10'"
+
+        # Scenario 4: CRITICAL TEST - Deserialize with custom ID lower than current max_id
+        # This is the potential bug scenario
+        data = {"_type": "TestEntity", "_id": "5", "name": "Entity5"}
+        entity5 = TestEntity.deserialize(data)
+        
+        # max_id should NOT decrease - it should remain at the highest value seen
+        assert TestEntity.max_id() == 10, "max_id should NOT decrease when lower ID is used"
+        assert TestEntity.count() == 4, "count should increment to 4"
+        assert entity5._id == "5", "Entity should have custom ID '5'"
+
+        # Scenario 5: Test ID collision potential - create new entity after lower ID insertion
+        entity_new = TestEntity(name="EntityNew")
+        
+        # This should get ID 11 (max_id + 1), not 6 or any other value
+        assert entity_new._id == "11", f"New entity should get ID '11', got '{entity_new._id}'"
+        assert TestEntity.max_id() == 11, "max_id should increment to 11"
+        assert TestEntity.count() == 5, "count should increment to 5"
+
+        # Scenario 6: Update existing entity - should not change max_id or count
+        original_max_id = TestEntity.max_id()
+        original_count = TestEntity.count()
+        
+        update_data = {"_type": "TestEntity", "_id": "5", "name": "Entity5 Updated"}
+        updated_entity = TestEntity.deserialize(update_data)
+        
+        assert TestEntity.max_id() == original_max_id, "max_id should not change on update"
+        assert TestEntity.count() == original_count, "count should not change on update"
+        assert updated_entity._id == "5", "Updated entity should keep same ID"
+        assert updated_entity.name == "Entity5 Updated", "Entity should be updated"
+        assert updated_entity is entity5, "Should return same instance due to registry"
+
+        # Scenario 7: Test with alias-based upsert
+        class AliasEntity(Entity):
+            __alias__ = "name"
+            name = String()
+            value = String()
+
+        # Create entity via alias
+        alias_data = {"_type": "AliasEntity", "name": "unique_name", "value": "original"}
+        alias_entity = AliasEntity.deserialize(alias_data)
+        
+        alias_max_id = AliasEntity.max_id()
+        alias_count = AliasEntity.count()
+        
+        # Update via alias (no _id provided) - should not change counters
+        update_data = {"_type": "AliasEntity", "name": "unique_name", "value": "updated"}
+        updated_alias = AliasEntity.deserialize(update_data)
+        
+        assert AliasEntity.max_id() == alias_max_id, "max_id should not change on alias update"
+        assert AliasEntity.count() == alias_count, "count should not change on alias update"
+        assert updated_alias.value == "updated", "Entity should be updated via alias"
+        assert updated_alias is alias_entity, "Should return same instance"
+
+    def test_deserialize_id_collision_prevention(self):
+        """Test that deserialize prevents ID collisions when custom IDs are used."""
+        Database.get_instance().clear()
+
+        class CollisionTest(Entity):
+            name = String()
+
+        # Create entities with gaps in ID sequence
+        entity1 = CollisionTest(name="Entity1")  # ID: 1
+        assert entity1._id == "1"
+        
+        # Insert entity with higher custom ID
+        data = {"_type": "CollisionTest", "_id": "100", "name": "Entity100"}
+        entity100 = CollisionTest.deserialize(data)
+        assert entity100._id == "100"
+        assert CollisionTest.max_id() == 100
+        
+        # Insert entity with lower custom ID (potential collision scenario)
+        data = {"_type": "CollisionTest", "_id": "50", "name": "Entity50"}
+        entity50 = CollisionTest.deserialize(data)
+        assert entity50._id == "50"
+        assert CollisionTest.max_id() == 100  # Should remain 100
+        
+        # Now create new entities - they should get IDs starting from max_id + 1
+        entity_new1 = CollisionTest(name="EntityNew1")
+        entity_new2 = CollisionTest(name="EntityNew2")
+        
+        assert entity_new1._id == "101", f"Expected '101', got '{entity_new1._id}'"
+        assert entity_new2._id == "102", f"Expected '102', got '{entity_new2._id}'"
+        
+        # Verify no collisions occurred
+        all_entities = CollisionTest.instances()
+        all_ids = [e._id for e in all_entities]
+        assert len(all_ids) == len(set(all_ids)), "All IDs should be unique (no collisions)"
+        
+        # Verify count is correct
+        assert CollisionTest.count() == 5, "Count should reflect all created entities"
+        assert CollisionTest.max_id() == 102, "max_id should be at highest assigned ID"
+
+    def test_deserialize_max_id_edge_cases(self):
+        """Test edge cases for max_id handling in deserialize."""
+        Database.get_instance().clear()
+
+        class EdgeCaseEntity(Entity):
+            name = String()
+
+        # Edge case 1: Deserialize with ID "0" (should not affect max_id calculation)
+        data = {"_type": "EdgeCaseEntity", "_id": "0", "name": "Zero"}
+        entity0 = EdgeCaseEntity.deserialize(data)
+        
+        # max_id should handle "0" correctly
+        assert entity0._id == "0"
+        # The next auto-generated entity should still get ID "1"
+        entity_auto = EdgeCaseEntity(name="Auto")
+        assert entity_auto._id == "1", f"Expected '1', got '{entity_auto._id}'"
+        assert EdgeCaseEntity.max_id() == 1
+
+        # Edge case 2: Very large custom ID
+        data = {"_type": "EdgeCaseEntity", "_id": "999999", "name": "Large"}
+        entity_large = EdgeCaseEntity.deserialize(data)
+        
+        assert entity_large._id == "999999"
+        assert EdgeCaseEntity.max_id() == 999999
+        
+        # Next auto-generated should be 1000000
+        entity_next = EdgeCaseEntity(name="Next")
+        assert entity_next._id == "1000000"
+
+        # Edge case 3: String ID that's not numeric (should be handled gracefully)
+        # Note: This tests the robustness of the system
+        data = {"_type": "EdgeCaseEntity", "_id": "abc123", "name": "NonNumeric"}
+        entity_non_numeric = EdgeCaseEntity.deserialize(data)
+        
+        assert entity_non_numeric._id == "abc123"
+        # max_id calculation should handle non-numeric IDs gracefully
+        # The system should continue working for numeric IDs
+        entity_after_non_numeric = EdgeCaseEntity(name="AfterNonNumeric")
+        # Should get next numeric ID based on previous max
+        assert entity_after_non_numeric._id == "1000001"
+
 
 def run(test_name: str = None, test_var: str = None):
     tester = Tester(TestSerialization)
