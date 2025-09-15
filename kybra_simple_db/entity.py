@@ -131,7 +131,7 @@ class Entity:
             current_max_id = db.load("_system", f"{type_name}_id")
             if current_max_id is None:
                 current_max_id = "0"
-            
+
             # Only update if the custom ID is numeric and higher than current max
             try:
                 custom_id_int = int(self._id)
