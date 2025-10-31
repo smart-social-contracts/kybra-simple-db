@@ -1,0 +1,73 @@
+// The Dev Container format allows you to configure your environment. At the heart of it
+// is a Docker image or Dockerfile which controls the tools available in your environment.
+//
+// See https://aka.ms/devcontainer.json for more information.
+{
+	"name": "Kybra Simple DB",
+	// Use "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+	// instead of the build to use a pre-built image.
+	"build": {
+		"context": ".",
+		"dockerfile": "Dockerfile"
+	},
+	
+	// Features add additional features to your environment. See https://containers.dev/features
+	// Beware: features are not supported on all platforms and may have unintended side-effects.
+	"features": {
+		"ghcr.io/devcontainers/features/python:1": {
+			"version": "3.10.7"
+		},
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "20"
+		}
+	},
+
+	// Configure tool-specific properties
+	"customizations": {
+		"vscode": {
+			// VS Code extensions to install
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-python.black-formatter",
+				"ms-python.isort",
+				"ms-python.flake8",
+				"ms-python.mypy-type-checker",
+				"charliermarsh.ruff",
+				"tamasfe.even-better-toml",
+				"redhat.vscode-yaml"
+			],
+			// VS Code settings
+			"settings": {
+				"python.defaultInterpreterPath": "/usr/local/bin/python",
+				"python.linting.enabled": true,
+				"python.linting.flake8Enabled": true,
+				"python.linting.mypyEnabled": true,
+				"python.formatting.provider": "black",
+				"editor.formatOnSave": true,
+				"editor.codeActionsOnSave": {
+					"source.organizeImports": "explicit"
+				},
+				"[python]": {
+					"editor.defaultFormatter": "ms-python.black-formatter",
+					"editor.formatOnSave": true,
+					"editor.tabSize": 4
+				}
+			}
+		}
+	},
+
+	// Use 'postCreateCommand' to run commands after the container is created
+	"postCreateCommand": "pip install --upgrade pip && pip install -r requirements-dev.txt && pip install -e .",
+
+	// Use 'postStartCommand' to run commands each time the container starts
+	// "postStartCommand": "",
+
+	// Use 'postAttachCommand' to run commands when attaching to the container
+	// "postAttachCommand": "",
+
+	// Set environment variables
+	"remoteEnv": {
+		"PYTHONPATH": "${containerWorkspaceFolder}"
+	}
+}
