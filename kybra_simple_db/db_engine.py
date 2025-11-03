@@ -178,28 +178,38 @@ class Database:
         """Return all stored data"""
         return {k: json.loads(v) for k, v in self._db_storage.items()}
 
-    def register_entity_type(self, type_obj):
+    def register_entity_type(self, type_obj, type_name: str = None):
         """Register an entity type with the database.
 
         Args:
             type_obj: Type object to register
+            type_name: Optional full type name (including namespace). If not provided, uses class name.
         """
+        if type_name is None:
+            type_name = type_obj.__name__
         logger.debug(
-            f"Registering type {type_obj.__name__} with bases {[b.__name__ for b in type_obj.__bases__]}"
+            f"Registering type {type_name} (class: {type_obj.__name__}) with bases {[b.__name__ for b in type_obj.__bases__]}"
         )
+        # Register under both the full type name and class name for backward compatibility
+        self._entity_types[type_name] = type_obj
         self._entity_types[type_obj.__name__] = type_obj
 
     def is_subclass(self, type_name, parent_type):
         """Check if a type is a subclass of another type.
 
         Args:
-            type_name: Name of the type to check
+            type_name: Name of the type to check (may include namespace)
             parent_type: Parent type to check against
 
         Returns:
             bool: True if type_name is a subclass of parent_type
         """
         type_obj = self._entity_types.get(type_name)
+        if not type_obj:
+            # Try to extract class name from namespaced type (e.g., "app::User" -> "User")
+            if "::" in type_name:
+                class_name = type_name.split("::")[-1]
+                type_obj = self._entity_types.get(class_name)
         logger.debug(f"Type check: {type_name} -> {parent_type.__name__}")
         return type_obj and issubclass(type_obj, parent_type)
 
