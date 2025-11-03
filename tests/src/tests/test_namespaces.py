@@ -99,8 +99,8 @@ class TestNamespaces:
             name = String()
             age = Integer()
 
-        person1 = NamespacedPerson(name="Charlie", age=25)
-        person2 = NamespacedPerson(name="Diana", age=30)
+        NamespacedPerson(name="Charlie", age=25)
+        NamespacedPerson(name="Diana", age=30)
 
         # Should be able to lookup by alias
         found = NamespacedPerson["Charlie"]
@@ -141,7 +141,6 @@ class TestNamespaces:
         assert serialized["name"] == "Eve"
 
         # Deserialize should work
-        db = Database.get_instance()
         deserialized = Entity.deserialize(serialized)
         assert deserialized is not None
         assert deserialized.name == "Eve"
