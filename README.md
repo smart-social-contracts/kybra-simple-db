@@ -120,70 +120,25 @@ For more usage examples, see the [tests](tests/src/tests).
 
 ## Namespaces
 
-Namespaces allow you to organize entities and avoid type name conflicts when you have multiple entities with the same class name. This is particularly useful when working with different domains or modules that may have similar entity types.
-
-### Usage
-
-Define a namespace by setting the `__namespace__` class attribute:
+Organize entities with the `__namespace__` attribute to avoid type conflicts:
 
 ```python
-from kybra_simple_db import Entity, String
-
-# Regular entity without namespace
-class User(Entity):
-    name = String()
-    email = String()
-
 # Entity in the "app" namespace
-class AppUser(Entity):
+class User(Entity):
     __namespace__ = "app"
     name = String()
-    email = String()
-    role = String()
 
-# Entity in the "admin" namespace
-class AdminUser(Entity):
+# Entity in the "admin" namespace  
+class User(Entity):
     __namespace__ = "admin"
     name = String()
-    email = String()
-    permissions = String()
-```
 
-### Key Features
+app_user = User(name="Alice")      # Stored as "app::User"
+admin_user = User(name="Bob")      # Stored as "admin::User"
 
-- **Isolated Storage**: Each namespace maintains its own ID sequence and storage space
-- **Type Separation**: Entities are stored with their namespace prefix (e.g., `"app::AppUser"`, `"admin::AdminUser"`)
-- **Independent Operations**: `count()`, `instances()`, and other class methods operate within the namespace
-- **Alias Support**: Aliases work correctly within namespaces
-
-### Example
-
-```python
-# Create entities in different namespaces
-regular_user = User(name="John", email="john@example.com")
-app_user = AppUser(name="Alice", email="alice@app.com", role="developer")
-admin_user = AdminUser(name="Bob", email="bob@admin.com", permissions="all")
-
-# Each starts with ID "1" in their own namespace
-assert regular_user._id == "1"  # User@1
-assert app_user._id == "1"       # app::AppUser@1
-assert admin_user._id == "1"     # admin::AdminUser@1
-
-# Verify type names include namespace
-assert regular_user._type == "User"
-assert app_user._type == "app::AppUser"
-assert admin_user._type == "admin::AdminUser"
-
-# Operations are namespace-isolated
-assert User.count() == 1
-assert AppUser.count() == 1
-assert AdminUser.count() == 1
-
-# Load entities independently
-loaded_app = AppUser.load("1")
-loaded_admin = AdminUser.load("1")
-assert loaded_app.name == "Alice"
-assert loaded_admin.name == "Bob"
+# Each namespace has isolated ID sequences and storage
+assert app_user._id == "1"
+assert admin_user._id == "1"
 ```
 
 ## API Reference
