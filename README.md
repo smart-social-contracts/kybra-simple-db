@@ -12,6 +12,7 @@ A lightweight key-value database with entity relationships and audit logging cap
 
 - **Persistent Storage**: Works with Kybra's StableBTreeMap stable structure for persistent storage on your canister's stable memory so your data persists automatically across canister upgrades.
 - **Entity-Relational Database**: Create, read and write entities with OneToOne, OneToMany, ManyToOne, and ManyToMany relationships.
+- **Namespaces**: Organize entities into namespaces to avoid type conflicts when you have multiple entities with the same class name.
 - **Audit Logging**: Track all changes to your data with created/updated timestamps and who created and updated each entity.
 - **Ownership**: Assign owners to your data objects to control who can modify them.
 
@@ -116,6 +117,74 @@ Then use the defined entities to store objects:
 ```
 
 For more usage examples, see the [tests](tests/src/tests).
+
+## Namespaces
+
+Namespaces allow you to organize entities and avoid type name conflicts when you have multiple entities with the same class name. This is particularly useful when working with different domains or modules that may have similar entity types.
+
+### Usage
+
+Define a namespace by setting the `__namespace__` class attribute:
+
+```python
+from kybra_simple_db import Entity, String
+
+# Regular entity without namespace
+class User(Entity):
+    name = String()
+    email = String()
+
+# Entity in the "app" namespace
+class AppUser(Entity):
+    __namespace__ = "app"
+    name = String()
+    email = String()
+    role = String()
+
+# Entity in the "admin" namespace
+class AdminUser(Entity):
+    __namespace__ = "admin"
+    name = String()
+    email = String()
+    permissions = String()
+```
+
+### Key Features
+
+- **Isolated Storage**: Each namespace maintains its own ID sequence and storage space
+- **Type Separation**: Entities are stored with their namespace prefix (e.g., `"app::AppUser"`, `"admin::AdminUser"`)
+- **Independent Operations**: `count()`, `instances()`, and other class methods operate within the namespace
+- **Alias Support**: Aliases work correctly within namespaces
+
+### Example
+
+```python
+# Create entities in different namespaces
+regular_user = User(name="John", email="john@example.com")
+app_user = AppUser(name="Alice", email="alice@app.com", role="developer")
+admin_user = AdminUser(name="Bob", email="bob@admin.com", permissions="all")
+
+# Each starts with ID "1" in their own namespace
+assert regular_user._id == "1"  # User@1
+assert app_user._id == "1"       # app::AppUser@1
+assert admin_user._id == "1"     # admin::AdminUser@1
+
+# Verify type names include namespace
+assert regular_user._type == "User"
+assert app_user._type == "app::AppUser"
+assert admin_user._type == "admin::AdminUser"
+
+# Operations are namespace-isolated
+assert User.count() == 1
+assert AppUser.count() == 1
+assert AdminUser.count() == 1
+
+# Load entities independently
+loaded_app = AppUser.load("1")
+loaded_admin = AdminUser.load("1")
+assert loaded_app.name == "Alice"
+assert loaded_admin.name == "Bob"
+```
 
 ## API Reference
 
