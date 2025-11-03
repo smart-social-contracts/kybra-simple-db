@@ -151,7 +151,9 @@ class TestNamespaces:
 def run(test_name: str = None, test_var: str = None):
     """Run the namespace tests."""
     tester = Tester(TestNamespaces)
-    return tester.run_test(test_name, test_var)
+    if test_name:
+        return tester.run_test(test_name, test_var)
+    return tester.run_tests()
 
 
 if __name__ == "__main__":
