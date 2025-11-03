@@ -113,11 +113,7 @@ class Entity:
         super().__init__() if hasattr(super(), "__init__") else None
 
         # Store the type for this entity - use namespace::class_name if namespace is set
-        namespace = getattr(self.__class__, "__namespace__", None)
-        if namespace:
-            self._type = f"{namespace}::{self.__class__.__name__}"
-        else:
-            self._type = self.__class__.__name__
+        self._type = self.__class__.get_full_type_name()
         # Get next sequential ID from storage
         self._id = None if kwargs.get("_id") is None else kwargs["_id"]
         self._loaded = False if kwargs.get("_loaded") is None else kwargs["_loaded"]
@@ -555,8 +551,8 @@ class Entity:
             db = cls.db()
             target_class = db._entity_types.get(entity_type)
             # If not found and entity_type has namespace, try without namespace
-            if not target_class and "::" in entity_type:
-                class_name = entity_type.split("::")[-1]
+            if not target_class:
+                class_name = db._extract_class_name(entity_type)
                 target_class = db._entity_types.get(class_name)
             if not target_class:
                 raise ValueError(f"Unknown entity type: {entity_type}")

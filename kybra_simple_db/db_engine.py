@@ -178,6 +178,19 @@ class Database:
         """Return all stored data"""
         return {k: json.loads(v) for k, v in self._db_storage.items()}
 
+    def _extract_class_name(self, type_name: str) -> str:
+        """Extract the class name from a potentially namespaced type name.
+
+        Args:
+            type_name: Type name, possibly with namespace (e.g., "app::User")
+
+        Returns:
+            The class name without namespace (e.g., "User")
+        """
+        if "::" in type_name:
+            return type_name.split("::")[-1]
+        return type_name
+
     def register_entity_type(self, type_obj, type_name: str = None):
         """Register an entity type with the database.
 
@@ -207,9 +220,8 @@ class Database:
         type_obj = self._entity_types.get(type_name)
         if not type_obj:
             # Try to extract class name from namespaced type (e.g., "app::User" -> "User")
-            if "::" in type_name:
-                class_name = type_name.split("::")[-1]
-                type_obj = self._entity_types.get(class_name)
+            class_name = self._extract_class_name(type_name)
+            type_obj = self._entity_types.get(class_name)
         logger.debug(f"Type check: {type_name} -> {parent_type.__name__}")
         return type_obj and issubclass(type_obj, parent_type)
 
