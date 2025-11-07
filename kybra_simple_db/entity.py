@@ -36,6 +36,19 @@ class Entity:
         person = Person(name="Jane")
         found = Person["Jane"]  # Lookup by alias
 
+        # Entity with versioning and migration
+        class Product(Entity):
+            __version__ = 2  # Current schema version
+            name = String()
+            price = Float()
+
+            @classmethod
+            def migrate(cls, obj, from_version, to_version):
+                if from_version == 1 and to_version >= 2:
+                    if 'price' not in obj:
+                        obj['price'] = 0.0
+                return obj
+
     Key Features:
         - Auto-generated sequential IDs (_id: "1", "2", "3", ...)
         - Property validation and type checking via descriptors
@@ -43,6 +56,7 @@ class Entity:
         - Alias-based entity lookup (Entity["alias_value"])
         - Automatic persistence to database on creation/update
         - Entity counting and pagination support
+        - Schema versioning and automatic migration on load
 
     Internally managed attributes:
         _type (str): Entity class name (e.g., "User", "Person")
@@ -54,6 +68,7 @@ class Entity:
 
     Class-level attributes:
         __alias__ (str): Optional field name for alias-based lookups
+        __version__ (int): Schema version for migration support (default: 1)
         _entity_type (str): Optional entity type for subclasses
         _context (Set[Entity]): Set of all entities in current context
 
@@ -66,6 +81,7 @@ class Entity:
     _entity_type = None  # To be defined in subclasses
     _context: Set["Entity"] = set()  # Set of entities in current context
     _do_not_save = False
+    __version__ = 1  # Default schema version
 
     def __init__(self, **kwargs):
         """Initialize a new entity.
@@ -242,6 +258,34 @@ class Entity:
         return cls.__name__ + "_alias"
 
     @classmethod
+    def migrate(cls, obj: dict, from_version: int, to_version: int) -> dict:
+        """Migrate entity data from one version to another.
+
+        This is the default implementation that does nothing. Subclasses should
+        override this method to implement custom migration logic.
+
+        Args:
+            obj: Dictionary containing the entity data to migrate
+            from_version: The version of the data being migrated from
+            to_version: The target version to migrate to
+
+        Returns:
+            Dictionary containing the migrated entity data
+
+        Example:
+            @classmethod
+            def migrate(cls, obj, from_version, to_version):
+                if from_version == 1 and to_version >= 2:
+                    if 'price' not in obj:
+                        obj['price'] = 0.0
+                if from_version <= 2 and to_version >= 3:
+                    if 'old_name' in obj:
+                        obj['new_name'] = obj.pop('old_name')
+                return obj
+        """
+        return obj
+
+    @classmethod
     def load(
         cls: Type[T], entity_id: str = None, level: int = LEVEL_MAX_DEFAULT
     ) -> Optional[T]:
@@ -274,6 +318,21 @@ class Entity:
         data = db.load(type_name, entity_id)
         if not data:
             return None
+
+        stored_version = data.get("__version__", 1)
+        current_version = cls.__version__
+
+        if stored_version != current_version:
+            logger.debug(
+                f"Version mismatch for {type_name}@{entity_id}: "
+                f"stored={stored_version}, current={current_version}"
+            )
+            # Apply migration
+            data = cls.migrate(data, stored_version, current_version)
+            data["__version__"] = current_version
+            logger.debug(
+                f"Migrated {type_name}@{entity_id} to version {current_version}"
+            )
 
         # Create instance first
         entity = cls(**data, _loaded=True)
@@ -446,11 +505,12 @@ class Entity:
         # Get mixin data first if available
         data = super().serialize() if hasattr(super(), "serialize") else {}
 
-        # Add core entity data
+        # Add core entity data including version
         data.update(
             {
                 "_type": self._type,  # Use the entity type
                 "_id": self._id,
+                "__version__": self.__class__.__version__,  # Include schema version
             }
         )
 
@@ -528,6 +588,18 @@ class Entity:
             raise ValueError(
                 f"Entity type mismatch: expected {cls.__name__}, got {entity_type}"
             )
+
+        stored_version = data.get("__version__", 1)
+        current_version = cls.__version__
+
+        if stored_version != current_version:
+            logger.debug(
+                f"Version mismatch during deserialize for {entity_type}: "
+                f"stored={stored_version}, current={current_version}"
+            )
+            data = cls.migrate(data, stored_version, current_version)
+            data["__version__"] = current_version
+            logger.debug(f"Migrated {entity_type} to version {current_version}")
 
         # Try to find existing entity
         existing_entity = None
