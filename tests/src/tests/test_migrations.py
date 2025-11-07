@@ -18,9 +18,11 @@ class TestMigrations:
 
         product = Product(name="Widget")
 
-        data = product.serialize()
-        assert "__version__" in data
-        assert data["__version__"] == 1
+        # Version is stored in database, not in public serialize()
+        db = Database.get_instance()
+        stored_data = db.load("Product", product._id)
+        assert "__version__" in stored_data
+        assert stored_data["__version__"] == 1
 
     def test_custom_version(self):
         """Test that entities can have custom versions."""
@@ -31,8 +33,10 @@ class TestMigrations:
 
         product = Product(name="Widget")
 
-        data = product.serialize()
-        assert data["__version__"] == 3
+        # Version is stored in database, not in public serialize()
+        db = Database.get_instance()
+        stored_data = db.load("Product", product._id)
+        assert stored_data["__version__"] == 3
 
     def test_migration_on_load(self):
         """Test that migration is triggered when loading old version data."""

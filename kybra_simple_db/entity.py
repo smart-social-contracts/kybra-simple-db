@@ -242,7 +242,8 @@ class Entity:
         if not self._do_not_save:
             logger.debug(f"Saving entity {self._type}@{self._id} to database")
             db = self.db()
-            db.save(self._type, self._id, data)
+            persisted_data = {**data, "__version__": self.__class__.__version__}
+            db.save(self._type, self._id, persisted_data)
             if hasattr(self.__class__, "__alias__") and self.__class__.__alias__:
                 alias_field = self.__class__.__alias__
                 if hasattr(self, alias_field):
@@ -505,12 +506,11 @@ class Entity:
         # Get mixin data first if available
         data = super().serialize() if hasattr(super(), "serialize") else {}
 
-        # Add core entity data including version
+        # Add core entity data
         data.update(
             {
                 "_type": self._type,  # Use the entity type
                 "_id": self._id,
-                "__version__": self.__class__.__version__,  # Include schema version
             }
         )
 
