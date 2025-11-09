@@ -261,14 +261,7 @@ class Relation:
             )
             for entity_type_name in entity_types:
                 # Get the entity class from the database registry
-                # Try full type name first (with namespace)
                 entity_class = obj.db()._entity_types.get(entity_type_name)
-
-                # If not found and type name has namespace separator, try without namespace as fallback
-                if not entity_class and "::" not in entity_type_name:
-                    # Type name has no namespace, try to find any class with this name
-                    # This is for backward compatibility
-                    entity_class = obj.db()._entity_types.get(entity_type_name)
 
                 if entity_class:
                     found_entity = entity_class[value]

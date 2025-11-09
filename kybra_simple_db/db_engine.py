@@ -208,8 +208,10 @@ class Database:
         self._entity_types[type_name] = type_obj
 
         # For backward compatibility, also register under class name if:
-        # 1. No namespace (type_name == class name), OR
-        # 2. Class name is not already registered
+        # 1. No namespace (type_name == class name) - allows non-namespaced lookups, OR
+        # 2. Class name slot is available (no collision) - allows simple name lookups
+        # This dual registration enables both "User" and "app::User" lookups while
+        # preventing collisions when multiple namespaced entities share a class name
         if (
             type_name == type_obj.__name__
             or type_obj.__name__ not in self._entity_types

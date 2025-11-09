@@ -124,17 +124,17 @@ Organize entities with the `__namespace__` attribute to avoid type conflicts:
 
 ```python
 # Entity in the "app" namespace
-class User(Entity):
+class AppUser(Entity):
     __namespace__ = "app"
     name = String()
 
 # Entity in the "admin" namespace  
-class User(Entity):
+class AdminUser(Entity):
     __namespace__ = "admin"
     name = String()
 
-app_user = User(name="Alice")      # Stored as "app::User"
-admin_user = User(name="Bob")      # Stored as "admin::User"
+app_user = AppUser(name="Alice")      # Stored as "app::AppUser"
+admin_user = AdminUser(name="Bob")    # Stored as "admin::AdminUser"
 
 # Each namespace has isolated ID sequences and storage
 assert app_user._id == "1"
