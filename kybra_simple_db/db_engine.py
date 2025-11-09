@@ -203,9 +203,24 @@ class Database:
         logger.debug(
             f"Registering type {type_name} (class: {type_obj.__name__}) with bases {[b.__name__ for b in type_obj.__bases__]}"
         )
-        # Register under both the full type name and class name for backward compatibility
+        
+        # Always register under the full type name
         self._entity_types[type_name] = type_obj
-        self._entity_types[type_obj.__name__] = type_obj
+        
+        # For backward compatibility, also register under class name if:
+        # 1. No namespace (type_name == class name), OR
+        # 2. Class name is not already registered
+        if type_name == type_obj.__name__ or type_obj.__name__ not in self._entity_types:
+            self._entity_types[type_obj.__name__] = type_obj
+        else:
+            # Class name already registered - log warning about potential collision
+            existing = self._entity_types[type_obj.__name__]
+            if existing != type_obj:
+                logger.warning(
+                    f"Class name '{type_obj.__name__}' collision: '{type_name}' not registered under class name. "
+                    f"Existing registration: '{getattr(existing, '__module__', 'unknown')}.{existing.__name__}'. "
+                    f"Use full type name '{type_name}' in relations."
+                )
 
     def is_subclass(self, type_name, parent_type):
         """Check if a type is a subclass of another type.

@@ -203,15 +203,34 @@ class Relation:
             obj.add_relation(self.name, self.reverse_name, entity)
 
     def validate_entity(self, entity):
-        """Validate that an entity is of the correct type."""
+        """Validate that an entity is of the correct type.
+        
+        Handles both namespaced (e.g., "app::User") and non-namespaced (e.g., "User") types.
+        """
         if entity is None:
             return True
         if not isinstance(entity, Entity):
             raise TypeError(f"{self.name} must be set to Entity instances")
-        if entity._type not in self.entity_types:
-            raise TypeError(
-                f"{self.name} must be set an Entity instance of any of the following types: {self.entity_types}"
+        
+        # Convert entity_types to list for uniform handling
+        allowed_types = (
+            [self.entity_types] if isinstance(self.entity_types, str) else self.entity_types
+        )
+        
+        # Check if entity type matches any allowed type
+        # This handles both exact matches and namespace variations
+        if entity._type not in allowed_types:
+            # Also check if the class name matches (for backward compatibility)
+            entity_class_name = entity._type.split("::")[-1] if "::" in entity._type else entity._type
+            type_matches = any(
+                entity_class_name == (t.split("::")[-1] if "::" in t else t)
+                for t in allowed_types
             )
+            if not type_matches:
+                raise TypeError(
+                    f"{self.name} must be set an Entity instance of any of the following types: {self.entity_types}, "
+                    f"but got type '{entity._type}'"
+                )
 
     def resolve_entity(self, obj, value):
         """Resolve a value to an Entity instance.
@@ -238,7 +257,15 @@ class Relation:
             )
             for entity_type_name in entity_types:
                 # Get the entity class from the database registry
+                # Try full type name first (with namespace)
                 entity_class = obj.db()._entity_types.get(entity_type_name)
+                
+                # If not found and type name has namespace separator, try without namespace as fallback
+                if not entity_class and "::" not in entity_type_name:
+                    # Type name has no namespace, try to find any class with this name
+                    # This is for backward compatibility
+                    entity_class = obj.db()._entity_types.get(entity_type_name)
+                
                 if entity_class:
                     found_entity = entity_class[value]
                     if found_entity:
@@ -265,10 +292,8 @@ class RelationList:
         # Resolve entity (supports string ID/name)
         entity = self.prop.resolve_entity(self.obj, entity)
 
-        if entity._type not in self.prop.entity_types:
-            raise TypeError(
-                f"{self.prop.name} must be set an Entity instance of any of the following types: {self.prop.entity_types}"
-            )
+        # Validate entity type using the base validate_entity method
+        self.prop.validate_entity(entity)
 
         # For one-to-many, check if entity already has a relation
         if isinstance(self.prop, OneToMany):
@@ -376,10 +401,9 @@ class OneToMany(Relation):
         for value in values:
             # Resolve value to Entity instance
             resolved_value = self.resolve_entity(obj, value)
-            if resolved_value._type not in self.entity_types:
-                raise TypeError(
-                    f"Trying to set an Entity instance of type '{resolved_value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
-                )
+            
+            # Validate entity type using the base validate_entity method
+            self.validate_entity(resolved_value)
             resolved_values.append(resolved_value)
 
             # Check that the reverse property is ManyToOne
@@ -428,10 +452,8 @@ class ManyToOne(Relation):
             # Resolve value to Entity instance
             value = self.resolve_entity(obj, value)
 
-            if value._type not in self.entity_types:
-                raise TypeError(
-                    f"Trying to set an Entity instance of type '{value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
-                )
+            # Validate entity type using the base validate_entity method
+            self.validate_entity(value)
 
             # Check that the reverse property is OneToMany
             reverse_prop = value.__class__.__dict__.get(self.reverse_name)
@@ -481,10 +503,9 @@ class ManyToMany(Relation):
             for value in values:
                 # Resolve value to Entity instance
                 resolved_value = self.resolve_entity(obj, value)
-                if resolved_value._type not in self.entity_types:
-                    raise TypeError(
-                        f"Trying to set an Entity instance of type '{resolved_value._type}' but '{self.name}' must contain Entity instances of any of the following types: {self.entity_types}"
-                    )
+                
+                # Validate entity type using the base validate_entity method
+                self.validate_entity(resolved_value)
                 resolved_values.append(resolved_value)
 
                 # Check that the reverse property is ManyToMany
