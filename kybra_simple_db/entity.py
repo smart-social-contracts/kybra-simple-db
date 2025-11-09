@@ -427,7 +427,7 @@ class Entity:
 
         # Return the slice of entities for the requested page
         ret = []
-        print(cls.max_id())
+        
         while len(ret) < count and from_id <= cls.max_id():
             logger.info(f"Loading entity {from_id}")
             entity = cls.load(str(from_id))
