@@ -203,14 +203,17 @@ class Database:
         logger.debug(
             f"Registering type {type_name} (class: {type_obj.__name__}) with bases {[b.__name__ for b in type_obj.__bases__]}"
         )
-        
+
         # Always register under the full type name
         self._entity_types[type_name] = type_obj
-        
+
         # For backward compatibility, also register under class name if:
         # 1. No namespace (type_name == class name), OR
         # 2. Class name is not already registered
-        if type_name == type_obj.__name__ or type_obj.__name__ not in self._entity_types:
+        if (
+            type_name == type_obj.__name__
+            or type_obj.__name__ not in self._entity_types
+        ):
             self._entity_types[type_obj.__name__] = type_obj
         else:
             # Class name already registered - log warning about potential collision

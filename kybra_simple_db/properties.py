@@ -204,24 +204,28 @@ class Relation:
 
     def validate_entity(self, entity):
         """Validate that an entity is of the correct type.
-        
+
         Handles both namespaced (e.g., "app::User") and non-namespaced (e.g., "User") types.
         """
         if entity is None:
             return True
         if not isinstance(entity, Entity):
             raise TypeError(f"{self.name} must be set to Entity instances")
-        
+
         # Convert entity_types to list for uniform handling
         allowed_types = (
-            [self.entity_types] if isinstance(self.entity_types, str) else self.entity_types
+            [self.entity_types]
+            if isinstance(self.entity_types, str)
+            else self.entity_types
         )
-        
+
         # Check if entity type matches any allowed type
         # This handles both exact matches and namespace variations
         if entity._type not in allowed_types:
             # Also check if the class name matches (for backward compatibility)
-            entity_class_name = entity._type.split("::")[-1] if "::" in entity._type else entity._type
+            entity_class_name = (
+                entity._type.split("::")[-1] if "::" in entity._type else entity._type
+            )
             type_matches = any(
                 entity_class_name == (t.split("::")[-1] if "::" in t else t)
                 for t in allowed_types
@@ -259,13 +263,13 @@ class Relation:
                 # Get the entity class from the database registry
                 # Try full type name first (with namespace)
                 entity_class = obj.db()._entity_types.get(entity_type_name)
-                
+
                 # If not found and type name has namespace separator, try without namespace as fallback
                 if not entity_class and "::" not in entity_type_name:
                     # Type name has no namespace, try to find any class with this name
                     # This is for backward compatibility
                     entity_class = obj.db()._entity_types.get(entity_type_name)
-                
+
                 if entity_class:
                     found_entity = entity_class[value]
                     if found_entity:
@@ -401,7 +405,7 @@ class OneToMany(Relation):
         for value in values:
             # Resolve value to Entity instance
             resolved_value = self.resolve_entity(obj, value)
-            
+
             # Validate entity type using the base validate_entity method
             self.validate_entity(resolved_value)
             resolved_values.append(resolved_value)
@@ -503,7 +507,7 @@ class ManyToMany(Relation):
             for value in values:
                 # Resolve value to Entity instance
                 resolved_value = self.resolve_entity(obj, value)
-                
+
                 # Validate entity type using the base validate_entity method
                 self.validate_entity(resolved_value)
                 resolved_values.append(resolved_value)

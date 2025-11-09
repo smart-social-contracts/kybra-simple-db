@@ -241,12 +241,12 @@ class TestNamespaces:
         # Create instances
         store_product = Product(name="Laptop", price=1000)
         warehouse_product = Product2(name="Monitor", quantity=50)
-        
+
         # Both should be registered independently after instance creation
         db = Database.get_instance()
         assert "store::Product" in db._entity_types
         assert "warehouse::Product2" in db._entity_types
-        
+
         # Verify they have separate IDs and types
         assert store_product._type == "store::Product"
         assert warehouse_product._type == "warehouse::Product2"
