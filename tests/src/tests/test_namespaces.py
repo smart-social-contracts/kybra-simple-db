@@ -39,8 +39,12 @@ class AdminUser(Entity):
 class TestNamespaces:
     """Test suite for namespace functionality."""
 
+    def setUp(self):
+        """Reset database before each test (for Tester runner)."""
+        Database.get_instance().clear()
+
     def setup_method(self):
-        """Reset database before each test."""
+        """Reset database before each test (for pytest)."""
         Database.get_instance().clear()
 
     def test_basic_namespace_storage(self):
