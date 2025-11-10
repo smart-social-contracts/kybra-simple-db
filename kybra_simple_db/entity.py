@@ -36,6 +36,15 @@ class Entity:
         person = Person(name="Jane")
         found = Person["Jane"]  # Lookup by alias
 
+        # Entity with namespace
+        class AppUser(Entity):
+            __namespace__ = "app"  # Stores as "app::AppUser"
+            name = String()
+
+        class AdminUser(Entity):
+            __namespace__ = "admin"  # Stores as "admin::AdminUser"
+            name = String()
+
     Key Features:
         - Auto-generated sequential IDs (_id: "1", "2", "3", ...)
         - Property validation and type checking via descriptors
@@ -54,6 +63,9 @@ class Entity:
 
     Class-level attributes:
         __alias__ (str): Optional field name for alias-based lookups
+        __namespace__ (str): Optional namespace for entity type (e.g., "app", "admin")
+                           Entities with namespaces are stored as "namespace::ClassName"
+                           Allows multiple entities with same class name in different namespaces
         _entity_type (str): Optional entity type for subclasses
         _context (Set[Entity]): Set of all entities in current context
 
@@ -66,6 +78,7 @@ class Entity:
     _entity_type = None  # To be defined in subclasses
     _context: Set["Entity"] = set()  # Set of entities in current context
     _do_not_save = False
+    __namespace__: Optional[str] = None  # Optional namespace for entity type
 
     def __init__(self, **kwargs):
         """Initialize a new entity.
@@ -99,8 +112,8 @@ class Entity:
         # Initialize any mixins
         super().__init__() if hasattr(super(), "__init__") else None
 
-        # Store the type for this entity - always use class name
-        self._type = self.__class__.__name__
+        # Store the type for this entity - use namespace::class_name if namespace is set
+        self._type = self.__class__.get_full_type_name()
         # Get next sequential ID from storage
         self._id = None if kwargs.get("_id") is None else kwargs["_id"]
         self._loaded = False if kwargs.get("_loaded") is None else kwargs["_loaded"]
@@ -111,8 +124,8 @@ class Entity:
         # Add to context
         self.__class__._context.add(self)
 
-        # Register this type with the database
-        self.db().register_entity_type(self.__class__)
+        # Register this type with the database (using full type name)
+        self.db().register_entity_type(self.__class__, self._type)
 
         # Generate ID if not provided, or update max_id if custom ID is higher
         if self._id is None:
@@ -167,6 +180,18 @@ class Entity:
         """
         return Database.get_instance()
 
+    @classmethod
+    def get_full_type_name(cls) -> str:
+        """Get the full type name including namespace.
+
+        Returns:
+            str: Full type name in format 'namespace::ClassName' or 'ClassName'
+        """
+        namespace = getattr(cls, "__namespace__", None)
+        if namespace:
+            return f"{namespace}::{cls.__name__}"
+        return cls.__name__
+
     def _save(
         self,
     ) -> "Entity":
@@ -179,7 +204,8 @@ class Entity:
             PermissionError: If TimestampedMixin is used and caller is not the owner
         """
 
-        type_name = self.__class__.__name__
+        # Use full type name (including namespace) for system counters and storage
+        type_name = self._type
         db = self.__class__.db()
 
         if self._id is None:
@@ -232,14 +258,15 @@ class Entity:
                 if hasattr(self, alias_field):
                     alias_value = getattr(self, alias_field)
                     if alias_value is not None:
-                        db.save(self._type + "_alias", alias_value, self._id)
+                        db.save(self.__class__._alias_key(), alias_value, self._id)
             self._loaded = True
 
         return self
 
     @classmethod
     def _alias_key(cls: Type[T]) -> str:
-        return cls.__name__ + "_alias"
+        """Get the alias key for this entity type, including namespace if set."""
+        return cls.get_full_type_name() + "_alias"
 
     @classmethod
     def load(
@@ -260,8 +287,8 @@ class Entity:
         if not entity_id:
             return None
 
-        # Use class name for type
-        type_name = cls.__name__
+        # Use full type name (including namespace if set)
+        type_name = cls.get_full_type_name()
 
         # Check entity registry first
         db = cls.db()
@@ -314,7 +341,8 @@ class Entity:
             List of entities
         """
         db = Database.get_instance()
-        db.register_entity_type(cls)
+        full_type_name = cls.get_full_type_name()
+        db.register_entity_type(cls, full_type_name)
         instances = []
 
         # Get all keys from storage
@@ -331,8 +359,12 @@ class Entity:
                 continue
 
             # Create instance if it's a subclass of the requested type
-            # or if it's the exact same type
-            if stored_type == cls.__name__ or db.is_subclass(stored_type, cls):
+            # or if it's the exact same type (check both full type name and class name)
+            if (
+                stored_type == full_type_name
+                or stored_type == cls.__name__
+                or db.is_subclass(stored_type, cls)
+            ):
                 # Use the actual stored type's load method
                 actual_cls = db._entity_types.get(stored_type)
                 if actual_cls:
@@ -349,7 +381,7 @@ class Entity:
         Returns:
             int: Total number of entities
         """
-        type_name = cls.__name__
+        type_name = cls.get_full_type_name()
         db = cls.db()
         count_key = f"{type_name}_count"
         count = db.load("_system", count_key)
@@ -362,7 +394,7 @@ class Entity:
         Returns:
             int: Maximum entity ID
         """
-        type_name = cls.__name__
+        type_name = cls.get_full_type_name()
         db = cls.db()
         max_id_key = f"{type_name}_id"
         max_id = db.load("_system", max_id_key)
@@ -395,7 +427,7 @@ class Entity:
 
         # Return the slice of entities for the requested page
         ret = []
-        print(cls.max_id())
+
         while len(ret) < count and from_id <= cls.max_id():
             logger.info(f"Loading entity {from_id}")
             entity = cls.load(str(from_id))
@@ -414,7 +446,7 @@ class Entity:
         self.db().unregister_entity(self._type, self._id)
 
         # Decrement the count when an entity is deleted
-        type_name = self.__class__.__name__
+        type_name = self.__class__.get_full_type_name()
         count_key = f"{type_name}_count"
         current_count = int(self.db().load("_system", count_key) or 0)
         if current_count > 0:
@@ -518,15 +550,20 @@ class Entity:
         if cls.__name__ == "Entity":
             db = cls.db()
             target_class = db._entity_types.get(entity_type)
+            # If not found and entity_type has namespace, try without namespace
+            if not target_class:
+                class_name = db._extract_class_name(entity_type)
+                target_class = db._entity_types.get(class_name)
             if not target_class:
                 raise ValueError(f"Unknown entity type: {entity_type}")
             # Delegate to the specific entity class
             return target_class.deserialize(data)
 
-        # If called on specific entity class, validate type matches
-        if entity_type != cls.__name__:
+        # If called on specific entity class, validate type matches (check both full type name and class name)
+        full_type_name = cls.get_full_type_name()
+        if entity_type != full_type_name and entity_type != cls.__name__:
             raise ValueError(
-                f"Entity type mismatch: expected {cls.__name__}, got {entity_type}"
+                f"Entity type mismatch: expected {full_type_name} or {cls.__name__}, got {entity_type}"
             )
 
         # Try to find existing entity
