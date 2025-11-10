@@ -120,21 +120,30 @@ For more usage examples, see the [tests](tests/src/tests).
 
 ## Namespaces
 
-Organize entities with the `__namespace__` attribute to avoid type conflicts:
+Organize entities with the `__namespace__` attribute to avoid type conflicts when you have the same class name in different modules:
 
 ```python
-# Entity in the "app" namespace
-class AppUser(Entity):
+# In app/models.py
+class User(Entity):
     __namespace__ = "app"
     name = String()
+    role = String()
+```
 
-# Entity in the "admin" namespace  
-class AdminUser(Entity):
+```python
+# In admin/models.py  
+class User(Entity):
     __namespace__ = "admin"
     name = String()
+    permissions = String()
+```
 
-app_user = AppUser(name="Alice")      # Stored as "app::AppUser"
-admin_user = AdminUser(name="Bob")    # Stored as "admin::AdminUser"
+```python
+from app.models import User as AppUser
+from admin.models import User as AdminUser
+
+app_user = AppUser(name="Alice", role="developer")      # Stored as "app::User"
+admin_user = AdminUser(name="Bob", permissions="all")     # Stored as "admin::User"
 
 # Each namespace has isolated ID sequences and storage
 assert app_user._id == "1"
