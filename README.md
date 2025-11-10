@@ -12,6 +12,7 @@ A lightweight key-value database with entity relationships and audit logging cap
 
 - **Persistent Storage**: Works with Kybra's StableBTreeMap stable structure for persistent storage on your canister's stable memory so your data persists automatically across canister upgrades.
 - **Entity-Relational Database**: Create, read and write entities with OneToOne, OneToMany, ManyToOne, and ManyToMany relationships.
+- **Namespaces**: Organize entities into namespaces to avoid type conflicts when you have multiple entities with the same class name.
 - **Audit Logging**: Track all changes to your data with created/updated timestamps and who created and updated each entity.
 - **Ownership**: Assign owners to your data objects to control who can modify them.
 
@@ -116,6 +117,38 @@ Then use the defined entities to store objects:
 ```
 
 For more usage examples, see the [tests](tests/src/tests).
+
+## Namespaces
+
+Organize entities with the `__namespace__` attribute to avoid type conflicts when you have the same class name in different modules:
+
+```python
+# In app/models.py
+class User(Entity):
+    __namespace__ = "app"
+    name = String()
+    role = String()
+```
+
+```python
+# In admin/models.py  
+class User(Entity):
+    __namespace__ = "admin"
+    name = String()
+    permissions = String()
+```
+
+```python
+from app.models import User as AppUser
+from admin.models import User as AdminUser
+
+app_user = AppUser(name="Alice", role="developer")      # Stored as "app::User"
+admin_user = AdminUser(name="Bob", permissions="all")     # Stored as "admin::User"
+
+# Each namespace has isolated ID sequences and storage
+assert app_user._id == "1"
+assert admin_user._id == "1"
+```
 
 ## API Reference
 

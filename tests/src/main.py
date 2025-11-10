@@ -2,14 +2,18 @@ from kybra import StableBTreeMap, ic, query, update
 
 from kybra_simple_db import *
 from tests import (
+    test_alias_and_properties,
     test_audit,
     test_database,
+    test_enhanced_relations,
     test_entity,
     test_example_1,
     test_example_2,
     test_mixins,
+    test_namespaces,
     test_properties,
     test_relationships,
+    test_serialization,
     test_stress,
     test_upgrade_after,
     test_upgrade_before,

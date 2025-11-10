@@ -178,28 +178,70 @@ class Database:
         """Return all stored data"""
         return {k: json.loads(v) for k, v in self._db_storage.items()}
 
-    def register_entity_type(self, type_obj):
+    def _extract_class_name(self, type_name: str) -> str:
+        """Extract the class name from a potentially namespaced type name.
+
+        Args:
+            type_name: Type name, possibly with namespace (e.g., "app::User")
+
+        Returns:
+            The class name without namespace (e.g., "User")
+        """
+        if "::" in type_name:
+            return type_name.split("::")[-1]
+        return type_name
+
+    def register_entity_type(self, type_obj, type_name: str = None):
         """Register an entity type with the database.
 
         Args:
             type_obj: Type object to register
+            type_name: Optional full type name (including namespace). If not provided, uses class name.
         """
+        if type_name is None:
+            type_name = type_obj.__name__
         logger.debug(
-            f"Registering type {type_obj.__name__} with bases {[b.__name__ for b in type_obj.__bases__]}"
+            f"Registering type {type_name} (class: {type_obj.__name__}) with bases {[b.__name__ for b in type_obj.__bases__]}"
         )
-        self._entity_types[type_obj.__name__] = type_obj
+
+        # Always register under the full type name
+        self._entity_types[type_name] = type_obj
+
+        # For backward compatibility, also register under class name if:
+        # 1. No namespace (type_name == class name) - allows non-namespaced lookups, OR
+        # 2. Class name slot is available (no collision) - allows simple name lookups
+        # This dual registration enables both "User" and "app::User" lookups while
+        # preventing collisions when multiple namespaced entities share a class name
+        if (
+            type_name == type_obj.__name__
+            or type_obj.__name__ not in self._entity_types
+        ):
+            self._entity_types[type_obj.__name__] = type_obj
+        else:
+            # Class name already registered - log warning about potential collision
+            existing = self._entity_types[type_obj.__name__]
+            if existing != type_obj:
+                logger.warning(
+                    f"Class name '{type_obj.__name__}' collision: '{type_name}' not registered under class name. "
+                    f"Existing registration: '{getattr(existing, '__module__', 'unknown')}.{existing.__name__}'. "
+                    f"Use full type name '{type_name}' in relations."
+                )
 
     def is_subclass(self, type_name, parent_type):
         """Check if a type is a subclass of another type.
 
         Args:
-            type_name: Name of the type to check
+            type_name: Name of the type to check (may include namespace)
             parent_type: Parent type to check against
 
         Returns:
             bool: True if type_name is a subclass of parent_type
         """
         type_obj = self._entity_types.get(type_name)
+        if not type_obj:
+            # Try to extract class name from namespaced type (e.g., "app::User" -> "User")
+            class_name = self._extract_class_name(type_name)
+            type_obj = self._entity_types.get(class_name)
         logger.debug(f"Type check: {type_name} -> {parent_type.__name__}")
         return type_obj and issubclass(type_obj, parent_type)
 
