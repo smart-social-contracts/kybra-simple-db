@@ -512,7 +512,6 @@ class TestMigrations:
         Database.get_instance().register_entity_type(User)
 
         loaded_user = User.load(user_id)
-        loaded_profile = Profile.load(profile_id)
 
         assert loaded_user is not None
         assert loaded_user.name == "Alice"
