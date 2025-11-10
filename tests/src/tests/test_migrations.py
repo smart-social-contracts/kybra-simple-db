@@ -466,16 +466,12 @@ class TestMigrations:
         class Profile(Entity):
             __version__ = 1
             bio = String()
+            owner = OneToOne("User", "profile")
 
         class User(Entity):
             __version__ = 1
             name = String()
             profile = OneToOne("Profile", "owner")
-
-        class Profile(Entity):
-            __version__ = 1
-            bio = String()
-            owner = OneToOne("User", "profile")
 
         profile = Profile(bio="Developer")
         user = User(name="Alice", profile=profile)
