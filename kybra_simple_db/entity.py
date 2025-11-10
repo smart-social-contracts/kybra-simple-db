@@ -36,6 +36,19 @@ class Entity:
         person = Person(name="Jane")
         found = Person["Jane"]  # Lookup by alias
 
+        # Entity with versioning and migration
+        class Product(Entity):
+            __version__ = 2  # Current schema version
+            name = String()
+            price = Float()
+
+            @classmethod
+            def migrate(cls, obj, from_version, to_version):
+                if from_version == 1 and to_version >= 2:
+                    if 'price' not in obj:
+                        obj['price'] = 0.0
+                return obj
+
         # Entity with namespace
         class AppUser(Entity):
             __namespace__ = "app"  # Stores as "app::AppUser"
@@ -52,6 +65,7 @@ class Entity:
         - Alias-based entity lookup (Entity["alias_value"])
         - Automatic persistence to database on creation/update
         - Entity counting and pagination support
+        - Schema versioning and automatic migration on load
 
     Internally managed attributes:
         _type (str): Entity class name (e.g., "User", "Person")
@@ -63,6 +77,7 @@ class Entity:
 
     Class-level attributes:
         __alias__ (str): Optional field name for alias-based lookups
+        __version__ (int): Schema version for migration support (default: 1)
         __namespace__ (str): Optional namespace for entity type (e.g., "app", "admin")
                            Entities with namespaces are stored as "namespace::ClassName"
                            Allows multiple entities with same class name in different namespaces
@@ -78,6 +93,7 @@ class Entity:
     _entity_type = None  # To be defined in subclasses
     _context: Set["Entity"] = set()  # Set of entities in current context
     _do_not_save = False
+    __version__ = 1  # Default schema version
     __namespace__: Optional[str] = None  # Optional namespace for entity type
 
     def __init__(self, **kwargs):
@@ -252,7 +268,8 @@ class Entity:
         if not self._do_not_save:
             logger.debug(f"Saving entity {self._type}@{self._id} to database")
             db = self.db()
-            db.save(self._type, self._id, data)
+            persisted_data = {**data, "__version__": self.__class__.__version__}
+            db.save(self._type, self._id, persisted_data)
             if hasattr(self.__class__, "__alias__") and self.__class__.__alias__:
                 alias_field = self.__class__.__alias__
                 if hasattr(self, alias_field):
@@ -267,6 +284,34 @@ class Entity:
     def _alias_key(cls: Type[T]) -> str:
         """Get the alias key for this entity type, including namespace if set."""
         return cls.get_full_type_name() + "_alias"
+
+    @classmethod
+    def migrate(cls, obj: dict, from_version: int, to_version: int) -> dict:
+        """Migrate entity data from one version to another.
+
+        This is the default implementation that does nothing. Subclasses should
+        override this method to implement custom migration logic.
+
+        Args:
+            obj: Dictionary containing the entity data to migrate
+            from_version: The version of the data being migrated from
+            to_version: The target version to migrate to
+
+        Returns:
+            Dictionary containing the migrated entity data
+
+        Example:
+            @classmethod
+            def migrate(cls, obj, from_version, to_version):
+                if from_version == 1 and to_version >= 2:
+                    if 'price' not in obj:
+                        obj['price'] = 0.0
+                if from_version <= 2 and to_version >= 3:
+                    if 'old_name' in obj:
+                        obj['new_name'] = obj.pop('old_name')
+                return obj
+        """
+        return obj
 
     @classmethod
     def load(
@@ -301,6 +346,21 @@ class Entity:
         data = db.load(type_name, entity_id)
         if not data:
             return None
+
+        stored_version = data.get("__version__", 1)
+        current_version = cls.__version__
+
+        if stored_version != current_version:
+            logger.debug(
+                f"Version mismatch for {type_name}@{entity_id}: "
+                f"stored={stored_version}, current={current_version}"
+            )
+            # Apply migration
+            data = cls.migrate(data, stored_version, current_version)
+            data["__version__"] = current_version
+            logger.debug(
+                f"Migrated {type_name}@{entity_id} to version {current_version}"
+            )
 
         # Create instance first
         entity = cls(**data, _loaded=True)
@@ -565,6 +625,18 @@ class Entity:
             raise ValueError(
                 f"Entity type mismatch: expected {full_type_name} or {cls.__name__}, got {entity_type}"
             )
+
+        stored_version = data.get("__version__", 1)
+        current_version = cls.__version__
+
+        if stored_version != current_version:
+            logger.debug(
+                f"Version mismatch during deserialize for {entity_type}: "
+                f"stored={stored_version}, current={current_version}"
+            )
+            data = cls.migrate(data, stored_version, current_version)
+            data["__version__"] = current_version
+            logger.debug(f"Migrated {entity_type} to version {current_version}")
 
         # Try to find existing entity
         existing_entity = None
