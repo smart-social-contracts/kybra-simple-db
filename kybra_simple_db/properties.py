@@ -37,6 +37,21 @@ class Property:
 
     def __set__(self, obj, value):
         """Set the property value with type checking and validation."""
+        from .hooks import call_entity_hook
+        from .constants import ACTION_CREATE, ACTION_MODIFY
+        
+        # Get old value and determine action
+        old_value = obj.__dict__.get(f"_{PROPERTY_STORAGE_PREFIX}_{self.name}", self.default)
+        action = ACTION_CREATE if not hasattr(obj, '_loaded') or not obj._loaded else ACTION_MODIFY
+        
+        # Call hook before setting
+        allow, modified_value = call_entity_hook(obj, self.name, old_value, value, action)
+        
+        if not allow:
+            raise ValueError(f"Hook rejected change to {self.name}")
+        
+        value = modified_value
+        
         if value is not None:
             if not isinstance(value, self.type):
                 if isinstance(value, str) and self.type in (int, float, bool):
