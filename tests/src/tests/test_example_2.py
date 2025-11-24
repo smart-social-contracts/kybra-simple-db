@@ -5,11 +5,10 @@
 3. Entity Inheritance
 """
 
-import os
-
 from kybra_simple_logging import get_logger
 
 import kybra_simple_db as ksdb
+from kybra_simple_db.context import set_caller_id
 
 logger = get_logger(__name__)
 
@@ -34,7 +33,7 @@ def run(test_name: str = None, test_var: str = None):
     assert user._owner == "system"  # Default owner
 
     # Update as a different user
-    os.environ["CALLER_ID"] = "alice"
+    set_caller_id("alice")
     system_time.advance_time(60000)  # Advance time by 1 minute (60,000 milliseconds)
     try:
         user._save()
