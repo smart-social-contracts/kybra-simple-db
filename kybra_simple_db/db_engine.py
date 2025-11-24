@@ -62,6 +62,36 @@ class Database:
         # Entity registry: {(type_name, entity_id): weakref to entity instance}
         self._entity_registry = {}
 
+    def as_user(self, user_id: str):
+        """Context manager for running operations as a specific user.
+
+        Usage:
+            with db.as_user("alice"):
+                doc = Document(title="My Doc")  # Owner is alice
+
+        Args:
+            user_id: ID of the user to impersonate
+
+        Returns:
+            Context manager that sets and resets caller ID
+        """
+        from .context import _current_caller
+
+        class UserContext:
+            def __init__(self, user_id, caller_var):
+                self.user_id = user_id
+                self.caller_var = caller_var
+                self.token = None
+
+            def __enter__(self):
+                self.token = self.caller_var.set(self.user_id)
+                return self
+
+            def __exit__(self, *args):
+                self.caller_var.reset(self.token)
+
+        return UserContext(user_id, _current_caller)
+
     def clear(self):
         keys = list(self._db_storage.keys())
         for key in keys:
