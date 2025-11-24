@@ -1,10 +1,9 @@
 """Test cases for entity mixins."""
 
-import os
-
 from tester import Tester
 
 from kybra_simple_db import *
+from kybra_simple_db.context import set_caller_id
 
 
 class TestEntity(Entity, TimestampedMixin):
@@ -21,7 +20,7 @@ class TestMixins:
     def test_timestamped_mixin(self):
         """Test that TimestampedMixin adds timestamp and ownership functionality."""
         # Set up test caller and time
-        os.environ["CALLER_ID"] = "test_user"
+        set_caller_id("test_user")
         system_time = SystemTime.get_instance()
 
         # Set initial time
@@ -50,7 +49,7 @@ class TestMixins:
         assert entity._timestamp_created == initial_time
 
         # Try to update with different user
-        os.environ["CALLER_ID"] = "other_user"
+        set_caller_id("other_user")
         Tester.assert_raises(PermissionError, entity._save)
 
         # Change owner and update

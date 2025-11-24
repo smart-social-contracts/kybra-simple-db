@@ -91,7 +91,7 @@ def test_as_user_with_access_control():
 
         @staticmethod
         def on_event(entity, field_name, old_value, new_value, action):
-            from kybra_simple_db import ACTION_MODIFY, ACTION_DELETE
+            from kybra_simple_db import ACTION_DELETE, ACTION_MODIFY
             from kybra_simple_db.context import get_caller_id
 
             caller = get_caller_id()
