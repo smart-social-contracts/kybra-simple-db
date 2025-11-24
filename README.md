@@ -12,9 +12,10 @@ A lightweight key-value database with entity relationships and audit logging cap
 
 - **Persistent Storage**: Works with Kybra's StableBTreeMap stable structure for persistent storage on your canister's stable memory so your data persists automatically across canister upgrades.
 - **Entity-Relational Database**: Create, read and write entities with OneToOne, OneToMany, ManyToOne, and ManyToMany relationships.
+- **Entity Hooks**: Intercept and control entity lifecycle events (create, modify, delete) with `on_event` hooks.
+- **Access Control**: Thread-safe context management for user identity tracking and ownership-based permissions.
 - **Namespaces**: Organize entities into namespaces to avoid type conflicts when you have multiple entities with the same class name.
 - **Audit Logging**: Track all changes to your data with created/updated timestamps and who created and updated each entity.
-- **Ownership**: Assign owners to your data objects to control who can modify them.
 
 
 ## Installation
@@ -150,12 +151,79 @@ assert app_user._id == "1"
 assert admin_user._id == "1"
 ```
 
+## Entity Hooks
+
+Intercept and control entity changes with the `on_event` hook:
+
+```python
+from kybra_simple_db import Entity, String, ACTION_MODIFY
+
+class User(Entity):
+    name = String()
+    email = String()
+    
+    @staticmethod
+    def on_event(entity, field_name, old_value, new_value, action):
+        # Validate email format
+        if field_name == "email" and "@" not in new_value:
+            return False, None  # Reject invalid email
+        
+        # Auto-capitalize names
+        if field_name == "name":
+            return True, new_value.upper()
+        
+        return True, new_value
+
+user = User(name="alice", email="alice@example.com")
+assert user.name == "ALICE"  # Auto-capitalized
+```
+
+See [docs/HOOKS.md](docs/HOOKS.md) for more patterns.
+
+## Access Control
+
+Thread-safe user context management with `as_user()`:
+
+```python
+from kybra_simple_db import Database, Entity, String, ACTION_MODIFY, ACTION_DELETE
+from kybra_simple_db.mixins import TimestampedMixin
+from kybra_simple_db.context import get_caller_id
+
+class Document(Entity, TimestampedMixin):
+    title = String()
+    
+    @staticmethod
+    def on_event(entity, field_name, old_value, new_value, action):
+        caller = get_caller_id()
+        
+        # Only owner can modify or delete
+        if action in (ACTION_MODIFY, ACTION_DELETE):
+            if entity._owner != caller:
+                return False, None
+        
+        return True, new_value
+
+db = Database.get_instance()
+
+# Alice creates a document
+with db.as_user("alice"):
+    doc = Document(title="My Doc")  # Owner: alice
+
+# Bob cannot modify Alice's document
+with db.as_user("bob"):
+    doc.title = "Hacked"  # Raises ValueError
+```
+
+See [docs/ACCESS_CONTROL.md](docs/ACCESS_CONTROL.md) and [examples/simple_access_control.py](examples/simple_access_control.py).
+
 ## API Reference
 
 - **Core**: `Database`, `Entity`
 - **Properties**: `String`, `Integer`, `Float`, `Boolean`
 - **Relationships**: `OneToOne`, `OneToMany`, `ManyToOne`, `ManyToMany`
 - **Mixins**: `TimestampedMixin` (timestamps and ownership tracking)
+- **Hooks**: `ACTION_CREATE`, `ACTION_MODIFY`, `ACTION_DELETE`
+- **Context**: `get_caller_id()`, `set_caller_id()`, `Database.as_user()`
 
 ## Development
 

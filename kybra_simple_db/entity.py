@@ -1,6 +1,5 @@
 """Enhanced entity implementation with support for mixins and entity types."""
 
-import os
 from typing import Any, Dict, List, Optional, Set, Type, TypeVar
 
 from kybra_simple_logging import get_logger
@@ -250,7 +249,9 @@ class Entity:
 
         # Update timestamps if mixin is present
         if hasattr(self, "_update_timestamps"):
-            caller_id = os.environ.get("CALLER_ID", "system")
+            from .context import get_caller_id
+
+            caller_id = get_caller_id()
             if (
                 hasattr(self, "check_ownership")
                 and hasattr(self, "_timestamp_created")
