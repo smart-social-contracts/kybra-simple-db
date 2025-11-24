@@ -75,22 +75,22 @@ class Database:
         Returns:
             Context manager that sets and resets caller ID
         """
-        from .context import _current_caller
+        from .context import get_caller_id, set_caller_id
 
         class UserContext:
-            def __init__(self, user_id, caller_var):
+            def __init__(self, user_id):
                 self.user_id = user_id
-                self.caller_var = caller_var
-                self.token = None
+                self.previous_caller = None
 
             def __enter__(self):
-                self.token = self.caller_var.set(self.user_id)
+                self.previous_caller = get_caller_id()
+                set_caller_id(self.user_id)
                 return self
 
             def __exit__(self, *args):
-                self.caller_var.reset(self.token)
+                set_caller_id(self.previous_caller)
 
-        return UserContext(user_id, _current_caller)
+        return UserContext(user_id)
 
     def clear(self):
         keys = list(self._db_storage.keys())
