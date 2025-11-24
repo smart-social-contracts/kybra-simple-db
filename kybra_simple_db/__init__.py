@@ -2,7 +2,7 @@
 Kybra Simple DB - A lightweight key-value database with entity relationships and audit logging
 """
 
-from .constants import ACTION_CREATE, ACTION_MODIFY, ACTION_DELETE
+from .constants import ACTION_CREATE, ACTION_DELETE, ACTION_MODIFY
 from .db_engine import Database
 from .entity import Entity
 from .mixins import TimestampedMixin

@@ -500,15 +500,15 @@ class Entity:
     def delete(self) -> None:
         logger.debug(f"Deleting entity {self._type}@{self._id}")
         """Delete this entity from the database."""
-        from .hooks import call_entity_hook
         from .constants import ACTION_DELETE
-        
+        from .hooks import call_entity_hook
+
         # Call hook before deletion
         allow, _ = call_entity_hook(self, None, self, None, ACTION_DELETE)
-        
+
         if not allow:
             raise PermissionError("Hook rejected entity deletion")
-        
+
         self.db().delete(self._type, self._id)
 
         # Remove from entity registry
