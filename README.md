@@ -216,6 +216,32 @@ with db.as_user("bob"):
 
 See [docs/ACCESS_CONTROL.md](docs/ACCESS_CONTROL.md) and [examples/simple_access_control.py](examples/simple_access_control.py).
 
+## Type Hints
+
+The library is fully typed (PEP 561 compliant). Type checkers and IDEs automatically infer property types:
+
+```python
+class User(Entity):
+    name = String()      # Inferred as str
+    age = Integer()      # Inferred as int
+    active = Boolean()   # Inferred as bool
+
+user = User(name="Alice", age=30, active=True)
+user.name   # IDE knows this is str
+user.age    # IDE knows this is int
+```
+
+For stricter typing, you can add explicit annotations:
+
+```python
+from typing import Optional
+
+class User(Entity):
+    name: str = String()
+    age: int = Integer()
+    profile: Optional["Profile"] = OneToOne("Profile", "user")
+```
+
 ## API Reference
 
 - **Core**: `Database`, `Entity`
