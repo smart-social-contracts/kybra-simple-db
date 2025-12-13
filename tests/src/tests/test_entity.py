@@ -136,6 +136,31 @@ class TestEntity:
         # Verify that lookup by alias (name) returns None
         assert Person["Jane"] is None
 
+    def test_entity_alias_specific_field_lookup(self):
+        """Test entity lookup by specific field using tuple syntax."""
+        # Create persons
+        person1 = Person(name="Alice", age=30)
+        person2 = Person(name="Bob", age=25)
+
+        # Lookup by specific field (tuple syntax)
+        found = Person["name", "Alice"]
+        assert found is not None
+        assert found._id == person1._id
+        assert found.name == "Alice"
+
+        # Lookup another person
+        found2 = Person["name", "Bob"]
+        assert found2 is not None
+        assert found2._id == person2._id
+
+        # Lookup non-existent value returns None
+        not_found = Person["name", "NonExistent"]
+        assert not_found is None
+
+        # Lookup by non-aliased field returns None (no mapping stored)
+        not_found2 = Person["age", "30"]
+        assert not_found2 is None
+
     def test_instances_basic(self):
         """Test basic functionality of instances() method."""
         # Create multiple persons

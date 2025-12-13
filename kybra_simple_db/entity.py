@@ -282,9 +282,20 @@ class Entity:
         return self
 
     @classmethod
-    def _alias_key(cls: Type[T]) -> str:
-        """Get the alias key for this entity type, including namespace if set."""
-        return cls.get_full_type_name() + "_alias"
+    def _alias_key(cls: Type[T], field_name: str = None) -> str:
+        """Get the alias key for this entity type and field, including namespace if set.
+
+        Args:
+            field_name: Optional field name. If not provided, uses cls.__alias__.
+
+        Returns:
+            Alias key string in format "{type_name}_{field_name}_alias"
+        """
+        if field_name is None:
+            field_name = getattr(cls, "__alias__", None)
+        if field_name is None:
+            return cls.get_full_type_name() + "_alias"
+        return f"{cls.get_full_type_name()}_{field_name}_alias"
 
     @classmethod
     def migrate(cls, obj: dict, from_version: int, to_version: int) -> dict:
@@ -861,12 +872,31 @@ class Entity:
         """Allow using class[id] syntax to load entities.
 
         Args:
-            key: ID of entity to load or value of aliased field
+            key: ID of entity to load, value of aliased field, or tuple of (field_name, value)
+                 for specific field lookup.
 
         Returns:
             Entity if found, None otherwise
+
+        Examples:
+            Entity[1]              # Lookup by ID
+            Entity["john"]         # Lookup by ID, then by __alias__ field
+            Entity["name", "john"] # Lookup by specific field "name" only
         """
         logger.debug(f"Loading entity with key {key}")
+
+        # Handle tuple for specific field lookup: Entity["field_name", "value"]
+        if isinstance(key, tuple) and len(key) == 2:
+            field_name, value = key
+            alias_key = cls._alias_key(field_name)
+            logger.debug(
+                f"Specific field lookup: alias_key={alias_key}, value={value}"
+            )
+            actual_id = cls.db().load(alias_key, str(value))
+            if actual_id:
+                return cls.load(actual_id)
+            return None
+
         # First try as direct ID lookup (convert to string if numeric)
         str_key = str(key) if isinstance(key, (int, float)) else key
         entity = cls.load(str_key)
