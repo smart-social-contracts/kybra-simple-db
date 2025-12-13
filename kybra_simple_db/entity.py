@@ -286,11 +286,20 @@ class Entity:
         """Get the alias key for this entity type and field, including namespace if set.
 
         Args:
-            field_name: Optional field name. If not provided, uses cls.__alias__.
+            field_name: Optional field name for the alias key.
+                - If provided, it is used in the key.
+                - If not provided and cls.__alias__ is defined, cls.__alias__ is used.
+                - If neither is provided, the key is generated without a field name.
 
         Returns:
-            Alias key string in format "{type_name}_{field_name}_alias"
+            Alias key string in one of the following formats:
+                - "{type_name}_{field_name}_alias" (if field_name or cls.__alias__ is used)
+                - "{type_name}_alias" (if neither is provided)
         """
+        if field_name is not None and not isinstance(field_name, str):
+            raise TypeError(
+                f"field_name must be a string, got {type(field_name).__name__}"
+            )
         if field_name is None:
             field_name = getattr(cls, "__alias__", None)
         if field_name is None:
@@ -888,6 +897,10 @@ class Entity:
         # Handle tuple for specific field lookup: Entity["field_name", "value"]
         if isinstance(key, tuple) and len(key) == 2:
             field_name, value = key
+            if not isinstance(field_name, str) or not field_name:
+                raise TypeError(
+                    f"Field name must be a non-empty string, got {type(field_name).__name__}"
+                )
             alias_key = cls._alias_key(field_name)
             logger.debug(f"Specific field lookup: alias_key={alias_key}, value={value}")
             actual_id = cls.db().load(alias_key, str(value))

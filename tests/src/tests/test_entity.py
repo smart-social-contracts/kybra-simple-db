@@ -161,6 +161,25 @@ class TestEntity:
         not_found2 = Person["age", "30"]
         assert not_found2 is None
 
+        # Verify backward compatibility: single-value syntax still works
+        found_by_alias = Person["Alice"]
+        assert found_by_alias is not None
+        assert found_by_alias._id == person1._id
+
+        # Test invalid tuple - non-string field name raises TypeError
+        try:
+            Person[123, "Alice"]
+            assert False, "Should have raised TypeError"
+        except TypeError:
+            pass
+
+        # Test invalid tuple - empty string field name raises TypeError
+        try:
+            Person["", "Alice"]
+            assert False, "Should have raised TypeError"
+        except TypeError:
+            pass
+
     def test_instances_basic(self):
         """Test basic functionality of instances() method."""
         # Create multiple persons

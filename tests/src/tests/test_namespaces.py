@@ -112,7 +112,7 @@ class TestNamespaces:
         assert found.name == "Charlie"
         assert found.age == 25
 
-        # Verify alias key includes namespace and field name
+        # Verify alias key format includes namespace and field name
         alias_key = NamespacedPerson._alias_key()
         assert alias_key == "people::NamespacedPerson_name_alias"
 
