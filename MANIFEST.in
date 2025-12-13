@@ -3,3 +3,4 @@ include README.md
 include requirements-dev.txt
 include pyproject.toml
 include setup.cfg
+include kybra_simple_db/py.typed
