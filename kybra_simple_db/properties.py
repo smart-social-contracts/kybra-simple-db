@@ -1,17 +1,36 @@
 """Property definitions for Entity classes."""
 
-from dataclasses import dataclass
-from typing import Any, Callable, Optional, Type
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Generic,
+    Iterator,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+    overload,
+)
 
-from .entity import Entity
+if TYPE_CHECKING:
+    from .entity import Entity
+
+# TypeVar for property value types
+T = TypeVar("T")
+# TypeVar for entity types in relations
+E = TypeVar("E", bound="Entity")
 
 # Prefix used for storing property values in entity __dict__
 PROPERTY_STORAGE_PREFIX = "prop"
 
 
-@dataclass
-class Property:
+class Property(Generic[T]):
     """Definition of an entity property.
+
+    A generic descriptor class that provides type-safe property access.
+    The type parameter T indicates the type of value this property holds.
 
     Attributes:
         name: Name of the property
@@ -21,15 +40,35 @@ class Property:
     """
 
     name: str
-    type: Type
-    default: Any = None
-    validator: Optional[Callable[[Any], bool]] = None
+    type: Type[T]
+    default: Optional[T]
+    validator: Optional[Callable[[T], bool]]
 
-    def __set_name__(self, owner, name):
+    def __init__(
+        self,
+        name: str = "",
+        type: Type[T] = type(None),  # type: ignore[assignment]
+        default: Optional[T] = None,
+        validator: Optional[Callable[[T], bool]] = None,
+    ):
+        self.name = name
+        self.type = type
+        self.default = default
+        self.validator = validator
+
+    def __set_name__(self, owner: type, name: str) -> None:
         """Set the property name when class is created."""
         self.name = name
 
-    def __get__(self, obj, objtype=None):
+    @overload
+    def __get__(self, obj: None, objtype: type) -> "Property[T]": ...
+
+    @overload
+    def __get__(self, obj: object, objtype: type) -> Optional[T]: ...
+
+    def __get__(
+        self, obj: object, objtype: type = None
+    ) -> Union["Property[T]", Optional[T]]:
         """Get the property value."""
         if obj is None:
             return self
@@ -82,14 +121,14 @@ class Property:
         obj._save()
 
 
-class String(Property):
+class String(Property[str]):
     """String property with optional length validation."""
 
     def __init__(
         self,
-        min_length: int = None,
-        max_length: int = None,
-        default: str = None,
+        min_length: Optional[int] = None,
+        max_length: Optional[int] = None,
+        default: Optional[str] = None,
     ):
         def validator(value: str) -> bool:
             if min_length is not None and len(value) < min_length:
@@ -101,11 +140,14 @@ class String(Property):
         super().__init__(name="", type=str, default=default, validator=validator)
 
 
-class Integer(Property):
+class Integer(Property[int]):
     """Integer property with optional range validation."""
 
     def __init__(
-        self, min_value: int = None, max_value: int = None, default: int = None
+        self,
+        min_value: Optional[int] = None,
+        max_value: Optional[int] = None,
+        default: Optional[int] = None,
     ):
         def validator(value: int) -> bool:
             if min_value is not None and value < min_value:
@@ -117,11 +159,14 @@ class Integer(Property):
         super().__init__(name="", type=int, default=default, validator=validator)
 
 
-class Float(Property):
+class Float(Property[float]):
     """Float property with optional range validation."""
 
     def __init__(
-        self, min_value: float = None, max_value: float = None, default: float = None
+        self,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
+        default: Optional[float] = None,
     ):
         def validator(value: float) -> bool:
             if min_value is not None and value < min_value:
@@ -133,14 +178,14 @@ class Float(Property):
         super().__init__(name="", type=float, default=default, validator=validator)
 
 
-class Boolean(Property):
+class Boolean(Property[bool]):
     """Boolean property."""
 
-    def __init__(self, default: bool = None):
+    def __init__(self, default: Optional[bool] = None):
         super().__init__(name="", type=bool, default=default)
 
 
-class Relation:
+class Relation(Generic[E]):
     """Base property for defining and accessing relations.
 
     This is the base class for all relation properties. It provides common functionality
@@ -149,12 +194,19 @@ class Relation:
     For one-to-one relationships (default), this property returns a single entity and
     enforces single cardinality. For one-to-many or many-to-many relationships, it
     returns a list of entities.
+
+    The type parameter E indicates the type of related entity.
     """
+
+    name: Optional[str]
+    entity_types: Union[str, List[str]]
+    reverse_name: Optional[str]
+    many: bool
 
     def __init__(
         self,
-        entity_types: [str],
-        reverse_name: str = None,
+        entity_types: Union[str, List[str]],
+        reverse_name: Optional[str] = None,
         many: bool = False,
     ):
         """Initialize relation property.
@@ -169,13 +221,21 @@ class Relation:
         self.reverse_name = reverse_name
         self.many = many
 
-    def __set_name__(self, owner, name):
+    def __set_name__(self, owner: type, name: str) -> None:
         """Set the property name when class is created."""
         self.name = name
         if self.reverse_name is None:
             self.reverse_name = name
 
-    def __get__(self, obj, objtype=None):
+    @overload
+    def __get__(self, obj: None, objtype: type) -> "Relation[E]": ...
+
+    @overload
+    def __get__(self, obj: object, objtype: type) -> Optional[E]: ...
+
+    def __get__(
+        self, obj: object, objtype: type = None
+    ) -> Union["Relation[E]", Optional[E], List[E]]:
         """Get related entities."""
         if obj is None:
             return self
@@ -225,11 +285,13 @@ class Relation:
         for entity in to_add:
             obj.add_relation(self.name, self.reverse_name, entity)
 
-    def validate_entity(self, entity):
+    def validate_entity(self, entity: Any) -> bool:
         """Validate that an entity is of the correct type.
 
         Handles both namespaced (e.g., "app::User") and non-namespaced (e.g., "User") types.
         """
+        from .entity import Entity
+
         if entity is None:
             return True
         if not isinstance(entity, Entity):
@@ -259,7 +321,7 @@ class Relation:
                     f"but got type '{entity._type}'"
                 )
 
-    def resolve_entity(self, obj, value):
+    def resolve_entity(self, obj: Any, value: Any) -> Optional[E]:
         """Resolve a value to an Entity instance.
 
         Args:
@@ -269,11 +331,13 @@ class Relation:
         Returns:
             Entity instance or None
         """
+        from .entity import Entity
+
         if value is None:
             return None
 
         if isinstance(value, Entity):
-            return value
+            return value  # type: ignore[return-value]
 
         if isinstance(value, (str, int)):
             # Try to find entity by ID or name (alias) using each allowed entity type
@@ -300,47 +364,47 @@ class Relation:
         )
 
 
-class RelationList:
+class RelationList(Generic[E]):
     """Helper class for managing lists of related entities."""
 
-    def __init__(self, obj, prop):
+    def __init__(self, obj: Any, prop: "Relation[E]"):
         self.obj = obj
         self.prop = prop
 
-    def add(self, entity):
+    def add(self, entity: Union[E, str, int]) -> None:
         """Add a new relation."""
         # Resolve entity (supports string ID/name)
-        entity = self.prop.resolve_entity(self.obj, entity)
+        resolved = self.prop.resolve_entity(self.obj, entity)
 
         # Validate entity type using the base validate_entity method
-        self.prop.validate_entity(entity)
+        self.prop.validate_entity(resolved)
 
         # For one-to-many, check if entity already has a relation
         if isinstance(self.prop, OneToMany):
-            existing_relations = entity.get_relations(self.prop.reverse_name)
+            existing_relations = resolved.get_relations(self.prop.reverse_name)
             if existing_relations:
                 # Remove existing relation since it's one-to-many
                 old_relation = existing_relations[0]
                 # Remove the entity from the old relation's list
                 if old_relation != self.obj:
-                    old_relation._relations[self.prop.name].remove(entity)
+                    old_relation._relations[self.prop.name].remove(resolved)
                     # Remove the old relation from the entity's list
-                    entity._relations[self.prop.reverse_name].remove(old_relation)
+                    resolved._relations[self.prop.reverse_name].remove(old_relation)
 
-        self.obj.add_relation(self.prop.name, self.prop.reverse_name, entity)
+        self.obj.add_relation(self.prop.name, self.prop.reverse_name, resolved)
 
-    def remove(self, entity):
+    def remove(self, entity: Union[E, str, int]) -> None:
         """Remove a relation."""
         self.obj.remove_relation(self.prop.name, self.prop.reverse_name, entity)
 
-    def __iter__(self):
+    def __iter__(self) -> "Iterator[E]":
         return iter(self.obj.get_relations(self.prop.name))
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.obj.get_relations(self.prop.name))
 
 
-class OneToOne(Relation):
+class OneToOne(Relation[E]):
     """Property for defining one-to-one relationships.
 
     This property type represents a one-to-one relationship where each entity
@@ -354,7 +418,11 @@ class OneToOne(Relation):
             person = OneToOne('Person', 'profile')
     """
 
-    def __init__(self, entity_types: [str], reverse_name: str = None):
+    def __init__(
+        self,
+        entity_types: Union[str, List[str]],
+        reverse_name: Optional[str] = None,
+    ):
         super().__init__(entity_types, reverse_name, many=False)
 
     def __set__(self, obj, value):
@@ -394,7 +462,7 @@ class OneToOne(Relation):
         super().__set__(obj, value)
 
 
-class OneToMany(Relation):
+class OneToMany(Relation[E]):
     """Property for defining one-to-many relationships.
 
     This property type represents a one-to-many relationship where the 'one' side
@@ -406,10 +474,10 @@ class OneToMany(Relation):
             employees = OneToMany('Employee', 'department')
 
         class Employee(Entity):
-            department = ManyToOneProperty('Department', 'employees')
+            department = ManyToOne('Department', 'employees')
     """
 
-    def __init__(self, entity_types: [str], reverse_name: str):
+    def __init__(self, entity_types: Union[str, List[str]], reverse_name: str):
         super().__init__(entity_types, reverse_name, many=True)
 
     def __set__(self, obj, values):
@@ -436,14 +504,22 @@ class OneToMany(Relation):
         # Replace original values with resolved entities
         super().__set__(obj, resolved_values)
 
-    def __get__(self, obj, objtype=None):
+    @overload
+    def __get__(self, obj: None, objtype: type) -> "OneToMany[E]": ...
+
+    @overload
+    def __get__(self, obj: object, objtype: type) -> "RelationList[E]": ...
+
+    def __get__(
+        self, obj: object, objtype: type = None
+    ) -> Union["OneToMany[E]", "RelationList[E]"]:
         """Get related entities as a RelationList."""
         if obj is None:
             return self
         return RelationList(obj, self)
 
 
-class ManyToOne(Relation):
+class ManyToOne(Relation[E]):
     """Property for defining many-to-one relationships.
 
     This property type represents a many-to-one relationship where multiple entities
@@ -451,13 +527,15 @@ class ManyToOne(Relation):
 
     Example:
         class Employee(Entity):
-            department = ManyToOneProperty('Department', 'employees')
+            department = ManyToOne('Department', 'employees')
 
         class Department(Entity):
             employees = OneToMany('Employee', 'department')
     """
 
-    def __init__(self, entity_types: [str], reverse_name: str = None):
+    def __init__(
+        self, entity_types: Union[str, List[str]], reverse_name: Optional[str] = None
+    ):
         super().__init__(entity_types, reverse_name, many=False)
 
     def __set__(self, obj, value):
@@ -490,7 +568,7 @@ class ManyToOne(Relation):
         super().__set__(obj, value)
 
 
-class ManyToMany(Relation):
+class ManyToMany(Relation[E]):
     """Property for defining many-to-many relationships.
 
     This property type represents a many-to-many relationship where entities
@@ -498,17 +576,19 @@ class ManyToMany(Relation):
 
     Example:
         class Student(Entity):
-            courses = ManyToManyProperty('Course', 'students')
+            courses = ManyToMany('Course', 'students')
 
         class Course(Entity):
-            students = ManyToManyProperty('Student', 'courses')
+            students = ManyToMany('Student', 'courses')
     """
 
-    def __init__(self, entity_types: [str], reverse_name: str):
+    def __init__(self, entity_types: Union[str, List[str]], reverse_name: str):
         super().__init__(entity_types, reverse_name, many=True)
 
     def __set__(self, obj, values):
         """Set related entities with many-to-many constraints."""
+        from .entity import Entity
+
         # Convert single entity to list for convenience
         if isinstance(values, Entity):
             values = [values]
@@ -540,7 +620,15 @@ class ManyToMany(Relation):
 
         super().__set__(obj, values)
 
-    def __get__(self, obj, objtype=None):
+    @overload
+    def __get__(self, obj: None, objtype: type) -> "ManyToMany[E]": ...
+
+    @overload
+    def __get__(self, obj: object, objtype: type) -> "RelationList[E]": ...
+
+    def __get__(
+        self, obj: object, objtype: type = None
+    ) -> Union["ManyToMany[E]", "RelationList[E]"]:
         """Get related entities as a RelationList."""
         if obj is None:
             return self
