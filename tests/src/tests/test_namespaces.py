@@ -112,9 +112,9 @@ class TestNamespaces:
         assert found.name == "Charlie"
         assert found.age == 25
 
-        # Verify alias key includes namespace
+        # Verify alias key format includes namespace and field name
         alias_key = NamespacedPerson._alias_key()
-        assert alias_key == "people::NamespacedPerson_alias"
+        assert alias_key == "people::NamespacedPerson_name_alias"
 
     def test_mixed_namespace_and_regular(self):
         """Test mixing namespaced and regular entities."""
