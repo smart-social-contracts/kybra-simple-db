@@ -61,13 +61,13 @@ class Property(Generic[T]):
         self.name = name
 
     @overload
-    def __get__(self, obj: None, objtype: type) -> "Property[T]": ...
+    def __get__(self, obj: None, objtype: Optional[type]) -> "Property[T]": ...
 
     @overload
-    def __get__(self, obj: object, objtype: type) -> Optional[T]: ...
+    def __get__(self, obj: object, objtype: Optional[type]) -> Optional[T]: ...
 
     def __get__(
-        self, obj: object, objtype: type = None
+        self, obj: object, objtype: Optional[type] = None
     ) -> Union["Property[T]", Optional[T]]:
         """Get the property value."""
         if obj is None:
@@ -228,13 +228,15 @@ class Relation(Generic[E]):
             self.reverse_name = name
 
     @overload
-    def __get__(self, obj: None, objtype: type) -> "Relation[E]": ...
+    def __get__(self, obj: None, objtype: Optional[type]) -> "Relation[E]": ...
 
     @overload
-    def __get__(self, obj: object, objtype: type) -> Optional[E]: ...
+    def __get__(
+        self, obj: object, objtype: Optional[type]
+    ) -> Union[Optional[E], List[E]]: ...
 
     def __get__(
-        self, obj: object, objtype: type = None
+        self, obj: object, objtype: Optional[type] = None
     ) -> Union["Relation[E]", Optional[E], List[E]]:
         """Get related entities."""
         if obj is None:
@@ -320,6 +322,8 @@ class Relation(Generic[E]):
                     f"{self.name} must be set an Entity instance of any of the following types: {self.entity_types}, "
                     f"but got type '{entity._type}'"
                 )
+
+        return True
 
     def resolve_entity(self, obj: Any, value: Any) -> Optional[E]:
         """Resolve a value to an Entity instance.
@@ -505,13 +509,13 @@ class OneToMany(Relation[E]):
         super().__set__(obj, resolved_values)
 
     @overload
-    def __get__(self, obj: None, objtype: type) -> "OneToMany[E]": ...
+    def __get__(self, obj: None, objtype: Optional[type]) -> "OneToMany[E]": ...
 
     @overload
-    def __get__(self, obj: object, objtype: type) -> "RelationList[E]": ...
+    def __get__(self, obj: object, objtype: Optional[type]) -> "RelationList[E]": ...
 
     def __get__(
-        self, obj: object, objtype: type = None
+        self, obj: object, objtype: Optional[type] = None
     ) -> Union["OneToMany[E]", "RelationList[E]"]:
         """Get related entities as a RelationList."""
         if obj is None:
@@ -621,13 +625,13 @@ class ManyToMany(Relation[E]):
         super().__set__(obj, values)
 
     @overload
-    def __get__(self, obj: None, objtype: type) -> "ManyToMany[E]": ...
+    def __get__(self, obj: None, objtype: Optional[type]) -> "ManyToMany[E]": ...
 
     @overload
-    def __get__(self, obj: object, objtype: type) -> "RelationList[E]": ...
+    def __get__(self, obj: object, objtype: Optional[type]) -> "RelationList[E]": ...
 
     def __get__(
-        self, obj: object, objtype: type = None
+        self, obj: object, objtype: Optional[type] = None
     ) -> Union["ManyToMany[E]", "RelationList[E]"]:
         """Get related entities as a RelationList."""
         if obj is None:
