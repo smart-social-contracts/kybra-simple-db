@@ -889,9 +889,7 @@ class Entity:
         if isinstance(key, tuple) and len(key) == 2:
             field_name, value = key
             alias_key = cls._alias_key(field_name)
-            logger.debug(
-                f"Specific field lookup: alias_key={alias_key}, value={value}"
-            )
+            logger.debug(f"Specific field lookup: alias_key={alias_key}, value={value}")
             actual_id = cls.db().load(alias_key, str(value))
             if actual_id:
                 return cls.load(actual_id)
