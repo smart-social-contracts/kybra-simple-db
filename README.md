@@ -48,7 +48,7 @@ from kybra_simple_db import (
 )
 
 class Person(Entity, TimestampedMixin):
-    __alias__ = "name"  # Use `name` as the alias field for lookup by `name`
+    __alias__ = "name"  # Use `name` as the alias field for lookup
     name = String(min_length=2, max_length=50)
     age = Integer(min_value=0, max_value=120)
     friends = ManyToMany("Person", "friends")
@@ -56,6 +56,31 @@ class Person(Entity, TimestampedMixin):
     children = OneToMany("Person", "mother")
     spouse = OneToOne("Person", "spouse")
 ```
+
+### Entity Lookup
+
+Entities can be retrieved using `Entity[key]` syntax with three different lookup modes:
+
+```python
+# Create an entity
+john = Person(name="John", age=30)
+
+# Lookup by ID
+Person[1]                  # Returns john (by _id)
+Person["1"]                # Also works with string ID
+
+# Lookup by alias (defined via __alias__)
+Person["John"]             # Tries ID first, then alias field "name"
+
+# Lookup by specific field (tuple syntax)
+Person["name", "John"]     # Lookup by field "name" only
+```
+
+| Syntax | Behavior |
+|--------|----------|
+| `Person[1]` | Lookup by `_id` |
+| `Person["John"]` | Try `_id` first, then `__alias__` field |
+| `Person["name", "John"]` | Lookup by specific field `name` only |
 
 Then use the defined entities to store objects:
 
