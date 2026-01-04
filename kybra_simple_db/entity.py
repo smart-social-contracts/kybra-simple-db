@@ -589,8 +589,16 @@ class Entity:
             if not k.startswith("_"):
                 data[k] = v
 
-        # Add relations as references
-        reference_name = "_id"  # TODO: make this configurable, e.g. take alias instead
+        # Add relations as references (prefer alias over _id if available)
+        def get_entity_reference(entity):
+            """Get the best reference for an entity: alias value if available, otherwise _id."""
+            if hasattr(entity.__class__, "__alias__") and entity.__class__.__alias__:
+                alias_field = entity.__class__.__alias__
+                alias_value = getattr(entity, alias_field, None)
+                if alias_value is not None:
+                    return alias_value
+            return entity._id
+
         for rel_name, rel_entities in self._relations.items():
             if rel_entities:
                 # Check if this is a *ToMany relation that should always be a list
@@ -601,10 +609,10 @@ class Entity:
 
                 if len(rel_entities) == 1 and not is_to_many:
                     # Single relation for OneToOne/ManyToOne - store as single reference
-                    data[rel_name] = getattr(rel_entities[0], reference_name)
+                    data[rel_name] = get_entity_reference(rel_entities[0])
                 else:
                     # Multiple relations or *ToMany relations - store as list of references
-                    data[rel_name] = [getattr(e, reference_name) for e in rel_entities]
+                    data[rel_name] = [get_entity_reference(e) for e in rel_entities]
 
         return data
 

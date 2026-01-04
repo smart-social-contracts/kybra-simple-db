@@ -652,6 +652,61 @@ class TestSerialization:
         assert entity_after_non_numeric._id == "1000001"
 
 
+    def test_serialize_relations_with_alias(self):
+        """Test that serialize uses alias instead of _id for relations when available."""
+        Database.get_instance().clear()
+
+        # Create entity classes where the related entity has an alias
+        class Author(Entity):
+            __alias__ = "name"
+            name = String()
+            books = OneToMany("Book", "author")
+
+        class Book(Entity):
+            title = String()
+            author = ManyToOne("Author", "books")
+
+        class Author2(Entity):
+            """Author without alias for comparison."""
+
+            name = String()
+            books = OneToMany("Book2", "author")
+
+        class Book2(Entity):
+            title = String()
+            author = ManyToOne("Author2", "books")
+
+        # Test with alias - should use alias value in serialization
+        author = Author(name="Alice")
+        book = Book(title="My Book")
+        book.author = author
+
+        book_data = book.serialize()
+        # Should use alias value "Alice" instead of _id "1"
+        assert book_data["author"] == "Alice", (
+            f"Expected 'Alice' (alias), got '{book_data['author']}'"
+        )
+
+        # Test without alias - should fall back to _id
+        author2 = Author2(name="Bob")
+        book2 = Book2(title="Another Book")
+        book2.author = author2
+
+        book2_data = book2.serialize()
+        # Should use _id since Author2 has no alias
+        assert book2_data["author"] == author2._id, (
+            f"Expected '{author2._id}' (_id), got '{book2_data['author']}'"
+        )
+
+        # Test round-trip with alias - deserialize should resolve by alias
+        Database.get_instance().clear()
+        Author(name="Alice")  # Recreate author first
+        recreated_book = Book.deserialize(book_data)
+        assert recreated_book.title == "My Book"
+        assert recreated_book.author is not None
+        assert recreated_book.author.name == "Alice"
+
+
 def run(test_name: str = None, test_var: str = None):
     tester = Tester(TestSerialization)
     return tester.run_tests()
