@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="kybra_simple_db",
-    version="0.5.1",
+    version="0.6.0",
     author="Smart Social Contracts",
     author_email="smartsocialcontracts@gmail.com",
     description="A lightweight key-value database with entity relationships and audit logging",
