@@ -651,7 +651,6 @@ class TestSerialization:
         # Should get next numeric ID based on previous max
         assert entity_after_non_numeric._id == "1000001"
 
-
     def test_serialize_relations_with_alias(self):
         """Test that serialize uses alias instead of _id for relations when available."""
         Database.get_instance().clear()
@@ -683,9 +682,9 @@ class TestSerialization:
 
         book_data = book.serialize()
         # Should use alias value "Alice" instead of _id "1"
-        assert book_data["author"] == "Alice", (
-            f"Expected 'Alice' (alias), got '{book_data['author']}'"
-        )
+        assert (
+            book_data["author"] == "Alice"
+        ), f"Expected 'Alice' (alias), got '{book_data['author']}'"
 
         # Test without alias - should fall back to _id
         author2 = Author2(name="Bob")
@@ -694,9 +693,9 @@ class TestSerialization:
 
         book2_data = book2.serialize()
         # Should use _id since Author2 has no alias
-        assert book2_data["author"] == author2._id, (
-            f"Expected '{author2._id}' (_id), got '{book2_data['author']}'"
-        )
+        assert (
+            book2_data["author"] == author2._id
+        ), f"Expected '{author2._id}' (_id), got '{book2_data['author']}'"
 
         # Test round-trip with alias - deserialize should resolve by alias
         Database.get_instance().clear()
