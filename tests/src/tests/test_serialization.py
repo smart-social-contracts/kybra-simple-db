@@ -154,6 +154,9 @@ class TestSerialization:
         parent_data = parent.serialize()
         child1_data = child1.serialize()
 
+        print("parent_data", parent_data)
+        print("child1_data", child1_data)
+
         # Clear database to test deserialization
         Database.get_instance().clear()
 
@@ -161,6 +164,9 @@ class TestSerialization:
         # Note: We need to create all entities first before setting relations
         recreated_parent = Parent.deserialize(parent_data)
         recreated_child1 = Child.deserialize(child1_data)
+
+        print("recreated_parent", recreated_parent)
+        print("recreated_child1", recreated_child1)
 
         # Verify basic properties
         assert recreated_parent.name == "Alice"
@@ -219,44 +225,8 @@ class TestSerialization:
         recreated_child1 = Child.deserialize(child1_data)
         recreated_parent = Parent.deserialize(parent_data)
 
-        # Debug: Check pending relations before resolving
-        print(
-            f"Parent pending relations: {getattr(recreated_parent, '_pending_relations', {})}"
-        )
-        print(
-            f"Child1 pending relations: {getattr(recreated_child1, '_pending_relations', {})}"
-        )
-
-        # Debug: Check what entities exist in database
-        print(f"Parent instances: {[p._id for p in Parent.instances()]}")
-        print(f"Child instances: {[c._id for c in Child.instances()]}")
-
-        # Resolve all pending relations after all entities are created
-        from kybra_simple_db import Entity
-
-        # Manual resolution test for parent
-        if hasattr(recreated_parent, "_pending_relations"):
-            print("Manually resolving parent relations...")
-            for key, value in recreated_parent._pending_relations.items():
-                prop = getattr(Parent, key, None)
-                print(f"  {key}: prop={prop}, value={value}")
-                if prop:
-                    print(f"  Property type: {type(prop)}")
-                    print(f"  Entity types: {getattr(prop, 'entity_types', None)}")
-                    print(
-                        f"  Entity types type: {type(getattr(prop, 'entity_types', None))}"
-                    )
-                    if hasattr(prop, "entity_types"):
-                        print(
-                            f"  First entity type: {prop.entity_types[0] if prop.entity_types else 'None'}"
-                        )
-
-        Entity.resolve_pending_relations()
-
-        # Debug: Check after resolving
-        print(f"Parent relations after resolve: {recreated_parent._relations}")
-        print(f"Child1 relations after resolve: {recreated_child1._relations}")
-
+        # Relations are attempted to be resolved immediately during deserialize
+        # (unresolvable relations are silently skipped)
         # Verify the recreated entities have the same serialized output
         recreated_parent_data = recreated_parent.serialize()
         recreated_child1_data = recreated_child1.serialize()
@@ -459,25 +429,24 @@ class TestSerialization:
         assert found._id == original_id
 
     def test_upsert_with_relations(self):
-        """Test that upsert handles relations correctly via pending relations."""
+        """Test that upsert handles relations correctly with immediate resolution."""
         Database.get_instance().clear()
 
         # Create entities first
         parent = Parent(name="Alice")
         child = Child(name="Bob")
 
-        # Test create with relations
+        # Test create with relations - relations are resolved immediately
         data = {
             "_type": "Child",
             "name": "Charlie",
-            "parent": parent._id,  # This should go to pending relations
+            "parent": parent._id,
         }
         charlie = Child.deserialize(data)
 
         assert charlie.name == "Charlie"
-        assert hasattr(charlie, "_pending_relations")
-        assert "parent" in charlie._pending_relations
-        assert charlie._pending_relations["parent"] == parent._id
+        # Relations are resolved immediately now
+        assert charlie.parent == parent
 
         # Test update with relations
         update_data = {
@@ -489,9 +458,7 @@ class TestSerialization:
         updated_child = Child.deserialize(update_data)
 
         assert updated_child.name == "Bob Updated"
-        assert hasattr(updated_child, "_pending_relations")
-        assert "parent" in updated_child._pending_relations
-        assert updated_child._pending_relations["parent"] == parent._id
+        assert updated_child.parent == parent
         assert updated_child is child  # Same instance
 
     def test_deserialize_max_id_count_consistency(self):
