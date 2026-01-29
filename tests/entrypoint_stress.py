@@ -65,7 +65,7 @@ def main():
     try:
         for i in range(1, MAX_ITERATIONS + 1):
             print(f"Running iteration {i}/{MAX_ITERATIONS}")
-            (_, elapsed_time) = run_command(
+            _, elapsed_time = run_command(
                 'dfx canister call test run_test \'("stress", "bulk_insert", "%d")\''
                 % BULK_INSERT_COUNT,
                 timeout=TIMEOUT_MAX,
@@ -73,7 +73,7 @@ def main():
             insert_times.append(elapsed_time)
             count += BULK_INSERT_COUNT
             name = "Entity_%s" % (count - 1)
-            (_, elapsed_time) = run_command(
+            _, elapsed_time = run_command(
                 'dfx canister call test run_test \'("stress", "query", "%s")\'' % name,
                 timeout=TIMEOUT_MAX,
             )
