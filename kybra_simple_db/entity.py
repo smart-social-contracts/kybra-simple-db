@@ -418,40 +418,35 @@ class Entity:
     def instances(cls: Type[T]) -> List[T]:
         """Get all instances of this entity type, including subclass instances.
 
+        Uses load_some() for O(max_id) performance instead of scanning all keys.
+
         Returns:
             List of entities
         """
         db = Database.get_instance()
         full_type_name = cls.get_full_type_name()
         db.register_entity_type(cls, full_type_name)
-        instances = []
 
-        # Get all keys from storage
-        for key in db._db_storage.keys():
-            parts = key.split("@")
-            if len(parts) != 2:
-                continue
+        # Use load_some for O(max_id) instead of O(total_keys)
+        max_id = cls.max_id()
+        if max_id == 0:
+            instances = []
+        else:
+            instances = cls.load_some(1, max_id)
 
-            stored_type, entity_id = parts
-
-            # Load the data to check its type
-            data = db.load(stored_type, entity_id)
-            if not data:
-                continue
-
-            # Create instance if it's a subclass of the requested type
-            # or if it's the exact same type (check both full type name and class name)
-            if (
-                stored_type == full_type_name
-                or stored_type == cls.__name__
-                or db.is_subclass(stored_type, cls)
-            ):
-                # Use the actual stored type's load method
-                actual_cls = db._entity_types.get(stored_type)
-                if actual_cls:
-                    instance = actual_cls.load(entity_id)
-                    if instance:
-                        instances.append(instance)
+        # Also check for subclass instances
+        # Track processed classes to avoid duplicates when types are registered under multiple names
+        processed_classes = {cls}
+        for type_name, type_cls in db._entity_types.items():
+            if type_cls in processed_classes:
+                continue  # Skip already processed classes
+            if type_name == full_type_name or type_name == cls.__name__:
+                continue  # Skip self
+            if db.is_subclass(type_name, cls):
+                processed_classes.add(type_cls)
+                subclass_max_id = type_cls.max_id()
+                if subclass_max_id > 0:
+                    instances.extend(type_cls.load_some(1, subclass_max_id))
 
         return instances
 
