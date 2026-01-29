@@ -435,10 +435,15 @@ class Entity:
             instances = cls.load_some(1, max_id)
 
         # Also check for subclass instances
+        # Track processed classes to avoid duplicates when types are registered under multiple names
+        processed_classes = {cls}
         for type_name, type_cls in db._entity_types.items():
+            if type_cls in processed_classes:
+                continue  # Skip already processed classes
             if type_name == full_type_name or type_name == cls.__name__:
-                continue  # Skip self, already handled
+                continue  # Skip self
             if db.is_subclass(type_name, cls):
+                processed_classes.add(type_cls)
                 subclass_max_id = type_cls.max_id()
                 if subclass_max_id > 0:
                     instances.extend(type_cls.load_some(1, subclass_max_id))
