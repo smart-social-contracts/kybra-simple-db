@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kybra_simple_db"
-version = "0.6.1"
+version = "0.6.2"
 description = "A lightweight key-value database written in Python, intended for use with Kybra on the Internet Computer (IC)"
 readme = "README.md"
 authors = [
