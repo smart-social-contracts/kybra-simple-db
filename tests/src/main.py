@@ -4,6 +4,7 @@ from kybra_simple_db import *
 from tests import (
     test_alias_and_properties,
     test_audit,
+    test_benchmark,
     test_database,
     test_enhanced_relations,
     test_entity,

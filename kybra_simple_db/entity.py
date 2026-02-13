@@ -612,7 +612,7 @@ class Entity:
         return data
 
     @classmethod
-    def deserialize(cls, data: dict):
+    def deserialize(cls, data: dict, level: int = 1):
         """Deserialize entity from dictionary data with upsert functionality.
 
         This method will:
@@ -623,6 +623,10 @@ class Entity:
 
         Args:
             data: Dictionary containing serialized entity data
+            level: Relationship loading depth for the upsert existence check.
+                Defaults to 1 (no deep relationship loading) since deserialize
+                resolves relationships separately. Use higher values only if
+                you need the returned entity to have pre-loaded relationships.
 
         Returns:
             Entity instance (either updated existing or newly created)
@@ -650,7 +654,7 @@ class Entity:
             if not target_class:
                 raise ValueError(f"Unknown entity type: {entity_type}")
             # Delegate to the specific entity class
-            return target_class.deserialize(data)
+            return target_class.deserialize(data, level=level)
 
         # If called on specific entity class, validate type matches (check both full type name and class name)
         full_type_name = cls.get_full_type_name()
@@ -677,7 +681,7 @@ class Entity:
         # First try by _id if provided
         entity_id = data.get("_id")
         if entity_id:
-            existing_entity = cls.load(str(entity_id))
+            existing_entity = cls.load(str(entity_id), level=level)
 
         # If not found by ID and class has alias, try by alias
         if not existing_entity and hasattr(cls, "__alias__") and cls.__alias__:
@@ -689,7 +693,7 @@ class Entity:
                     alias_key = cls._alias_key()
                     actual_id = cls.db().load(alias_key, str(alias_value))
                     if actual_id:
-                        existing_entity = cls.load(actual_id)
+                        existing_entity = cls.load(actual_id, level=level)
 
         if existing_entity:
             # UPDATE existing entity
