@@ -57,7 +57,9 @@ def run_command(command, timeout=None):
 
 def run_benchmark(operation, db_size):
     """Run a single benchmark operation and extract instruction count."""
-    cmd = f'dfx canister call test run_test \'("benchmark", "{operation}", "{db_size}")\''
+    cmd = (
+        f'dfx canister call test run_test \'("benchmark", "{operation}", "{db_size}")\''
+    )
     stdout, stderr = run_command(cmd, timeout=TIMEOUT_MAX)
 
     if stdout is None:
@@ -69,7 +71,9 @@ def run_benchmark(operation, db_size):
     if match:
         return int(match.group(1))
 
-    print(f"{YELLOW}  Could not parse result for {operation}@{db_size}{RESET}", flush=True)
+    print(
+        f"{YELLOW}  Could not parse result for {operation}@{db_size}{RESET}", flush=True
+    )
     print(f"  stdout: {stdout[:200] if stdout else 'None'}", flush=True)
     print(f"  stderr: {stderr[:200] if stderr else 'None'}", flush=True)
     return None
@@ -97,7 +101,9 @@ def main():
 
         for op in OPERATIONS:
             done += 1
-            print(f"  [{done}/{total}] {op} @ db_size={db_size}...", end=" ", flush=True)
+            print(
+                f"  [{done}/{total}] {op} @ db_size={db_size}...", end=" ", flush=True
+            )
             cost = run_benchmark(op, db_size)
             results[(op, db_size)] = cost
             if cost is not None:
@@ -128,8 +134,16 @@ def main():
     comparisons = [
         ("load_level1", "load_level3", "load"),
         ("deserialize_new_level1", "deserialize_new_level3", "deserialize (new)"),
-        ("deserialize_existing_level1", "deserialize_existing_level3", "deserialize (existing)"),
-        ("bulk_deserialize_level1", "bulk_deserialize_level3", "bulk deserialize (10 records)"),
+        (
+            "deserialize_existing_level1",
+            "deserialize_existing_level3",
+            "deserialize (existing)",
+        ),
+        (
+            "bulk_deserialize_level1",
+            "bulk_deserialize_level3",
+            "bulk deserialize (10 records)",
+        ),
     ]
 
     header = f"{'Operation':<35}{'DB Size':>8}  {'level=1':>14}  {'level=3':>14}  {'Savings':>10}"
